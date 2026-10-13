@@ -40,32 +40,32 @@ std::vector<Entity> WeaponSystem::update(Coordinator& coordinator, float elapsed
 		weapon.remaining = std::max(0.0F, weapon.remaining - elapsedTime);
 		if (!weapon.firing || weapon.remaining > 0.0F || !prefabs::canSpawnReplicated(coordinator))
 			continue;
-		if (fire(coordinator, e))
+		if (const std::optional<Entity> projectile = fire(coordinator, e)) {
 			weapon.remaining = weapon.cooldown;
+			spawned.push_back(*projectile);
+		}
 	}
 	return spawned;
 }
 
 /// Spawns the projectile matching the shooter: player ships shoot straight ahead, enemies fire their ShotKind once onscreen.
-bool WeaponSystem::fire(Coordinator& coordinator, Entity shooter)
+std::optional<Entity> WeaponSystem::fire(Coordinator& coordinator, Entity shooter)
 {
 	const Position origin = coordinator.getComponent<Position>(shooter);
 
 	if (coordinator.hasComponent<PlayerControl>(shooter)) {
-		prefabs::createPlayerProjectile(coordinator, coordinator.getComponent<PlayerControl>(shooter).playerId, origin);
-		return true;
+		return prefabs::createPlayerProjectile(coordinator, coordinator.getComponent<PlayerControl>(shooter).playerId, origin);
 	}
 	if (origin.x > config::WORLD_WIDTH)
-		return false;
+		return std::nullopt;
 	if (coordinator.getComponent<Weapon>(shooter).shot == network::ShotKind::Beam) {
-		prefabs::createScantBeam(coordinator, origin);
-		return true;
+		return prefabs::createScantBeam(coordinator, origin);
 	}
 	return fireAtPlayer(coordinator, origin);
 }
 
 /// Fires a shot from `origin` toward where the closest player is now; the shot then flies straight on.
-bool WeaponSystem::fireAtPlayer(Coordinator& coordinator, Position origin)
+std::optional<Entity> WeaponSystem::fireAtPlayer(Coordinator& coordinator, Position origin)
 {
 	std::optional<Velocity> aim;
 	float closest = 0.0F;
@@ -82,9 +82,8 @@ bool WeaponSystem::fireAtPlayer(Coordinator& coordinator, Position origin)
 		aim = Velocity{config::ENEMY_PROJECTILE_SPEED * dx / distance, config::ENEMY_PROJECTILE_SPEED * dy / distance};
 	}
 	if (!aim)
-		return false;
-	prefabs::createEnemyProjectile(coordinator, origin, *aim);
-	return true;
+		return std::nullopt;
+	return prefabs::createEnemyProjectile(coordinator, origin, *aim);
 }
 
 }

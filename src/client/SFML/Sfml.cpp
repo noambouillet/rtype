@@ -17,13 +17,14 @@ namespace rtype {
 Sfml::Sfml(AssetManager& assets)
 	: _window(sf::VideoMode({client_config::WINDOW_WIDTH, client_config::WINDOW_HEIGHT}), "R-Type"),
 	  _assets(assets),
-	  _visualEffects(assets),
+	  _visualEffects(assets, _sounds),
 	  _joystickId(0),
 	  _lastFrame(std::chrono::steady_clock::now()),
 	  _background(assets, _window),
 	  _animationStart(std::chrono::steady_clock::now())
 {
 	_window.setFramerateLimit(60);
+	_sounds.playMusic(MUSIC_FILE);
 }
 
 bool Sfml::isOpen() const

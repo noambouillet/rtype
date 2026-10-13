@@ -11,10 +11,12 @@
 #include <chrono>
 #include <cstdint>
 #include <optional>
+#include <string_view>
 #include <vector>
 
 #include "AssetManager.hpp"
 #include "ScrollingBackground.hpp"
+#include "SoundPlayer.hpp"
 #include "VisualEffects.hpp"
 
 namespace rtype {
@@ -34,6 +36,7 @@ private:
 	static constexpr float SHIP_SCALE = 3.0F;  // player ships and enemies; the server colliders match this scale
 	static constexpr float SHOT_SCALE = 2.0F;
 	static constexpr auto SHOT_FRAME_TIME = std::chrono::milliseconds(80);
+	static constexpr std::string_view MUSIC_FILE = "music.wav";
 
 	std::uint8_t keyboardButtons() const;
 	std::uint8_t joystickButtons() const;
@@ -44,6 +47,7 @@ private:
 
 	sf::RenderWindow _window;
 	AssetManager& _assets;
+	SoundPlayer _sounds;
 	VisualEffects _visualEffects;
 	unsigned int _joystickId;
 	std::chrono::steady_clock::time_point _lastFrame;

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <optional>
 #include <vector>
 
 #include "Components.hpp"
@@ -21,8 +22,8 @@ public:
 	std::vector<Entity> update(Coordinator& coordinator, float elapsedTime);
 
 private:
-	bool fire(Coordinator& coordinator, Entity shooter);
-	bool fireAtPlayer(Coordinator& coordinator, Position origin);
+	std::optional<Entity> fire(Coordinator& coordinator, Entity shooter);
+	std::optional<Entity> fireAtPlayer(Coordinator& coordinator, Position origin);
 };
 
 }

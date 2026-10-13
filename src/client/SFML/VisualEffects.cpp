@@ -8,6 +8,7 @@
 #include "VisualEffects.hpp"
 
 #include <algorithm>
+#include <bit>
 #include <span>
 #include <string_view>
 #include <variant>
@@ -34,7 +35,7 @@ static void drawAnimation(sf::RenderWindow& window, AssetManager& assets, std::s
 	window.draw(sprite);
 }
 
-VisualEffects::VisualEffects(AssetManager& assets) : _assets(assets)
+VisualEffects::VisualEffects(AssetManager& assets, SoundPlayer& sounds) : _assets(assets), _sounds(sounds)
 {
 	_playerEntityIds.fill(std::nullopt);
 }
@@ -112,6 +113,13 @@ void VisualEffects::addEffect(std::optional<std::uint32_t> entityId, EffectKind 
 		.kind = kind,
 		.position = position,
 		.started = now});
+	if (kind == EffectKind::ShotBurst) {
+		_sounds.playSound(PLAYER_SHOT_SOUND, PLAYER_SHOT_VOLUME);
+	} else if (kind == EffectKind::MobExplosion) {
+		_sounds.playSound(ENEMY_DEATH_SOUND, ENEMY_DEATH_VOLUME);
+	} else if (kind == EffectKind::PlayerExplosion) {
+		_sounds.playSound(PLAYER_DEATH_SOUND, PLAYER_DEATH_VOLUME);
+	}
 }
 
 /// Moves an effect with its known ship or damaged entity while it is visible.
@@ -159,6 +167,9 @@ void VisualEffects::handleEvent(const network::EntitySpawnEvent& spawn, LocalFir
 	if (entity.entityType == network::EntityType::Player && entity.ownerPlayerId < client_config::MAX_PLAYERS) {
 		_playerEntityIds[entity.ownerPlayerId] = entity.entityId;
 	}
+	if (entity.entityType == network::EntityType::EnemyProjectile) {
+		_sounds.playSound(ENEMY_SHOT_SOUND, ENEMY_SHOT_VOLUME);
+	}
 	if (entity.entityType != network::EntityType::PlayerProjectile) {
 		return;
 	}
@@ -176,12 +187,14 @@ void VisualEffects::removeHitSpark(std::uint32_t entityId)
 	});
 }
 
-/// Starts an enemy explosion when its destroy notice arrives.
+/// Starts an enemy explosion when it is destroyed inside the world, not when it leaves it.
 void VisualEffects::handleEvent(const network::EntityDestroyEvent& destroy, LocalFirePredictor::TimePoint now)
 {
 	_entityPositions.erase(destroy.entityId);
 	removeHitSpark(destroy.entityId);
-	if (destroy.kind == network::EntityType::Enemy) {
+	const bool offscreen = destroy.x < -OFFSCREEN_MARGIN || destroy.x > static_cast<float>(client_config::WINDOW_WIDTH) + OFFSCREEN_MARGIN ||
+						   destroy.y < -OFFSCREEN_MARGIN || destroy.y > static_cast<float>(client_config::WINDOW_HEIGHT) + OFFSCREEN_MARGIN;
+	if (destroy.kind == network::EntityType::Enemy && !offscreen) {
 		addEffect(destroy.entityId, EffectKind::MobExplosion, {destroy.x, destroy.y}, now);
 	}
 }
@@ -206,11 +219,30 @@ void VisualEffects::handleEvent(const network::PlayerDeathEvent& death, LocalFir
 	addEffect(death.entityId, EffectKind::PlayerExplosion, {death.x, death.y}, now);
 }
 
+/// Plays one sound per player gained or lost by the connected players mask.
+void VisualEffects::updateConnections(const std::optional<network::WorldSnapshot>& snapshot)
+{
+	if (!snapshot) {
+		return;
+	}
+	const std::uint8_t connected = snapshot->connectedMask;
+	const int joined = std::popcount(static_cast<std::uint8_t>(connected & ~_connectedMask));
+	const int left = std::popcount(static_cast<std::uint8_t>(_connectedMask & ~connected));
+	for (int player = 0; player < joined; ++player) {
+		_sounds.playSound(PLAYER_JOIN_SOUND, CONNECTION_VOLUME);
+	}
+	for (int player = 0; player < left; ++player) {
+		_sounds.playSound(PLAYER_LEAVE_SOUND, CONNECTION_VOLUME);
+	}
+	_connectedMask = connected;
+}
+
 /// Converts gameplay notices into temporary animations and draws their frames.
 void VisualEffects::display(sf::RenderWindow& window, const std::optional<network::WorldSnapshot>& snapshot,
 	const std::vector<network::WorldEventNotice>& events)
 {
 	updatePositions(snapshot);
+	updateConnections(snapshot);
 	const auto now = std::chrono::steady_clock::now();
 	std::erase_if(_effects, [now](const VisualEffect& effect) { return now - effect.started >= effectDuration(effect.kind); });
 	for (const network::WorldEventNotice& notice : events) {

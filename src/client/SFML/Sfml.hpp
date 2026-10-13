@@ -36,7 +36,7 @@ private:
 	static constexpr float SHIP_SCALE = 3.0F;  // player ships and enemies; the server colliders match this scale
 	static constexpr float SHOT_SCALE = 2.0F;
 	static constexpr auto SHOT_FRAME_TIME = std::chrono::milliseconds(80);
-	static constexpr std::string_view MUSIC_FILE = "music.wav";
+	static constexpr std::string_view MUSIC_FILE = "music.ogg";
 
 	std::uint8_t keyboardButtons() const;
 	std::uint8_t joystickButtons() const;

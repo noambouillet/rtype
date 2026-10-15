@@ -14,6 +14,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 namespace rtype {
 
@@ -29,7 +30,7 @@ namespace key_bindings_config {
 
 constexpr std::size_t ACTION_COUNT = 5;
 
-constexpr std::array<std::string_view, ACTION_COUNT> ACTION_NAMES = {
+inline const std::vector<std::string_view> ACTION_NAMES = {
 	"up",
 	"down",
 	"left",

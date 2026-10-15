@@ -43,10 +43,11 @@ KeyBindings::KeyBindings()
 bool KeyBindings::parseActionLine(std::string_view key, std::string_view value,
 	std::array<sf::Keyboard::Key, key_bindings_config::ACTION_COUNT>& bindings) const
 {
-	auto actionIt = std::find(key_bindings_config::ACTION_NAMES.begin(), key_bindings_config::ACTION_NAMES.end(), key);
-	if (actionIt == key_bindings_config::ACTION_NAMES.end())
+	std::vector<std::string_view>::const_iterator actionNamePosition =
+		std::find(key_bindings_config::ACTION_NAMES.begin(), key_bindings_config::ACTION_NAMES.end(), key);
+	if (actionNamePosition == key_bindings_config::ACTION_NAMES.end())
 		return false;
-	std::size_t actionIndex = std::distance(key_bindings_config::ACTION_NAMES.begin(), actionIt);
+	std::size_t actionIndex = std::distance(key_bindings_config::ACTION_NAMES.begin(), actionNamePosition);
 	for (const auto& [name, keyCode] : key_bindings_config::KEY_NAMES) {
 		if (name == value) {
 			bindings[actionIndex] = keyCode;

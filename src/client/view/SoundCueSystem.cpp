@@ -60,10 +60,10 @@ void SoundCueSystem::updateConnections(ecs::Coordinator& coordinator, std::uint8
 {
 	const int joined = std::popcount(static_cast<std::uint8_t>(connected & ~_connectedMask));
 	const int left = std::popcount(static_cast<std::uint8_t>(_connectedMask & ~connected));
-	for (int player = 0; player < joined; ++player) {
+	for (int player = 0; player < joined; player++) {
 		emit(coordinator, PLAYER_JOIN_SOUND, CONNECTION_VOLUME);
 	}
-	for (int player = 0; player < left; ++player) {
+	for (int player = 0; player < left; player++) {
 		emit(coordinator, PLAYER_LEAVE_SOUND, CONNECTION_VOLUME);
 	}
 	_connectedMask = connected;

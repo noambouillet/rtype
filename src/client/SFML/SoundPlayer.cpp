@@ -37,15 +37,15 @@ void SoundPlayer::stopMusic()
 /// Loads "name" into the cache or throws if the file cannot be read.
 sf::SoundBuffer& SoundPlayer::loadBuffer(const std::string& name)
 {
-	const auto [it, inserted] = _buffers.try_emplace(name);
-	if (inserted) {
+	const auto [bufferEntry, wasInserted] = _buffers.try_emplace(name);
+	if (wasInserted) {
 		const std::filesystem::path soundPath = _root / std::filesystem::path(name).lexically_normal();
-		if (!it->second.loadFromFile(soundPath)) {
-			_buffers.erase(it);
+		if (!bufferEntry->second.loadFromFile(soundPath)) {
+			_buffers.erase(bufferEntry);
 			throw AudioError("Cannot load sound: " + soundPath.string());
 		}
 	}
-	return it->second;
+	return bufferEntry->second;
 }
 
 /// Plays a cached sound once, or nothing if its file is missing.

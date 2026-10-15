@@ -16,6 +16,7 @@
 
 namespace rtype {
 
+/// Initializes the SFML window, loads the key bindings configuration, and prepares the keyboard button mapping.
 Sfml::Sfml(AssetManager& assets)
 	: _window(sf::VideoMode({client_config::WINDOW_WIDTH, client_config::WINDOW_HEIGHT}), "R-Type"),
 	  _assets(assets),
@@ -59,11 +60,13 @@ void Sfml::handleEvent()
 	}
 }
 
+/// Returns a bitmask of the currently pressed buttons, combining keyboard and joystick input.
 std::uint8_t Sfml::buttons() const
 {
 	return keyboardButtons() | joystickButtons();
 }
 
+/// Returns a bitmask of the currently pressed keyboard buttons, based on the configured key bindings.
 std::uint8_t Sfml::keyboardButtons() const
 {
 	if (!_window.hasFocus()) {
@@ -95,6 +98,7 @@ std::uint8_t Sfml::keyboardButtons() const
 	return value;
 }
 
+/// Returns a bitmask of the currently pressed joystick buttons, based on the configured deadzone and fire button.
 std::uint8_t Sfml::joystickButtons() const
 {
 	if (!sf::Joystick::isConnected(_joystickId)) {

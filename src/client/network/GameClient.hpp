@@ -15,14 +15,14 @@
 #include <variant>
 #include <vector>
 
-#include "UdpClient.hpp"
+#include "game_engine/Network/Transport.hpp"
 #include "utils/network/Protocol.hpp"
 
 namespace rtype::network {
 
 struct WorldEntity {
 	std::uint32_t entityId;
-	EntityType entityType;
+	game::EntityType entityType;
 	std::uint8_t ownerPlayerId;
 	std::uint8_t spriteId;
 	std::uint8_t health;
@@ -43,7 +43,7 @@ struct EntitySpawnEvent {
 
 struct EntityDestroyEvent {
 	std::uint32_t entityId;
-	EntityType kind;
+	game::EntityType kind;
 	float x;
 	float y;
 };
@@ -98,7 +98,7 @@ private:
 	void sendInput(std::uint8_t buttons);
 	std::uint32_t takeSequence();
 
-	UdpClient _udp;
+	IClientTransport& _udp;
 	std::uint64_t _nonce;
 	std::uint32_t _sessionId;
 	std::uint32_t _nextSequence;
@@ -114,7 +114,7 @@ private:
 	std::vector<WorldEventNotice> _events;
 
 public:
-	GameClient(const std::string& host, std::uint16_t port);
+	explicit GameClient(IClientTransport& transport);
 	void tick(std::uint8_t buttons);
 	void disconnect();
 	std::optional<PlayerDeparture> takeDeparture();

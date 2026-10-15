@@ -24,7 +24,7 @@ ecs::Entity createBug(ecs::Coordinator& coordinator, float y, float firstShot);
 ecs::Entity createScantBeam(ecs::Coordinator& coordinator, ecs::Position origin);
 ecs::Entity createBink(ecs::Coordinator& coordinator, float firstShot);
 ecs::Entity createScant(ecs::Coordinator& coordinator, float y, float firstShot);
-ecs::Entity createFormation(ecs::Coordinator& coordinator, network::EnemyKind kind, float y, int count);
+ecs::Entity createFormation(ecs::Coordinator& coordinator, game::EnemyKind kind, float y, int count);
 ecs::Entity createWaveSpawner(ecs::Coordinator& coordinator);
 
 }

@@ -13,12 +13,12 @@
 
 namespace rtype {
 
-Session::Session(asio::ip::udp::endpoint address, std::uint64_t nonce, Clock::time_point now, std::uint32_t id)
+Session::Session(network::Endpoint address, std::uint64_t nonce, Clock::time_point now, std::uint32_t id)
 	: _address(std::move(address)), _nonce(nonce), _id(id), _nextSequence(1), _lastInputSequence(0), _lastHeard(now), _lastInput(now), _buttons(0), _hasInput(false)
 {
 }
 
-const asio::ip::udp::endpoint& Session::address() const
+const network::Endpoint& Session::address() const
 {
 	return _address;
 }
@@ -34,7 +34,7 @@ std::uint32_t Session::id() const
 }
 
 /// Records the latest valid packet's source as this session's reply address.
-void Session::refresh(asio::ip::udp::endpoint address, Clock::time_point now)
+void Session::refresh(network::Endpoint address, Clock::time_point now)
 {
 	_address = std::move(address);
 	_lastHeard = now;

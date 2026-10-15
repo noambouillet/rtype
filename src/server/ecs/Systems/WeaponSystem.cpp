@@ -40,7 +40,7 @@ std::vector<Entity> WeaponSystem::update(Coordinator& coordinator, float elapsed
 		weapon.remaining = std::max(0.0F, weapon.remaining - elapsedTime);
 		if (!weapon.firing || weapon.remaining > 0.0F || !prefabs::canSpawnReplicated(coordinator))
 			continue;
-		if (const std::optional<Entity> projectile = fire(coordinator, e)) {
+		if (const auto projectile = fire(coordinator, e)) {
 			weapon.remaining = weapon.cooldown;
 			spawned.push_back(*projectile);
 		}
@@ -58,7 +58,7 @@ std::optional<Entity> WeaponSystem::fire(Coordinator& coordinator, Entity shoote
 	}
 	if (origin.x > config::WORLD_WIDTH)
 		return std::nullopt;
-	if (coordinator.getComponent<Weapon>(shooter).shot == network::ShotKind::Beam) {
+	if (coordinator.getComponent<Weapon>(shooter).shot == game::ShotKind::Beam) {
 		return prefabs::createScantBeam(coordinator, origin);
 	}
 	return fireAtPlayer(coordinator, origin);

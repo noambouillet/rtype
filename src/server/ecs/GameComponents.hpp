@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-#include "utils/network/Protocol.hpp"
+#include "game/GameTypes.hpp"
 
 namespace rtype::ecs {
 
@@ -22,8 +22,8 @@ constexpr std::uint32_t ENEMY_PROJECTILE = 0b1000;
 }
 
 struct Replicated {
-	network::EntityType type = network::EntityType::Enemy;
-	std::uint8_t owner = network::NO_OWNER;
+	game::EntityType type = game::EntityType::Enemy;
+	std::uint8_t owner = game::NO_OWNER;
 	std::uint8_t variant = 0;
 };
 
@@ -36,7 +36,7 @@ struct Weapon {
 	float cooldown = 0.0F;
 	float remaining = 0.0F;
 	bool firing = false;
-	network::ShotKind shot = network::ShotKind::Aimed;
+	game::ShotKind shot = game::ShotKind::Aimed;
 };
 
 struct WaveSpawner {
@@ -64,7 +64,7 @@ struct SineMotion {
 };
 
 struct FormationSpawner {
-	network::EnemyKind kind = network::EnemyKind::Patapata;
+	game::EnemyKind kind = game::EnemyKind::Patapata;
 	int remaining = 0;
 	float delay = 0.0F;
 	float timer = 0.0F;

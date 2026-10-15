@@ -48,7 +48,7 @@ void WorldEventCollector::recordRemoval(ecs::Coordinator& coordinator, ecs::Enti
 	std::erase_if(_events, [id = state->id](const WorldEvent& event) {
 		return event.type() == WorldEvent::Type::EntityDamage && event.entity().id == id;
 	});
-	const WorldEvent::Type type = state->type == network::EntityType::Player ? WorldEvent::Type::PlayerDeath : WorldEvent::Type::EntityDestroy;
+	const WorldEvent::Type type = state->type == game::EntityType::Player ? WorldEvent::Type::PlayerDeath : WorldEvent::Type::EntityDestroy;
 	_events.emplace_back(type, *state);
 }
 

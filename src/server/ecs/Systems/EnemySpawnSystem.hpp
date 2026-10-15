@@ -8,7 +8,6 @@
 #pragma once
 
 #include <random>
-#include <vector>
 
 #include "Coordinator.hpp"
 #include "System.hpp"
@@ -19,7 +18,7 @@ class EnemySpawnSystem : public System {
 public:
 	EnemySpawnSystem();
 	Signature signature(Coordinator& coordinator);
-	std::vector<Entity> update(Coordinator& coordinator, float elapsedTime, bool active);
+	void update(Coordinator& coordinator, float elapsedTime, bool active);
 
 private:
 	void spawnWave(Coordinator& coordinator);

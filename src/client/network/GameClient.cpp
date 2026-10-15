@@ -24,15 +24,15 @@ static std::uint64_t generateNonce()
 }
 
 /// Creates a client with a fresh nonce for this join attempt.
-GameClient::GameClient(const std::string& host, std::uint16_t port)
-	: _udp(host, port), _nonce(generateNonce()), _sessionId(0), _nextSequence(1), _playerId(0), _lastButtons(0), _joinAttempts(0), _status(ClientStatus::Joining), _worldSnapshot{}, _events{}
+GameClient::GameClient(IClientTransport& transport)
+	: _udp(transport), _nonce(generateNonce()), _sessionId(0), _nextSequence(1), _playerId(0), _lastButtons(0), _joinAttempts(0), _status(ClientStatus::Joining), _worldSnapshot{}, _events{}
 {
 }
 
 /// Processes server packets and refreshes input at the RFC's 50 ms interval.
 void GameClient::tick(std::uint8_t buttons)
 {
-	if (buttons > MAX_BUTTON_STATE) {
+	if (buttons > game::MAX_BUTTON_STATE) {
 		throw NetworkError("Reserved input buttons are set");
 	}
 	for (const auto& bytes : _udp.receivePending()) {
@@ -187,14 +187,17 @@ std::optional<std::vector<WorldEntity>> GameClient::parseEntities(const std::vec
 /// Parses one entity record after the caller validates its packet length.
 std::optional<WorldEntity> GameClient::parseEntityRecord(const std::vector<std::uint8_t>& bytes, std::size_t offset)
 {
-	const EntityType kind = static_cast<EntityType>(bytes[offset + 4]);
+	const auto decoded = decodeEntityType(bytes[offset + 4]);
+	if (!decoded) {
+		return std::nullopt;
+	}
+	const game::EntityType kind = *decoded;
 	const std::uint8_t owner = bytes[offset + 5];
 	const std::uint8_t variant = bytes[offset + 6];
 	const std::uint8_t health = bytes[offset + 7];
-	if (kind < EntityType::Player || kind > EntityType::EnemyProjectile ||
-		((kind == EntityType::Player || kind == EntityType::PlayerProjectile) ? owner > 3 : owner != NO_OWNER) ||
-		(kind == EntityType::Player && (variant != owner || health == 0)) || (kind == EntityType::Enemy && health == 0) ||
-		((kind == EntityType::PlayerProjectile || kind == EntityType::EnemyProjectile) && health != 0)) {
+	if (((kind == game::EntityType::Player || kind == game::EntityType::PlayerProjectile) ? owner > 3 : owner != game::NO_OWNER) ||
+		(kind == game::EntityType::Player && (variant != owner || health == 0)) || (kind == game::EntityType::Enemy && health == 0) ||
+		((kind == game::EntityType::PlayerProjectile || kind == game::EntityType::EnemyProjectile) && health != 0)) {
 		return std::nullopt;
 	}
 	return WorldEntity{readU32(bytes, offset), kind, owner, variant, health, decodePosition(bytes, offset + 8), decodePosition(bytes, offset + 12)};
@@ -217,9 +220,11 @@ void GameClient::handleWorldEvent(const Header& header, const std::vector<std::u
 			break;
 		}
 		case PacketType::EntityDestroy: {
-			const EntityDestroyEvent event{readU32(bytes, offset), static_cast<EntityType>(bytes[offset + 4]),
-				decodePosition(bytes, offset + 5), decodePosition(bytes, offset + 9)};
-			_events.push_back(WorldEventNotice{tick, event});
+			if (const auto kind = decodeEntityType(bytes[offset + 4])) {
+				const EntityDestroyEvent event{readU32(bytes, offset), *kind,
+					decodePosition(bytes, offset + 5), decodePosition(bytes, offset + 9)};
+				_events.push_back(WorldEventNotice{tick, event});
+			}
 			break;
 		}
 		case PacketType::EntityDamage:

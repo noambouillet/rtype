@@ -18,14 +18,14 @@ SoundPlayer::SoundPlayer() : _root("assets/sounds")
 }
 
 /// Plays music in a loop, or keeps the game silent if the file cannot be opened.
-void SoundPlayer::playMusic(std::string_view name)
+void SoundPlayer::playMusic(std::string_view name, float volume)
 {
 	const std::filesystem::path musicPath = _root / std::filesystem::path(name).lexically_normal();
 	if (!_music.openFromFile(musicPath)) {
 		return;
 	}
 	_music.setLooping(true);
-	_music.setVolume(MUSIC_VOLUME);
+	_music.setVolume(volume);
 	_music.play();
 }
 

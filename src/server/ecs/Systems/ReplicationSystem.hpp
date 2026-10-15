@@ -13,13 +13,13 @@
 
 #include "Coordinator.hpp"
 #include "System.hpp"
-#include "utils/network/Protocol.hpp"
+#include "game/GameTypes.hpp"
 
 namespace rtype::ecs {
 
 struct ReplicatedState {
 	std::uint32_t id;
-	network::EntityType type;
+	game::EntityType type;
 	std::uint8_t owner;
 	std::uint8_t variant;
 	std::uint8_t health;

@@ -15,18 +15,18 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "game_engine/Audio/AudioBackend.hpp"
+
 namespace rtype {
 
-class SoundPlayer {
+class SoundPlayer : public audio::IAudioBackend {
 public:
 	SoundPlayer();
-	void playMusic(std::string_view name);
-	void playSound(std::string_view name, float volume);
-	void stopMusic();
+	void playMusic(std::string_view name, float volume) override;
+	void stopMusic() override;
+	void playSound(std::string_view name, float volume) override;
 
 private:
-	static constexpr float MUSIC_VOLUME = 20.0F;
-
 	sf::SoundBuffer& loadBuffer(const std::string& name);
 
 	std::filesystem::path _root;

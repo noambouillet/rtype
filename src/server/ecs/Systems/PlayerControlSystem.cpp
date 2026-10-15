@@ -10,8 +10,8 @@
 #include <cmath>
 
 #include "Components.hpp"
+#include "game/GameTypes.hpp"
 #include "server/ecs/GameComponents.hpp"
-#include "utils/network/Protocol.hpp"
 
 namespace rtype::ecs {
 
@@ -32,8 +32,8 @@ void PlayerControlSystem::update(Coordinator& coordinator, const Buttons& button
 	for (const Entity& e : entities) {
 		const auto& control = coordinator.getComponent<PlayerControl>(e);
 		const std::uint8_t pressed = control.playerId < buttons.size() ? buttons[control.playerId] : 0;
-		const float horizontal = static_cast<float>((pressed & network::BUTTON_RIGHT) != 0) - static_cast<float>((pressed & network::BUTTON_LEFT) != 0);
-		const float vertical = static_cast<float>((pressed & network::BUTTON_DOWN) != 0) - static_cast<float>((pressed & network::BUTTON_UP) != 0);
+		const float horizontal = static_cast<float>((pressed & game::BUTTON_RIGHT) != 0) - static_cast<float>((pressed & game::BUTTON_LEFT) != 0);
+		const float vertical = static_cast<float>((pressed & game::BUTTON_DOWN) != 0) - static_cast<float>((pressed & game::BUTTON_UP) != 0);
 		const float length = std::sqrt(horizontal * horizontal + vertical * vertical);
 
 		auto& velocity = coordinator.getComponent<Velocity>(e);
@@ -42,7 +42,7 @@ void PlayerControlSystem::update(Coordinator& coordinator, const Buttons& button
 		} else {
 			velocity = {control.speed * horizontal / length, control.speed * vertical / length};
 		}
-		coordinator.getComponent<Weapon>(e).firing = (pressed & network::BUTTON_FIRE) != 0;
+		coordinator.getComponent<Weapon>(e).firing = (pressed & game::BUTTON_FIRE) != 0;
 	}
 }
 

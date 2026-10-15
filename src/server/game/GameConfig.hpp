@@ -13,6 +13,7 @@
 namespace rtype::config {
 
 constexpr std::size_t MAX_PLAYERS = 4;
+constexpr std::size_t MAX_REPLICATED_ENTITIES = 64;
 
 constexpr float WORLD_WIDTH = 1280.0F;
 constexpr float WORLD_HEIGHT = 720.0F;

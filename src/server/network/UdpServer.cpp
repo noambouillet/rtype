@@ -37,7 +37,8 @@ void UdpServer::receiveNext()
 			if (_pending.size() < MAX_PENDING) {
 				// Keep one extra byte so the parser can reject oversized datagrams.
 				const auto storedSize = std::min(size, MAX_DATAGRAM_SIZE + 1);
-				_pending.push_back({_sender, {_receiveBuffer.begin(), _receiveBuffer.begin() + storedSize}});
+				_pending.push_back({{_sender.address().to_string(), _sender.port()},
+					{_receiveBuffer.begin(), _receiveBuffer.begin() + storedSize}});
 			}
 		}
 		if (_socket.is_open()) {
@@ -61,7 +62,7 @@ std::vector<Datagram> UdpServer::receivePending()
 }
 
 /// Schedules one datagram for transmission from the network thread.
-void UdpServer::send(const asio::ip::udp::endpoint& recipient, std::vector<std::uint8_t> bytes)
+void UdpServer::send(const Endpoint& recipient, std::vector<std::uint8_t> bytes)
 {
 	if (bytes.empty()) {
 		return;
@@ -72,7 +73,10 @@ void UdpServer::send(const asio::ip::udp::endpoint& recipient, std::vector<std::
 	}
 	asio::post(_context, [this, recipient, bytes = std::move(bytes)] {
 		asio::error_code error;
-		_socket.send_to(asio::buffer(bytes), recipient, 0, error);
+		const asio::ip::address address = asio::ip::make_address(recipient.address, error);
+		if (!error) {
+			_socket.send_to(asio::buffer(bytes), asio::ip::udp::endpoint(address, recipient.port), 0, error);
+		}
 		_queuedSends.fetch_sub(1);
 	});
 }

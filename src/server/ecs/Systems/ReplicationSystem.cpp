@@ -11,6 +11,7 @@
 
 #include "Components.hpp"
 #include "server/ecs/GameComponents.hpp"
+#include "server/game/GameConfig.hpp"
 
 namespace rtype::ecs {
 
@@ -43,9 +44,9 @@ std::optional<ReplicatedState> ReplicationSystem::capture(Coordinator& coordinat
 std::vector<ReplicatedState> ReplicationSystem::collect(Coordinator& coordinator)
 {
 	std::vector<ReplicatedState> states;
-	states.reserve(std::min(entities.size(), network::MAX_SNAPSHOT_ENTITIES));
+	states.reserve(std::min(entities.size(), config::MAX_REPLICATED_ENTITIES));
 	for (const Entity& e : entities) {
-		if (states.size() >= network::MAX_SNAPSHOT_ENTITIES) {
+		if (states.size() >= config::MAX_REPLICATED_ENTITIES) {
 			break;
 		}
 		if (const std::optional<ReplicatedState> state = capture(coordinator, e)) {

@@ -60,9 +60,7 @@ void HoverMotionSystem::update(Coordinator& coordinator, float elapsedTime)
 		} else if (position.x > motion.holdX) {
 			velocity.x = -std::min(motion.speed, (position.x - motion.holdX) / elapsedTime);
 		} else {
-			const bool charging = coordinator.hasComponent<Weapon>(e)
-				&& coordinator.getComponent<Weapon>(e).firing
-				&& coordinator.getComponent<Weapon>(e).remaining <= motion.chargeTime;
+			const bool charging = coordinator.hasComponent<Weapon>(e) && coordinator.getComponent<Weapon>(e).firing && coordinator.getComponent<Weapon>(e).remaining <= motion.chargeTime;
 			const std::optional<float> targetY = closestPlayerY(coordinator, position);
 
 			if (targetY && !charging)

@@ -16,14 +16,11 @@
 #include <thread>
 #include <vector>
 
+#include "game_engine/Network/Transport.hpp"
+
 namespace rtype::network {
 
-struct Datagram {
-	asio::ip::udp::endpoint sender;
-	std::vector<std::uint8_t> bytes;
-};
-
-class UdpServer {
+class UdpServer : public IServerTransport {
 private:
 	static constexpr std::size_t MAX_PENDING = 256;
 	static constexpr std::size_t MAX_QUEUED_SENDS = 1024;
@@ -46,8 +43,8 @@ public:
 	UdpServer(const UdpServer&) = delete;
 	UdpServer& operator=(const UdpServer&) = delete;
 
-	std::vector<Datagram> receivePending();
-	void send(const asio::ip::udp::endpoint& recipient, std::vector<std::uint8_t> bytes);
+	std::vector<Datagram> receivePending() override;
+	void send(const Endpoint& recipient, std::vector<std::uint8_t> bytes) override;
 };
 
 }

@@ -7,9 +7,10 @@
 
 #pragma once
 
-#include <asio.hpp>
 #include <chrono>
 #include <cstdint>
+
+#include "game_engine/Network/Transport.hpp"
 
 namespace rtype {
 
@@ -17,7 +18,7 @@ class Session {
 private:
 	using Clock = std::chrono::steady_clock;
 
-	asio::ip::udp::endpoint _address;
+	network::Endpoint _address;
 	std::uint64_t _nonce;
 	std::uint32_t _id;
 	std::uint32_t _nextSequence;
@@ -33,12 +34,12 @@ public:
 		std::uint8_t buttons;
 	};
 
-	Session(asio::ip::udp::endpoint address, std::uint64_t nonce, Clock::time_point now, std::uint32_t id);
+	Session(network::Endpoint address, std::uint64_t nonce, Clock::time_point now, std::uint32_t id);
 
-	[[nodiscard]] const asio::ip::udp::endpoint& address() const;
+	[[nodiscard]] const network::Endpoint& address() const;
 	[[nodiscard]] std::uint64_t nonce() const;
 	[[nodiscard]] std::uint32_t id() const;
-	void refresh(asio::ip::udp::endpoint address, Clock::time_point now);
+	void refresh(network::Endpoint address, Clock::time_point now);
 	void acceptInput(Input input, Clock::time_point now);
 	std::uint32_t takeNextSequence();
 	[[nodiscard]] bool hasExpired(Clock::time_point now, Clock::duration timeout) const;

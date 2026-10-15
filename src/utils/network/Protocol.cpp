@@ -12,6 +12,21 @@
 
 namespace rtype::network {
 
+/// Accepts only entity kinds defined by the game before converting a wire byte.
+std::optional<game::EntityType> decodeEntityType(std::uint8_t wireKind)
+{
+	const auto kind = static_cast<game::EntityType>(wireKind);
+	switch (kind) {
+		case game::EntityType::Player:
+		case game::EntityType::Enemy:
+		case game::EntityType::PlayerProjectile:
+		case game::EntityType::EnemyProjectile:
+			return kind;
+		default:
+			return std::nullopt;
+	}
+}
+
 static bool isKnownType(std::uint8_t type)
 {
 	switch (static_cast<PacketType>(type)) {
@@ -131,20 +146,21 @@ static bool validSessionNotice(const Header& header, const std::vector<std::uint
 /// Checks one entity record shared by snapshots and spawn events.
 static bool validEntityRecord(const std::vector<std::uint8_t>& bytes, std::size_t offset)
 {
-	const EntityType kind = static_cast<EntityType>(bytes[offset + 4]);
+	const auto decoded = decodeEntityType(bytes[offset + 4]);
+	if (!decoded) {
+		return false;
+	}
+	const game::EntityType kind = *decoded;
 	const std::uint8_t owner = bytes[offset + 5];
 	const std::uint8_t variant = bytes[offset + 6];
 	const std::uint8_t health = bytes[offset + 7];
-	if (kind < EntityType::Player || kind > EntityType::EnemyProjectile) {
-		return false;
-	}
-	if (kind == EntityType::Player) {
+	if (kind == game::EntityType::Player) {
 		return owner <= 3 && variant == owner && health > 0;
 	}
-	if (kind == EntityType::PlayerProjectile) {
+	if (kind == game::EntityType::PlayerProjectile) {
 		return owner <= 3 && health == 0;
 	}
-	return owner == NO_OWNER && (kind == EntityType::Enemy ? health > 0 : health == 0);
+	return owner == game::NO_OWNER && (kind == game::EntityType::Enemy ? health > 0 : health == 0);
 }
 
 /// Checks the masks, record count, and unique IDs in a world snapshot.
@@ -189,8 +205,8 @@ static bool validWorldEvent(const Header& header, const std::vector<std::uint8_t
 		case PacketType::EntitySpawn:
 			return header.payloadSize == 24 && validEntityRecord(bytes, offset);
 		case PacketType::EntityDestroy:
-			return header.payloadSize == 21 && bytes[offset + 4] >= static_cast<std::uint8_t>(EntityType::Enemy) &&
-				   bytes[offset + 4] <= static_cast<std::uint8_t>(EntityType::EnemyProjectile);
+			return header.payloadSize == 21 && decodeEntityType(bytes[offset + 4]) &&
+				   decodeEntityType(bytes[offset + 4]) != game::EntityType::Player;
 		case PacketType::EntityDamage:
 			return header.payloadSize == 13 && bytes[offset + 4] > 0;
 		case PacketType::PlayerDeath:
@@ -274,14 +290,14 @@ std::optional<ErrorCode> validateClientPayload(const Header& header, const std::
 		if (header.payloadSize != 1) {
 			return ErrorCode::InvalidLength;
 		}
-		if (header.sequence == 0 || bytes[HEADER_SIZE] > MAX_BUTTON_STATE) {
+		if (header.sequence == 0 || bytes[HEADER_SIZE] > game::MAX_BUTTON_STATE) {
 			return ErrorCode::InvalidField;
 		}
 	}
 	return std::nullopt;
 }
 
-/// Builds a version 1 datagram, or an empty vector if it exceeds the MTU.
+/// Builds a protocol datagram, or an empty vector if it exceeds the MTU.
 std::vector<std::uint8_t> makePacket(PacketType type, std::uint32_t sequence,
 	std::uint32_t sessionId, const std::vector<std::uint8_t>& payload)
 {

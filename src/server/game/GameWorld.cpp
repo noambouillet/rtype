@@ -16,8 +16,8 @@
 #include "server/ecs/Systems/EnemySpawnSystem.hpp"
 #include "server/ecs/Systems/FormationSystem.hpp"
 #include "server/ecs/Systems/HitSystem.hpp"
-#include "server/ecs/Systems/OffscreenSystem.hpp"
 #include "server/ecs/Systems/HoverMotionSystem.hpp"
+#include "server/ecs/Systems/OffscreenSystem.hpp"
 #include "server/ecs/Systems/PlayerControlSystem.hpp"
 #include "server/ecs/Systems/SineMotionSystem.hpp"
 #include "server/ecs/Systems/WeaponSystem.hpp"
@@ -48,7 +48,6 @@ void GameWorld::registerComponents()
 	_coordinator.registerComponent<ecs::Velocity>();
 	_coordinator.registerComponent<ecs::Health>();
 	_coordinator.registerComponent<ecs::Damage>();
-	_coordinator.registerComponent<ecs::Sprite>();
 	_coordinator.registerComponent<ecs::Destroy>();
 	_coordinator.registerComponent<ecs::Collider>();
 	_coordinator.registerComponent<ecs::Replicated>();
@@ -97,11 +96,11 @@ void GameWorld::runSystems(const Input& input, float deltaTime, WorldEventCollec
 	for (const ecs::Entity& projectile : projectiles) {
 		events.recordSpawn(_coordinator, projectile);
 	}
-	const std::vector<ecs::Entity> enemies = _coordinator.getSystem<ecs::EnemySpawnSystem>().update(_coordinator, deltaTime, input.connectedMask != 0);
+	_coordinator.getSystem<ecs::EnemySpawnSystem>().update(_coordinator, deltaTime, input.connectedMask != 0);
+	const std::vector<ecs::Entity> enemies = _coordinator.getSystem<ecs::FormationSystem>().update(_coordinator, deltaTime);
 	for (const ecs::Entity& enemy : enemies) {
 		events.recordSpawn(_coordinator, enemy);
 	}
-  _coordinator.getSystem<ecs::FormationSystem>().update(_coordinator, deltaTime);
 	_coordinator.getSystem<ecs::SineMotionSystem>().update(_coordinator, deltaTime);
 	_coordinator.getSystem<ecs::HoverMotionSystem>().update(_coordinator, deltaTime);
 	_coordinator.getSystem<ecs::MovementSystem>().update(_coordinator, deltaTime);
@@ -133,9 +132,12 @@ void GameWorld::syncPlayerEntities(const Input& input, WorldEventCollector& even
 			const ecs::Entity player = prefabs::createPlayer(_coordinator, static_cast<std::uint8_t>(playerId));
 			_playerEntities[playerId] = player;
 			events.recordSpawn(_coordinator, player);
-		} else if (!connected && _playerEntities[playerId]) {
-			_coordinator.destroyEntity(*_playerEntities[playerId]);
-			_playerEntities[playerId].reset();
+		} else if (!connected) {
+			auto& player = _playerEntities[playerId];
+			if (player) {
+				_coordinator.destroyEntity(player.value());
+				player.reset();
+			}
 		}
 	}
 }
@@ -145,14 +147,15 @@ std::uint8_t GameWorld::aliveMask() const
 {
 	std::uint8_t mask = 0;
 	for (std::size_t playerId = 0; playerId < MAX_PLAYERS; playerId++) {
-		if (_playerEntities[playerId] && _coordinator.isAlive(*_playerEntities[playerId])) {
+		const auto& player = _playerEntities[playerId];
+		if (player && _coordinator.isAlive(player.value())) {
 			mask |= static_cast<std::uint8_t>(1 << playerId);
 		}
 	}
 	return mask;
 }
 
-/// Lists what clients must see this tick; GameServer encodes it into a snapshot.
+/// Lists authoritative visual state for the network service to encode.
 std::vector<GameWorld::EntityState> GameWorld::replicatedEntities()
 {
 	return _coordinator.getSystem<ecs::ReplicationSystem>().collect(_coordinator);

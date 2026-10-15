@@ -1,6 +1,6 @@
 # R-Type UDP protocol
 
-This version implements the network layer for one game with up to four player
+This protocol supports one game with up to four player
 sessions. The client sends joins, disconnects, and input commands and validates
 server replies. The server runs fixed ticks, simulates players, projectiles,
 enemies, collisions, and damage, and sends full world snapshots and gameplay
@@ -218,7 +218,7 @@ applied tick.
 ### Events
 
 `GameWorld` returns a tick-local list of spawn, surviving damage, destruction,
-and player death events. `GameServer` sends one packet per event, before that
+and player death events. `ServerNetworkService` sends one packet per event, before that
 tick's snapshot. The client validates and queues events for presentation; they
 do not replace its authoritative snapshot. Disconnecting a player removes the
 ship and uses the separate `PLAYER_LEFT` notice; it does not count as a death.

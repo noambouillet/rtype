@@ -2,8 +2,8 @@
 
 R-Type is a C++20 multiplayer shoot-'em-up project. This site contains the
 project's Markdown guides and generated documentation for the C++ source.
-The server currently handles UDP sessions and input; gameplay and a
-graphical client are still planned.
+The server runs authoritative gameplay and the graphical client presents
+replicated world snapshots through a view ECS.
 
 ## Guides
 

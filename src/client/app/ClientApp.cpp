@@ -7,6 +7,8 @@
 
 #include "ClientApp.hpp"
 
+#include <algorithm>
+#include <chrono>
 #include <csignal>
 #include <cstdint>
 #include <filesystem>
@@ -17,8 +19,11 @@
 #include <vector>
 
 #include "client/SFML/Sfml.hpp"
-#include "client/SFML/SpriteRegions.hpp"
+#include "client/SFML/SoundPlayer.hpp"
 #include "client/network/GameClient.hpp"
+#include "client/network/UdpClient.hpp"
+#include "client/view/ClientWorld.hpp"
+#include "client/view/SpriteRegions.hpp"
 #include "utils/Logger.hpp"
 
 namespace rtype {
@@ -72,16 +77,18 @@ static void reportNotices(network::GameClient& client, Logger& logger)
 }
 
 /// Polls one frame and sends the current input state.
-static bool updateFrame(Sfml& window, network::GameClient& client, Logger& logger, network::ClientStatus& previous)
+static bool updateFrame(Sfml& window, SoundPlayer& audio, network::GameClient& client, rtype::client::ClientWorld& view,
+	Logger& logger, network::ClientStatus& previous, std::chrono::steady_clock::time_point& lastFrame)
 {
 	window.handleEvent();
 	if (!window.isOpen()) {
 		return true;
 	}
+	const auto now = std::chrono::steady_clock::now();
+	const float deltaTime = std::clamp(std::chrono::duration<float>(now - lastFrame).count(), 0.0F, 0.1F);
+	lastFrame = now;
 	const std::uint8_t buttons = window.buttons();
-	const std::optional<std::uint8_t> localPlayerId = client.status() == network::ClientStatus::Connected ? std::optional<std::uint8_t>(client.playerId()) : std::nullopt;
-	window.predictLocalFire(buttons, localPlayerId, client.worldSnapshot());
-	client.tick(buttons);
+	view.update(client, buttons, deltaTime);
 	reportNotices(client, logger);
 	if (client.status() != previous) {
 		previous = client.status();
@@ -89,9 +96,8 @@ static bool updateFrame(Sfml& window, network::GameClient& client, Logger& logge
 			return false;
 		}
 	}
-	window.updateBackground();
-	const std::vector<network::WorldEventNotice> events = client.takeEvents();
-	window.displayWindow(client.worldSnapshot(), events);
+	view.render(window, deltaTime);
+	view.playAudio(audio);
 	return true;
 }
 
@@ -108,12 +114,16 @@ int runClient(const ClientOptions& options)
 	assets.preload(sprites::ENEMY_SHEET);
 	assets.preload("background.png");
 	assets.preload(sprites::EXPLOSION_SHEET);
-	network::GameClient client(options.host, options.port);
+	network::UdpClient transport(options.host, options.port);
+	network::GameClient client(transport);
 	Sfml window(assets);
+	SoundPlayer audio;
+	rtype::client::ClientWorld view;
 	auto previous = client.status();
+	auto lastFrame = std::chrono::steady_clock::now();
 	logger->info("Connecting to " + options.host + ':' + std::to_string(options.port));
 	while (running != 0 && window.isOpen()) {
-		if (!updateFrame(window, client, *logger, previous)) {
+		if (!updateFrame(window, audio, client, view, *logger, previous, lastFrame)) {
 			return 1;
 		}
 	}

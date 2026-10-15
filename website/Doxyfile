@@ -1,5 +1,5 @@
 PROJECT_NAME           = "R-Type"
-PROJECT_BRIEF          = "Project documentation and server API"
+PROJECT_BRIEF          = "Game engine, server, and client documentation"
 OUTPUT_DIRECTORY       = website/_site
 HTML_OUTPUT            = .
 

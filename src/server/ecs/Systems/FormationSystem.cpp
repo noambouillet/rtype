@@ -16,19 +16,21 @@
 
 namespace rtype::ecs {
 
-FormationSystem::FormationSystem() : _rng(std::random_device{}()) {}
+FormationSystem::FormationSystem() : _rng(std::random_device{}())
+{
+}
 
 /// Returns how often an enemy of `kind` fires, which bounds the random delay before its first shot.
-static float fireCooldown(network::EnemyKind kind)
+static float fireCooldown(game::EnemyKind kind)
 {
 	switch (kind) {
-		case network::EnemyKind::Bug:
+		case game::EnemyKind::Bug:
 			return config::BUG_FIRE_COOLDOWN;
-		case network::EnemyKind::Scant:
+		case game::EnemyKind::Scant:
 			return config::SCANT_FIRE_COOLDOWN;
-		case network::EnemyKind::Bink:
+		case game::EnemyKind::Bink:
 			return config::BINK_FIRE_COOLDOWN;
-		case network::EnemyKind::Patapata:
+		case game::EnemyKind::Patapata:
 		default:
 			return config::PATAPATA_FIRE_COOLDOWN;
 	}
@@ -46,8 +48,9 @@ Signature FormationSystem::signature(Coordinator& coordinator)
 /// Spawns one enemy of the formation's kind every `delay` seconds; the spawner is destroyed once all are out.
 /// Bugs start at the same point and follow the path of the one before, Patapata get their own height within
 /// `spread` and a random phase, Binks walk on the ground.
-void FormationSystem::update(Coordinator& coordinator, float elapsedTime)
+std::vector<Entity> FormationSystem::update(Coordinator& coordinator, float elapsedTime)
 {
+	std::vector<Entity> spawned;
 	for (const Entity& e : entities) {
 		auto& formation = coordinator.getComponent<FormationSpawner>(e);
 
@@ -57,25 +60,26 @@ void FormationSystem::update(Coordinator& coordinator, float elapsedTime)
 		formation.timer += formation.delay;
 		formation.remaining--;
 		const bool done = formation.remaining <= 0;
-		const network::EnemyKind kind = formation.kind;
+		const game::EnemyKind kind = formation.kind;
 		std::uniform_real_distribution<float> height(formation.y - formation.spread, formation.y + formation.spread);
 		std::uniform_real_distribution<float> phase(0.0F, 2.0F * std::numbers::pi_v<float>);
 		std::uniform_real_distribution<float> firstShot(config::ENEMY_FIRST_SHOT_MIN,
 			config::ENEMY_FIRST_SHOT_MIN + fireCooldown(kind));
 		const float y = height(_rng);
 		if (prefabs::canSpawnReplicated(coordinator)) {
-			if (kind == network::EnemyKind::Scant)
-				prefabs::createScant(coordinator, y, firstShot(_rng));
-			else if (kind == network::EnemyKind::Bink)
-				prefabs::createBink(coordinator, firstShot(_rng));
-			else if (kind == network::EnemyKind::Bug)
-				prefabs::createBug(coordinator, y, firstShot(_rng));
+			if (kind == game::EnemyKind::Scant)
+				spawned.push_back(prefabs::createScant(coordinator, y, firstShot(_rng)));
+			else if (kind == game::EnemyKind::Bink)
+				spawned.push_back(prefabs::createBink(coordinator, firstShot(_rng)));
+			else if (kind == game::EnemyKind::Bug)
+				spawned.push_back(prefabs::createBug(coordinator, y, firstShot(_rng)));
 			else
-				prefabs::createPatapata(coordinator, y, phase(_rng), firstShot(_rng));
+				spawned.push_back(prefabs::createPatapata(coordinator, y, phase(_rng), firstShot(_rng)));
 		}
 		if (done && !coordinator.hasComponent<Destroy>(e))
 			coordinator.addComponent(e, Destroy{});
 	}
+	return spawned;
 }
 
 }

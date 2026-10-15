@@ -8,6 +8,7 @@
 #pragma once
 
 #include <random>
+#include <vector>
 
 #include "Coordinator.hpp"
 #include "System.hpp"
@@ -18,7 +19,7 @@ class FormationSystem : public System {
 public:
 	FormationSystem();
 	Signature signature(Coordinator& coordinator);
-	void update(Coordinator& coordinator, float elapsedTime);
+	std::vector<Entity> update(Coordinator& coordinator, float elapsedTime);
 
 private:
 	std::mt19937 _rng;

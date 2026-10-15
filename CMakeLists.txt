@@ -90,6 +90,7 @@ add_executable(r-type_client
     src/client/app/ClientApp.cpp
     src/client/app/ClientOptions.cpp
     src/client/SFML/AssetManager.cpp
+    src/client/SFML/KeyBindings.cpp
     src/client/SFML/Sfml.cpp
     src/client/network/UdpClient.cpp
 )

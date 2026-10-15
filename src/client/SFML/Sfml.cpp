@@ -8,6 +8,8 @@
 #include "Sfml.hpp"
 
 #include <cmath>
+#include <fstream>
+#include <string>
 
 #include "client/GameConfig.hpp"
 #include "game/GameTypes.hpp"
@@ -19,6 +21,21 @@ Sfml::Sfml(AssetManager& assets)
 	  _assets(assets),
 	  _joystickId(0)
 {
+	const std::string configFile = std::string(client_config::BINDINGS_FILE);
+	std::ifstream checkFile(configFile);
+	if (!checkFile.is_open()) {
+		_bindings.save(configFile);
+	}
+	checkFile.close();
+	_bindings.load(configFile);
+
+	const std::array<ActionType, key_bindings_config::ACTION_COUNT> allActions = {
+		ActionType::Up, ActionType::Down, ActionType::Left,
+		ActionType::Right, ActionType::Fire};
+	_keyboardButtons.clear();
+	for (ActionType action : allActions) {
+		_keyboardButtons.push_back({_bindings.getBinding(action), action});
+	}
 	_window.setFramerateLimit(60);
 }
 
@@ -53,20 +70,27 @@ std::uint8_t Sfml::keyboardButtons() const
 		return 0;
 	}
 	std::uint8_t value = 0;
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) {
-		value |= game::BUTTON_UP;
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down)) {
-		value |= game::BUTTON_DOWN;
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left)) {
-		value |= game::BUTTON_LEFT;
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right)) {
-		value |= game::BUTTON_RIGHT;
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
-		value |= game::BUTTON_FIRE;
+	for (const auto& [key, action] : _keyboardButtons) {
+		if (!sf::Keyboard::isKeyPressed(key)) {
+			continue;
+		}
+		switch (action) {
+			case ActionType::Up:
+				value |= game::BUTTON_UP;
+				break;
+			case ActionType::Down:
+				value |= game::BUTTON_DOWN;
+				break;
+			case ActionType::Left:
+				value |= game::BUTTON_LEFT;
+				break;
+			case ActionType::Right:
+				value |= game::BUTTON_RIGHT;
+				break;
+			case ActionType::Fire:
+				value |= game::BUTTON_FIRE;
+				break;
+		}
 	}
 	return value;
 }
@@ -79,19 +103,20 @@ std::uint8_t Sfml::joystickButtons() const
 	std::uint8_t value = 0;
 	const float horizontal = sf::Joystick::getAxisPosition(_joystickId, sf::Joystick::Axis::X);
 	const float vertical = sf::Joystick::getAxisPosition(_joystickId, sf::Joystick::Axis::Y);
-	if (vertical < -JOYSTICK_THRESHOLD) {
+	const float threshold = static_cast<float>(_bindings.deadzone());
+	if (vertical < -threshold) {
 		value |= game::BUTTON_UP;
 	}
-	if (vertical > JOYSTICK_THRESHOLD) {
+	if (vertical > threshold) {
 		value |= game::BUTTON_DOWN;
 	}
-	if (horizontal < -JOYSTICK_THRESHOLD) {
+	if (horizontal < -threshold) {
 		value |= game::BUTTON_LEFT;
 	}
-	if (horizontal > JOYSTICK_THRESHOLD) {
+	if (horizontal > threshold) {
 		value |= game::BUTTON_RIGHT;
 	}
-	if (sf::Joystick::isButtonPressed(_joystickId, 0)) {
+	if (_bindings.joystickFire() < sf::Joystick::getButtonCount(_joystickId) && sf::Joystick::isButtonPressed(_joystickId, _bindings.joystickFire())) {
 		value |= game::BUTTON_FIRE;
 	}
 	return value;

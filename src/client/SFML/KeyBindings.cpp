@@ -33,7 +33,8 @@ KeyBindings::KeyBindings()
 		  sf::Keyboard::Key::Down,
 		  sf::Keyboard::Key::Left,
 		  sf::Keyboard::Key::Right,
-		  sf::Keyboard::Key::Space},
+		  sf::Keyboard::Key::Space,
+		  sf::Keyboard::Key::X},
 	  _deadzone(30),
 	  _joystickFire(0)
 {

@@ -24,14 +24,14 @@ public:
 	explicit Sfml(AssetManager& assets);
 	bool isOpen() const;
 	void handleEvent();
-	std::uint8_t buttons() const;
+	std::uint8_t buttons();
 	void beginFrame() override;
 	void drawBackground(std::string_view texture, float offset) override;
 	void drawSprite(const render::SpriteDraw& command) override;
 	void endFrame() override;
 
 private:
-	std::uint8_t keyboardButtons() const;
+	std::uint8_t keyboardButtons();
 	std::uint8_t joystickButtons() const;
 
 	sf::RenderWindow _window;
@@ -39,6 +39,8 @@ private:
 	KeyBindings _bindings;
 	std::vector<std::pair<sf::Keyboard::Key, ActionType>> _keyboardButtons;
 	std::uint32_t _joystickId;
+	bool _autoFireEnabled;
+	bool _autoFireKeyWasPressed;
 };
 
 }

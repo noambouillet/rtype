@@ -20,7 +20,9 @@ namespace rtype {
 Sfml::Sfml(AssetManager& assets)
 	: _window(sf::VideoMode({client_config::WINDOW_WIDTH, client_config::WINDOW_HEIGHT}), "R-Type"),
 	  _assets(assets),
-	  _joystickId(0)
+	  _joystickId(0),
+	  _autoFireEnabled(false),
+	  _autoFireKeyWasPressed(false)
 {
 	const std::string configFile = std::string(client_config::BINDINGS_FILE);
 	std::ifstream checkFile(configFile);
@@ -32,7 +34,7 @@ Sfml::Sfml(AssetManager& assets)
 
 	const std::array<ActionType, key_bindings_config::ACTION_COUNT> allActions = {
 		ActionType::Up, ActionType::Down, ActionType::Left,
-		ActionType::Right, ActionType::Fire};
+		ActionType::Right, ActionType::Fire, ActionType::AutoFire};
 	_keyboardButtons.clear();
 	for (ActionType action : allActions) {
 		_keyboardButtons.push_back({_bindings.getBinding(action), action});
@@ -61,20 +63,29 @@ void Sfml::handleEvent()
 }
 
 /// Returns a bitmask of the currently pressed buttons, combining keyboard and joystick input.
-std::uint8_t Sfml::buttons() const
+std::uint8_t Sfml::buttons()
 {
 	return keyboardButtons() | joystickButtons();
 }
 
 /// Returns a bitmask of the currently pressed keyboard buttons, based on the configured key bindings.
-std::uint8_t Sfml::keyboardButtons() const
+std::uint8_t Sfml::keyboardButtons()
 {
 	if (!_window.hasFocus()) {
+		_autoFireKeyWasPressed = false;
 		return 0;
 	}
 	std::uint8_t value = 0;
 	for (const auto& [key, action] : _keyboardButtons) {
-		if (!sf::Keyboard::isKeyPressed(key)) {
+		const bool pressed = sf::Keyboard::isKeyPressed(key);
+		if (action == ActionType::AutoFire) {
+			if (pressed && !_autoFireKeyWasPressed) {
+				_autoFireEnabled = !_autoFireEnabled;
+			}
+			_autoFireKeyWasPressed = pressed;
+			continue;
+		}
+		if (!pressed) {
 			continue;
 		}
 		switch (action) {
@@ -93,7 +104,12 @@ std::uint8_t Sfml::keyboardButtons() const
 			case ActionType::Fire:
 				value |= game::BUTTON_FIRE;
 				break;
+			case ActionType::AutoFire:
+				break;
 		}
+	}
+	if (_autoFireEnabled) {
+		value |= game::BUTTON_FIRE;
 	}
 	return value;
 }

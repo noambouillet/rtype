@@ -24,11 +24,12 @@ enum class ActionType {
 	Left,
 	Right,
 	Fire,
+	AutoFire,
 };
 
 namespace key_bindings_config {
 
-constexpr std::size_t ACTION_COUNT = 5;
+constexpr std::size_t ACTION_COUNT = 6;
 
 inline const std::vector<std::string_view> ACTION_NAMES = {
 	"up",
@@ -36,6 +37,7 @@ inline const std::vector<std::string_view> ACTION_NAMES = {
 	"left",
 	"right",
 	"fire",
+	"auto_fire",
 };
 
 constexpr std::array<std::pair<std::string_view, sf::Keyboard::Key>, 33> KEY_NAMES = {{

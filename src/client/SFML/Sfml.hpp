@@ -15,6 +15,7 @@
 
 #include "AssetManager.hpp"
 #include "KeyBindings.hpp"
+#include "game_engine/EngineSettings.hpp"
 #include "game_engine/Graphics/GraphicsBackend.hpp"
 
 namespace rtype {
@@ -36,6 +37,7 @@ private:
 
 	sf::RenderWindow _window;
 	AssetManager& _assets;
+	engine::EngineSettings _engineSettings;
 	KeyBindings _bindings;
 	std::vector<std::pair<sf::Keyboard::Key, ActionType>> _keyboardButtons;
 	std::uint32_t _joystickId;

@@ -8,15 +8,18 @@
 #include "Sfml.hpp"
 
 #include <cmath>
-#include <fstream>
+#include <map>
 #include <string>
 
 #include "client/GameConfig.hpp"
+#include "client/view/SpriteRegions.hpp"
 #include "game/GameTypes.hpp"
+#include "game_engine/ConfigParser.hpp"
+#include "utils/RTypeError.hpp"
 
 namespace rtype {
 
-/// Initializes the SFML window, loads the key bindings configuration, and prepares the keyboard button mapping.
+/// Initializes the SFML window, loads client settings, and prepares the keyboard button mapping.
 Sfml::Sfml(AssetManager& assets)
 	: _window(sf::VideoMode({client_config::WINDOW_WIDTH, client_config::WINDOW_HEIGHT}), "R-Type"),
 	  _assets(assets),
@@ -24,20 +27,26 @@ Sfml::Sfml(AssetManager& assets)
 	  _autoFireEnabled(false),
 	  _autoFireKeyWasPressed(false)
 {
-	const std::string configFile = std::string(client_config::BINDINGS_FILE);
-	std::ifstream checkFile(configFile);
-	if (!checkFile.is_open()) {
-		_bindings.save(configFile);
+	const std::string configFile = std::string(client_config::SETTINGS_FILE);
+	std::map<std::string, std::string> config = engine::ConfigParser::parseFile(configFile);
+	_engineSettings.loadFromMap(config);
+	_bindings.loadFromMap(config);
+	if (config.empty()) {
+		_engineSettings.saveToMap(config);
+		_bindings.saveToMap(config);
+		if (!engine::ConfigParser::saveFile(configFile, config)) {
+			throw ConfigError("Unable to create settings file: " + configFile);
+		}
 	}
-	checkFile.close();
-	_bindings.load(configFile);
 
-	const std::array<ActionType, key_bindings_config::ACTION_COUNT> allActions = {
+	const std::vector<ActionType> allActions = {
 		ActionType::Up, ActionType::Down, ActionType::Left,
 		ActionType::Right, ActionType::Fire, ActionType::AutoFire};
 	_keyboardButtons.clear();
+	_keyboardButtons.reserve(allActions.size());
 	for (ActionType action : allActions) {
-		_keyboardButtons.push_back({_bindings.getBinding(action), action});
+		const sf::Keyboard::Key key = _bindings.getBinding(action);
+		_keyboardButtons.push_back({key, action});
 	}
 	_window.setFramerateLimit(60);
 }
@@ -77,6 +86,9 @@ std::uint8_t Sfml::keyboardButtons()
 	}
 	std::uint8_t value = 0;
 	for (const auto& [key, action] : _keyboardButtons) {
+		if (key == sf::Keyboard::Key::Unknown) {
+			continue;
+		}
 		const bool pressed = sf::Keyboard::isKeyPressed(key);
 		if (action == ActionType::AutoFire) {
 			if (pressed && !_autoFireKeyWasPressed) {
@@ -166,6 +178,9 @@ void Sfml::drawBackground(std::string_view texture, float offset)
 /// Translates a library independent sprite command into an SFML draw call.
 void Sfml::drawSprite(const render::SpriteDraw& command)
 {
+	if (!_engineSettings.screenFlashEnabled() && command.texture == sprites::EXPLOSION_SHEET) {
+		return;
+	}
 	const render::Rect& region = command.region;
 	sf::Sprite sprite = _assets.sprite(command.texture, sf::IntRect({region.position.x, region.position.y}, {region.size.x, region.size.y}));
 	sprite.setOrigin({command.originX, command.originY});

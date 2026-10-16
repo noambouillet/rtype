@@ -25,7 +25,8 @@ Sfml::Sfml(AssetManager& assets)
 	  _assets(assets),
 	  _joystickId(0),
 	  _autoFireEnabled(false),
-	  _autoFireKeyWasPressed(false)
+	  _autoFireKeyWasPressed(false),
+	  _joystickAutoFireWasPressed(false)
 {
 	const std::string configFile = std::string(client_config::SETTINGS_FILE);
 	std::map<std::string, std::string> config = engine::ConfigParser::parseFile(configFile);
@@ -127,9 +128,10 @@ std::uint8_t Sfml::keyboardButtons()
 }
 
 /// Returns a bitmask of the currently pressed joystick buttons, based on the configured deadzone and fire button.
-std::uint8_t Sfml::joystickButtons() const
+std::uint8_t Sfml::joystickButtons()
 {
 	if (!sf::Joystick::isConnected(_joystickId)) {
+		_joystickAutoFireWasPressed = false;
 		return 0;
 	}
 	std::uint8_t value = 0;
@@ -148,7 +150,16 @@ std::uint8_t Sfml::joystickButtons() const
 	if (horizontal > threshold) {
 		value |= game::BUTTON_RIGHT;
 	}
-	if (_bindings.joystickFire() < sf::Joystick::getButtonCount(_joystickId) && sf::Joystick::isButtonPressed(_joystickId, _bindings.joystickFire())) {
+	const unsigned int buttonCount = sf::Joystick::getButtonCount(_joystickId);
+	if (_bindings.joystickFire() < buttonCount && sf::Joystick::isButtonPressed(_joystickId, _bindings.joystickFire())) {
+		value |= game::BUTTON_FIRE;
+	}
+	const bool autoFirePressed = _bindings.joystickAutoFire() < buttonCount && sf::Joystick::isButtonPressed(_joystickId, _bindings.joystickAutoFire());
+	if (autoFirePressed && !_joystickAutoFireWasPressed) {
+		_autoFireEnabled = !_autoFireEnabled;
+	}
+	_joystickAutoFireWasPressed = autoFirePressed;
+	if (_autoFireEnabled) {
 		value |= game::BUTTON_FIRE;
 	}
 	return value;

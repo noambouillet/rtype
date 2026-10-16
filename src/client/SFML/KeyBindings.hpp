@@ -85,11 +85,13 @@ public:
 	sf::Keyboard::Key getBinding(std::string_view action) const;
 	std::uint32_t deadzone() const;
 	std::uint32_t joystickFire() const;
+	std::uint32_t joystickAutoFire() const;
 
 private:
 	std::vector<sf::Keyboard::Key> _bindings;
 	std::uint32_t _deadzone;
 	std::uint32_t _joystickFire;
+	std::uint32_t _joystickAutoFire;
 };
 
 }

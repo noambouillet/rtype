@@ -33,7 +33,7 @@ public:
 
 private:
 	std::uint8_t keyboardButtons();
-	std::uint8_t joystickButtons() const;
+	std::uint8_t joystickButtons();
 
 	sf::RenderWindow _window;
 	AssetManager& _assets;
@@ -43,6 +43,7 @@ private:
 	std::uint32_t _joystickId;
 	bool _autoFireEnabled;
 	bool _autoFireKeyWasPressed;
+	bool _joystickAutoFireWasPressed;
 };
 
 }

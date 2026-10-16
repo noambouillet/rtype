@@ -10,8 +10,11 @@
 #include <SFML/Graphics.hpp>
 #include <cstdint>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include "AssetManager.hpp"
+#include "KeyBindings.hpp"
 #include "game_engine/Graphics/GraphicsBackend.hpp"
 
 namespace rtype {
@@ -28,14 +31,14 @@ public:
 	void endFrame() override;
 
 private:
-	static constexpr float JOYSTICK_THRESHOLD = 50.0F;
-
 	std::uint8_t keyboardButtons() const;
 	std::uint8_t joystickButtons() const;
 
 	sf::RenderWindow _window;
 	AssetManager& _assets;
-	unsigned int _joystickId;
+	KeyBindings _bindings;
+	std::vector<std::pair<sf::Keyboard::Key, ActionType>> _keyboardButtons;
+	std::uint32_t _joystickId;
 };
 
 }

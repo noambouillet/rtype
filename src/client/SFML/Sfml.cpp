@@ -8,17 +8,35 @@
 #include "Sfml.hpp"
 
 #include <cmath>
+#include <fstream>
+#include <string>
 
 #include "client/GameConfig.hpp"
 #include "game/GameTypes.hpp"
 
 namespace rtype {
 
+/// Initializes the SFML window, loads the key bindings configuration, and prepares the keyboard button mapping.
 Sfml::Sfml(AssetManager& assets)
 	: _window(sf::VideoMode({client_config::WINDOW_WIDTH, client_config::WINDOW_HEIGHT}), "R-Type"),
 	  _assets(assets),
 	  _joystickId(0)
 {
+	const std::string configFile = std::string(client_config::BINDINGS_FILE);
+	std::ifstream checkFile(configFile);
+	if (!checkFile.is_open()) {
+		_bindings.save(configFile);
+	}
+	checkFile.close();
+	_bindings.load(configFile);
+
+	const std::array<ActionType, key_bindings_config::ACTION_COUNT> allActions = {
+		ActionType::Up, ActionType::Down, ActionType::Left,
+		ActionType::Right, ActionType::Fire};
+	_keyboardButtons.clear();
+	for (ActionType action : allActions) {
+		_keyboardButtons.push_back({_bindings.getBinding(action), action});
+	}
 	_window.setFramerateLimit(60);
 }
 
@@ -42,35 +60,45 @@ void Sfml::handleEvent()
 	}
 }
 
+/// Returns a bitmask of the currently pressed buttons, combining keyboard and joystick input.
 std::uint8_t Sfml::buttons() const
 {
 	return keyboardButtons() | joystickButtons();
 }
 
+/// Returns a bitmask of the currently pressed keyboard buttons, based on the configured key bindings.
 std::uint8_t Sfml::keyboardButtons() const
 {
 	if (!_window.hasFocus()) {
 		return 0;
 	}
 	std::uint8_t value = 0;
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) {
-		value |= game::BUTTON_UP;
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down)) {
-		value |= game::BUTTON_DOWN;
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left)) {
-		value |= game::BUTTON_LEFT;
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right)) {
-		value |= game::BUTTON_RIGHT;
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
-		value |= game::BUTTON_FIRE;
+	for (const auto& [key, action] : _keyboardButtons) {
+		if (!sf::Keyboard::isKeyPressed(key)) {
+			continue;
+		}
+		switch (action) {
+			case ActionType::Up:
+				value |= game::BUTTON_UP;
+				break;
+			case ActionType::Down:
+				value |= game::BUTTON_DOWN;
+				break;
+			case ActionType::Left:
+				value |= game::BUTTON_LEFT;
+				break;
+			case ActionType::Right:
+				value |= game::BUTTON_RIGHT;
+				break;
+			case ActionType::Fire:
+				value |= game::BUTTON_FIRE;
+				break;
+		}
 	}
 	return value;
 }
 
+/// Returns a bitmask of the currently pressed joystick buttons, based on the configured deadzone and fire button.
 std::uint8_t Sfml::joystickButtons() const
 {
 	if (!sf::Joystick::isConnected(_joystickId)) {
@@ -79,19 +107,20 @@ std::uint8_t Sfml::joystickButtons() const
 	std::uint8_t value = 0;
 	const float horizontal = sf::Joystick::getAxisPosition(_joystickId, sf::Joystick::Axis::X);
 	const float vertical = sf::Joystick::getAxisPosition(_joystickId, sf::Joystick::Axis::Y);
-	if (vertical < -JOYSTICK_THRESHOLD) {
+	const float threshold = static_cast<float>(_bindings.deadzone());
+	if (vertical < -threshold) {
 		value |= game::BUTTON_UP;
 	}
-	if (vertical > JOYSTICK_THRESHOLD) {
+	if (vertical > threshold) {
 		value |= game::BUTTON_DOWN;
 	}
-	if (horizontal < -JOYSTICK_THRESHOLD) {
+	if (horizontal < -threshold) {
 		value |= game::BUTTON_LEFT;
 	}
-	if (horizontal > JOYSTICK_THRESHOLD) {
+	if (horizontal > threshold) {
 		value |= game::BUTTON_RIGHT;
 	}
-	if (sf::Joystick::isButtonPressed(_joystickId, 0)) {
+	if (_bindings.joystickFire() < sf::Joystick::getButtonCount(_joystickId) && sf::Joystick::isButtonPressed(_joystickId, _bindings.joystickFire())) {
 		value |= game::BUTTON_FIRE;
 	}
 	return value;

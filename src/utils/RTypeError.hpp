@@ -52,8 +52,8 @@ public:
 class AudioError : public RTypeError {
 public:
 	explicit AudioError(const std::string& message) : RTypeError(message)
-  {
-  }
+	{
+	}
 };
 
 class ConfigError : public RTypeError {

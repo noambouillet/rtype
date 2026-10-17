@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "client/SFML/Sfml.hpp"
+#include "client/SFML/SoundPlayer.hpp"
 #include "client/network/GameClient.hpp"
 #include "client/network/UdpClient.hpp"
 #include "client/view/ClientWorld.hpp"
@@ -76,7 +77,7 @@ static void reportNotices(network::GameClient& client, Logger& logger)
 }
 
 /// Polls one frame and sends the current input state.
-static bool updateFrame(Sfml& window, network::GameClient& client, rtype::client::ClientWorld& view,
+static bool updateFrame(Sfml& window, SoundPlayer& audio, network::GameClient& client, rtype::client::ClientWorld& view,
 	Logger& logger, network::ClientStatus& previous, std::chrono::steady_clock::time_point& lastFrame)
 {
 	window.handleEvent();
@@ -96,6 +97,7 @@ static bool updateFrame(Sfml& window, network::GameClient& client, rtype::client
 		}
 	}
 	view.render(window, deltaTime);
+	view.playAudio(audio);
 	return true;
 }
 
@@ -115,12 +117,13 @@ int runClient(const ClientOptions& options)
 	network::UdpClient transport(options.host, options.port);
 	network::GameClient client(transport);
 	Sfml window(assets);
+	SoundPlayer audio;
 	rtype::client::ClientWorld view;
 	auto previous = client.status();
 	auto lastFrame = std::chrono::steady_clock::now();
 	logger->info("Connecting to " + options.host + ':' + std::to_string(options.port));
 	while (running != 0 && window.isOpen()) {
-		if (!updateFrame(window, client, view, *logger, previous, lastFrame)) {
+		if (!updateFrame(window, audio, client, view, *logger, previous, lastFrame)) {
 			return 1;
 		}
 	}

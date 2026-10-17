@@ -108,7 +108,7 @@ void EffectSystem::handle(ecs::Coordinator& coordinator, [[maybe_unused]] const 
 	const DestroyEvent& event)
 {
 	removeHitSpark(coordinator, event.id);
-	if (event.kind == game::EntityType::Enemy) {
+	if (event.kind == game::EntityType::Enemy && destroyedOnscreen(event)) {
 		add(coordinator, EffectKind::MobExplosion, {event.x, event.y}, event.id);
 	}
 }
@@ -145,7 +145,7 @@ void EffectSystem::consume(ecs::Coordinator& coordinator, const ClientNetworkSys
 }
 
 /// Starts the local weapon burst immediately while the server owns the shot entity.
-void EffectSystem::predictLocalFire(ecs::Coordinator& coordinator, const ClientNetworkSystem& network,
+bool EffectSystem::predictLocalFire(ecs::Coordinator& coordinator, const ClientNetworkSystem& network,
 	std::uint8_t buttons, std::optional<std::uint8_t> localPlayerId)
 {
 	std::optional<ecs::Position> position;
@@ -156,7 +156,9 @@ void EffectSystem::predictLocalFire(ecs::Coordinator& coordinator, const ClientN
 	if (_firePredictor.update((buttons & rtype::game::BUTTON_FIRE) != 0, position.has_value(), now) && position) {
 		position->x += PLAYER_WEAPON_OFFSET;
 		add(coordinator, EffectKind::ShotBurst, *position, std::nullopt, localPlayerId);
+		return true;
 	}
+	return false;
 }
 
 /// Advances effect lifetime and follows living targets without touching network records.

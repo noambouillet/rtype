@@ -13,7 +13,7 @@ endif()
 
 find_package(asio CONFIG REQUIRED)
 find_package(Threads REQUIRED)
-find_package(SFML 3.0.2 EXACT COMPONENTS Graphics Window System CONFIG REQUIRED)
+find_package(SFML 3.0.2 EXACT COMPONENTS Graphics Window System Audio CONFIG REQUIRED)
 
 add_library(rtype_protocol src/utils/network/Protocol.cpp)
 target_include_directories(rtype_protocol PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -34,6 +34,7 @@ add_library(rtype_engine
     src/game_engine/System/Systems/DamageSystem.cpp
     src/game_engine/System/Systems/DestroySystem.cpp
     src/game_engine/System/Systems/RenderSystem.cpp
+    src/game_engine/System/Systems/AudioSystem.cpp
 )
 
 target_include_directories(rtype_engine PUBLIC
@@ -82,6 +83,7 @@ add_library(rtype_client_core
     src/client/view/SpriteCatalog.cpp
     src/client/view/ClientNetworkSystem.cpp
     src/client/view/EffectSystem.cpp
+    src/client/view/SoundEventSystem.cpp
     src/client/view/ClientWorld.cpp
     src/client/view/LocalFirePredictor.cpp
 )
@@ -94,10 +96,11 @@ add_executable(r-type_client
     src/client/SFML/AssetManager.cpp
     src/client/SFML/KeyBindings.cpp
     src/client/SFML/Sfml.cpp
+    src/client/SFML/SoundPlayer.cpp
     src/client/network/UdpClient.cpp
 )
 target_link_libraries(r-type_client PRIVATE rtype_client_core rtype_logger
-    asio::asio Threads::Threads SFML::Graphics SFML::Window SFML::System)
+    asio::asio Threads::Threads SFML::Graphics SFML::Window SFML::System SFML::Audio)
 if(WIN32)
     target_compile_definitions(r-type_client PRIVATE _WIN32_WINNT=0x0601)
     target_link_libraries(r-type_client PRIVATE ws2_32)

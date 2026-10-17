@@ -29,6 +29,7 @@ public:
 	[[nodiscard]] std::optional<ecs::Entity> find(std::uint32_t serverId) const;
 	[[nodiscard]] std::optional<ecs::Position> playerPosition(ecs::Coordinator& coordinator, std::uint8_t playerId) const;
 	[[nodiscard]] std::uint8_t aliveMask() const;
+	[[nodiscard]] std::uint8_t connectedMask() const;
 
 private:
 	ecs::Entity createVisualEntity(ecs::Coordinator& coordinator, const network::WorldEntity& serverEntity);
@@ -37,6 +38,7 @@ private:
 	std::unordered_map<std::uint32_t, ecs::Entity> _entitiesByServerId;
 	std::optional<std::uint64_t> _lastAppliedTick;
 	std::uint8_t _aliveMask;
+	std::uint8_t _connectedMask;
 };
 
 }

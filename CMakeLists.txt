@@ -22,6 +22,8 @@ add_library(rtype_logger src/utils/Logger.cpp)
 target_include_directories(rtype_logger PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 add_library(rtype_engine
+    src/game_engine/ConfigParser.cpp
+    src/game_engine/EngineSettings.cpp
     src/game_engine/Component/ComponentManager.cpp
     src/game_engine/Coordinator/Coordinator.cpp
     src/game_engine/Entity/Entity.cpp

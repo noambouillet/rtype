@@ -17,7 +17,7 @@
 
 namespace rtype::client {
 
-ClientNetworkSystem::ClientNetworkSystem() : _entitiesByServerId{}, _lastAppliedTick{}, _aliveMask(0)
+ClientNetworkSystem::ClientNetworkSystem() : _entitiesByServerId{}, _lastAppliedTick{}, _aliveMask(0), _connectedMask(0)
 {
 }
 
@@ -87,6 +87,7 @@ void ClientNetworkSystem::applySnapshot(ecs::Coordinator& coordinator, const net
 		}
 	}
 	_aliveMask = snapshot.aliveMask;
+	_connectedMask = snapshot.connectedMask;
 	_lastAppliedTick = snapshot.tick;
 }
 
@@ -146,6 +147,11 @@ std::optional<ecs::Position> ClientNetworkSystem::playerPosition(ecs::Coordinato
 std::uint8_t ClientNetworkSystem::aliveMask() const
 {
 	return _aliveMask;
+}
+
+std::uint8_t ClientNetworkSystem::connectedMask() const
+{
+	return _connectedMask;
 }
 
 }

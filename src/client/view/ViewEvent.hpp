@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <variant>
 
+#include "client/GameConfig.hpp"
 #include "game/GameTypes.hpp"
 
 namespace rtype::client {
@@ -40,5 +41,13 @@ struct DeathEvent {
 };
 
 using ViewEvent = std::variant<SpawnEvent, DestroyEvent, DamageEvent, DeathEvent>;
+
+/// Tells a kill inside the world apart from an entity that left it.
+inline bool destroyedOnscreen(const DestroyEvent& event)
+{
+	constexpr float margin = client_config::OFFSCREEN_MARGIN;
+	return event.x >= -margin && event.x <= static_cast<float>(client_config::WINDOW_WIDTH) + margin &&
+		   event.y >= -margin && event.y <= static_cast<float>(client_config::WINDOW_HEIGHT) + margin;
+}
 
 }

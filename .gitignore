@@ -58,3 +58,6 @@
 *.swo
 .DS_Store
 Thumbs.db
+
+# Python bytecode from the functional tests
+__pycache__/

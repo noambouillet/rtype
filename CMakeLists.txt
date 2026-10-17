@@ -105,3 +105,14 @@ add_custom_target(rtype_assets ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/assets" "$<TARGET_FILE_DIR:r-type_client>/assets"
     DEPENDS r-type_client)
+
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_FOUND)
+    enable_testing()
+    foreach(suite cli session gameplay robustness degraded_network)
+        add_test(NAME functional_${suite}
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/functional/run_tests.py
+                --build-dir $<TARGET_FILE_DIR:r-type_server> test_${suite})
+        set_tests_properties(functional_${suite} PROPERTIES LABELS functional TIMEOUT 180)
+    endforeach()
+endif()

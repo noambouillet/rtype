@@ -29,6 +29,17 @@ enum class ActionType {
 
 constexpr std::size_t ACTION_COUNT = 6;
 
+constexpr sf::Keyboard::Key DEFAULT_KEY_UP = sf::Keyboard::Key::Up;
+constexpr sf::Keyboard::Key DEFAULT_KEY_DOWN = sf::Keyboard::Key::Down;
+constexpr sf::Keyboard::Key DEFAULT_KEY_LEFT = sf::Keyboard::Key::Left;
+constexpr sf::Keyboard::Key DEFAULT_KEY_RIGHT = sf::Keyboard::Key::Right;
+constexpr sf::Keyboard::Key DEFAULT_KEY_FIRE = sf::Keyboard::Key::Space;
+constexpr sf::Keyboard::Key DEFAULT_KEY_AUTO_FIRE = sf::Keyboard::Key::X;
+
+constexpr std::uint32_t DEFAULT_JOYSTICK_DEADZONE = 30;
+constexpr std::uint32_t DEFAULT_JOYSTICK_FIRE = 0;
+constexpr std::uint32_t DEFAULT_JOYSTICK_AUTO_FIRE = 1;
+
 inline const std::vector<std::string_view> ACTION_NAMES = {
 	"up",
 	"down",
@@ -88,6 +99,9 @@ public:
 	std::uint32_t joystickAutoFire() const;
 
 private:
+	void parseKeyboardBinding(std::string_view actionKey, const std::string& keyName, std::vector<sf::Keyboard::Key>& bindings);
+	void parseJoystickSetting(std::string_view key, const std::string& value, std::uint32_t& deadzone, std::uint32_t& fire, std::uint32_t& autoFire);
+
 	std::vector<sf::Keyboard::Key> _bindings;
 	std::uint32_t _deadzone;
 	std::uint32_t _joystickFire;

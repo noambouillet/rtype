@@ -14,20 +14,74 @@
 
 namespace rtype {
 
+/// Initializes the default keyboard bindings and joystick settings.
 KeyBindings::KeyBindings()
 	: _bindings{
-		  sf::Keyboard::Key::Up,
-		  sf::Keyboard::Key::Down,
-		  sf::Keyboard::Key::Left,
-		  sf::Keyboard::Key::Right,
-		  sf::Keyboard::Key::Space,
-		  sf::Keyboard::Key::X},
-	  _deadzone(30),
-	  _joystickFire(0),
-	  _joystickAutoFire(1)
+		  DEFAULT_KEY_UP,
+		  DEFAULT_KEY_DOWN,
+		  DEFAULT_KEY_LEFT,
+		  DEFAULT_KEY_RIGHT,
+		  DEFAULT_KEY_FIRE,
+		  DEFAULT_KEY_AUTO_FIRE},
+	  _deadzone(DEFAULT_JOYSTICK_DEADZONE),
+	  _joystickFire(DEFAULT_JOYSTICK_FIRE),
+	  _joystickAutoFire(DEFAULT_JOYSTICK_AUTO_FIRE)
 {
 }
 
+/// Matches an action name and key name to update the corresponding keyboard binding.
+void KeyBindings::parseKeyboardBinding(
+	std::string_view actionKey,
+	const std::string& keyName,
+	std::vector<sf::Keyboard::Key>& bindings)
+{
+	const auto action = std::find(ACTION_NAMES.begin(), ACTION_NAMES.end(), actionKey);
+	if (action == ACTION_NAMES.end())
+		return;
+	for (const auto& entry : KEY_NAMES) {
+		if (entry.first == keyName) {
+			const std::size_t index = static_cast<std::size_t>(std::distance(ACTION_NAMES.begin(), action));
+			bindings[index] = entry.second;
+			return;
+		}
+	}
+}
+
+/// Parses and validates a joystick configuration value, discarding invalid numbers.
+void KeyBindings::parseJoystickSetting(
+	std::string_view key,
+	const std::string& value,
+	std::uint32_t& deadzone,
+	std::uint32_t& fire,
+	std::uint32_t& autoFire)
+{
+	if (value.empty() || value.front() == '-')
+		return;
+	unsigned long parsedValue = 0;
+	try {
+		std::size_t parsedLength = 0;
+		parsedValue = std::stoul(value, &parsedLength);
+		if (parsedLength != value.size())
+			return;
+	} catch (const std::invalid_argument&) {
+		return;
+	} catch (const std::out_of_range&) {
+		return;
+	}
+	if (parsedValue > std::numeric_limits<std::uint32_t>::max())
+		return;
+	const std::uint32_t number = static_cast<std::uint32_t>(parsedValue);
+	if (key == "joystick_deadzone") {
+		if (number <= 100)
+			deadzone = number;
+	} else if (key == "joystick_fire") {
+		fire = number;
+	} else if (key == "joystick_auto_fire") {
+		autoFire = number;
+	}
+}
+
+/// Loads key bindings and joystick settings from a key-value map, ignoring unrecognized or invalid entries.
 void KeyBindings::loadFromMap(const std::map<std::string, std::string>& data)
 {
 	auto bindings = _bindings;
@@ -36,51 +90,10 @@ void KeyBindings::loadFromMap(const std::map<std::string, std::string>& data)
 	std::uint32_t joystickAutoFireValue = _joystickAutoFire;
 
 	for (const auto& [key, value] : data) {
-		const auto action = std::find(ACTION_NAMES.begin(), ACTION_NAMES.end(), key);
-		if (action != ACTION_NAMES.end()) {
-			bool keyFound = false;
-			for (const auto& entry : KEY_NAMES) {
-				if (entry.first == value) {
-					const std::size_t index = static_cast<std::size_t>(std::distance(ACTION_NAMES.begin(), action));
-					bindings[index] = entry.second;
-					keyFound = true;
-					break;
-				}
-			}
-			if (!keyFound)
-				continue;
-			continue;
-		}
-
 		if (key == "joystick_deadzone" || key == "joystick_fire" || key == "joystick_auto_fire") {
-			if (value.empty() || value.front() == '-')
-				continue;
-			unsigned long parsedValue = 0;
-			try {
-				std::size_t parsedLength = 0;
-				parsedValue = std::stoul(value, &parsedLength);
-				if (parsedLength != value.size())
-					continue;
-			} catch (const std::invalid_argument&) {
-				continue;
-			} catch (const std::out_of_range&) {
-				continue;
-			}
-			if (parsedValue > std::numeric_limits<std::uint32_t>::max()) {
-				continue;
-			}
-			const std::uint32_t number = static_cast<std::uint32_t>(parsedValue);
-			if (key == "joystick_deadzone") {
-				if (number > 100) {
-					continue;
-				}
-				deadzoneValue = number;
-			} else if (key == "joystick_fire") {
-				joystickFireValue = number;
-			} else {
-				joystickAutoFireValue = number;
-			}
-			continue;
+			parseJoystickSetting(key, value, deadzoneValue, joystickFireValue, joystickAutoFireValue);
+		} else {
+			parseKeyboardBinding(key, value, bindings);
 		}
 	}
 	_bindings = bindings;
@@ -89,6 +102,7 @@ void KeyBindings::loadFromMap(const std::map<std::string, std::string>& data)
 	_joystickAutoFire = joystickAutoFireValue;
 }
 
+/// Serializes the current key bindings and joystick settings to a key-value map.
 void KeyBindings::saveToMap(std::map<std::string, std::string>& data) const
 {
 	for (std::size_t i = 0; i < ACTION_NAMES.size(); i++) {
@@ -104,11 +118,13 @@ void KeyBindings::saveToMap(std::map<std::string, std::string>& data) const
 	data["joystick_auto_fire"] = std::to_string(_joystickAutoFire);
 }
 
+/// Returns the key currently bound to the specified action enum value.
 sf::Keyboard::Key KeyBindings::getBinding(ActionType action) const
 {
 	return _bindings[static_cast<std::size_t>(action)];
 }
 
+/// Returns the key currently bound to the specified action name string, or Unknown if not found.
 sf::Keyboard::Key KeyBindings::getBinding(std::string_view action) const
 {
 	for (std::size_t i = 0; i < ACTION_NAMES.size(); i++) {
@@ -119,16 +135,19 @@ sf::Keyboard::Key KeyBindings::getBinding(std::string_view action) const
 	return sf::Keyboard::Key::Unknown;
 }
 
+/// Returns the current joystick deadzone percentage threshold.
 std::uint32_t KeyBindings::deadzone() const
 {
 	return _deadzone;
 }
 
+/// Returns the joystick button index assigned to regular firing.
 std::uint32_t KeyBindings::joystickFire() const
 {
 	return _joystickFire;
 }
 
+/// Returns the joystick button index assigned to auto-firing.
 std::uint32_t KeyBindings::joystickAutoFire() const
 {
 	return _joystickAutoFire;

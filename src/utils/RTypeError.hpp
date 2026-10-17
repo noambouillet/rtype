@@ -49,4 +49,11 @@ public:
 	}
 };
 
+class ConfigError : public RTypeError {
+public:
+	explicit ConfigError(const std::string& message) : RTypeError(message)
+	{
+	}
+};
+
 }

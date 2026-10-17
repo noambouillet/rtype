@@ -2,15 +2,15 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** Configurable keyboard and joystick bindings
+** SFML-specific client settings
 */
 
 #pragma once
 
 #include <SFML/Window/Keyboard.hpp>
-#include <array>
 #include <cstddef>
 #include <cstdint>
+#include <map>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -24,11 +24,21 @@ enum class ActionType {
 	Left,
 	Right,
 	Fire,
+	AutoFire,
 };
 
-namespace key_bindings_config {
+constexpr std::size_t ACTION_COUNT = 6;
 
-constexpr std::size_t ACTION_COUNT = 5;
+constexpr sf::Keyboard::Key DEFAULT_KEY_UP = sf::Keyboard::Key::Up;
+constexpr sf::Keyboard::Key DEFAULT_KEY_DOWN = sf::Keyboard::Key::Down;
+constexpr sf::Keyboard::Key DEFAULT_KEY_LEFT = sf::Keyboard::Key::Left;
+constexpr sf::Keyboard::Key DEFAULT_KEY_RIGHT = sf::Keyboard::Key::Right;
+constexpr sf::Keyboard::Key DEFAULT_KEY_FIRE = sf::Keyboard::Key::Space;
+constexpr sf::Keyboard::Key DEFAULT_KEY_AUTO_FIRE = sf::Keyboard::Key::X;
+
+constexpr std::uint32_t DEFAULT_JOYSTICK_DEADZONE = 30;
+constexpr std::uint32_t DEFAULT_JOYSTICK_FIRE = 0;
+constexpr std::uint32_t DEFAULT_JOYSTICK_AUTO_FIRE = 1;
 
 inline const std::vector<std::string_view> ACTION_NAMES = {
 	"up",
@@ -36,9 +46,10 @@ inline const std::vector<std::string_view> ACTION_NAMES = {
 	"left",
 	"right",
 	"fire",
+	"auto_fire",
 };
 
-constexpr std::array<std::pair<std::string_view, sf::Keyboard::Key>, 33> KEY_NAMES = {{
+inline const std::vector<std::pair<std::string_view, sf::Keyboard::Key>> KEY_NAMES = {
 	{"Up", sf::Keyboard::Key::Up},
 	{"Down", sf::Keyboard::Key::Down},
 	{"Left", sf::Keyboard::Key::Left},
@@ -72,34 +83,29 @@ constexpr std::array<std::pair<std::string_view, sf::Keyboard::Key>, 33> KEY_NAM
 	{"X", sf::Keyboard::Key::X},
 	{"Y", sf::Keyboard::Key::Y},
 	{"Z", sf::Keyboard::Key::Z},
-}};
-
-}
+};
 
 class KeyBindings {
 public:
 	KeyBindings();
 
-	bool load(const std::string& filepath);
-	bool save(const std::string& filepath) const;
+	void loadFromMap(const std::map<std::string, std::string>& data);
+	void saveToMap(std::map<std::string, std::string>& data) const;
 
 	sf::Keyboard::Key getBinding(ActionType action) const;
 	sf::Keyboard::Key getBinding(std::string_view action) const;
-
 	std::uint32_t deadzone() const;
 	std::uint32_t joystickFire() const;
+	std::uint32_t joystickAutoFire() const;
 
 private:
-	bool parseLine(std::string_view line, std::array<sf::Keyboard::Key, key_bindings_config::ACTION_COUNT>& bindings,
-		std::uint32_t& deadzone, std::uint32_t& joystickFire) const;
-	bool parseActionLine(std::string_view key, std::string_view value,
-		std::array<sf::Keyboard::Key, key_bindings_config::ACTION_COUNT>& bindings) const;
-	bool parseJoystickLine(std::string_view key, std::string_view value,
-		std::uint32_t& deadzone, std::uint32_t& joystickFire) const;
+	void parseKeyboardBinding(std::string_view actionKey, const std::string& keyName, std::vector<sf::Keyboard::Key>& bindings);
+	void parseJoystickSetting(std::string_view key, const std::string& value, std::uint32_t& deadzone, std::uint32_t& fire, std::uint32_t& autoFire);
 
-	std::array<sf::Keyboard::Key, key_bindings_config::ACTION_COUNT> _bindings;
+	std::vector<sf::Keyboard::Key> _bindings;
 	std::uint32_t _deadzone;
 	std::uint32_t _joystickFire;
+	std::uint32_t _joystickAutoFire;
 };
 
 }

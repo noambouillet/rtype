@@ -7,14 +7,15 @@ replicated world snapshots through a view ECS.
 
 ## Guides
 
-- [UDP protocol](../docs/RFC.md): implemented session and input messages,
-  with planned world messages marked in the guide.
-- [Build and run](../docs/vcpkg_setup_instructions.md): dependencies,
-  compilation, and server commands.
+- [Build instructions](../docs/build_instructions.md): dependencies, toolchains, vcpkg setup, and compilation on Linux and Windows.
+- [Run instructions](../docs/run_instructions.md): binary execution, command-line arguments, `settings.cfg`, and multiplayer workflows.
+- [Architecture & systems](../docs/architecture.md): engine layers, network authoritative loop, rendering pipeline, and physics/movement.
+- [Entity Component System guide](../docs/ecs_guide.md): ECS paradigm, generational entity IDs, sparse sets, and system signatures.
+- [Accessibility technical study](../docs/accessibility_study.md): motor and visual accessibility features, comparative analysis, and standards compliance.
+- [UDP protocol](../docs/RFC.md): network wire protocol, session handshakes, sequence numbers, and packet specifications.
 - [Coding style](../docs/coding-style.md): C++ conventions and `///` comments.
-- [Contributing](../docs/contributing.md): project workflow.
-- [R-Type gameplay reference](../docs/R-TYPE.md): original game ideas and
-  assignment requirements.
+- [Contributing](../docs/contributing.md): project workflow and conventional commits.
+- [R-Type gameplay reference](../docs/R-TYPE.md): original game mechanics and assignment requirements.
 
 ## API
 

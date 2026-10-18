@@ -4,7 +4,7 @@ This project is an online multiplayer 2D side-scrolling shoot'em up game inspire
 
 ---
 
-## 🎯 Project Goals
+## Project Goals
 
 The objective of this project is to build a complete, cross-platform multiplayer game and game engine from scratch without relying on off-the-shelf commercial game engines (like Unity or Unreal).
 
@@ -17,7 +17,7 @@ Key goals include:
 
 ---
 
-## 💡 Key Concepts Addressed
+## Key Concepts Addressed
 
 - **Entity Component System (ECS):** Composition-based architecture replacing rigid OOP inheritance trees. Uses 32-bit generational entity handles and sparse set component storage for fast, cache-friendly lookups.
 - **Client-Server Networking:** Authoritative server architecture where clients send input sampled at 60 Hz and the server broadcasts world snapshots and discrete combat events over UDP.
@@ -28,7 +28,7 @@ Key goals include:
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```text
 r-type/
@@ -72,7 +72,7 @@ r-type/
 
 ---
 
-## 👥 Collaborators
+## Collaborators
 
 This project is developed by:
 
@@ -82,7 +82,7 @@ This project is developed by:
 
 ---
 
-## 📚 Documentation Index
+## Documentation Index
 
 For detailed instructions and technical documentation, refer to the guides below:
 

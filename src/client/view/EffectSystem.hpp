@@ -26,7 +26,7 @@ public:
 	ecs::Signature signature(ecs::Coordinator& coordinator);
 	void consume(ecs::Coordinator& coordinator, const ClientNetworkSystem& network,
 		const std::vector<ViewEvent>& events, std::optional<std::uint8_t> localPlayerId);
-	void predictLocalFire(ecs::Coordinator& coordinator, const ClientNetworkSystem& network,
+	bool predictLocalFire(ecs::Coordinator& coordinator, const ClientNetworkSystem& network,
 		std::uint8_t buttons, std::optional<std::uint8_t> localPlayerId);
 	void update(ecs::Coordinator& coordinator, const ClientNetworkSystem& network, float deltaTime);
 

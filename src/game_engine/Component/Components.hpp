@@ -50,6 +50,11 @@ struct Animation {
 	bool loop = false;
 };
 
+struct Sound {
+	std::string name;
+	float volume = 100.0F;
+};
+
 struct Destroy {};
 
 struct Collider {

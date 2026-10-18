@@ -8,17 +8,47 @@
 #include "Sfml.hpp"
 
 #include <cmath>
+#include <map>
+#include <string>
 
 #include "client/GameConfig.hpp"
+#include "client/view/SpriteRegions.hpp"
 #include "game/GameTypes.hpp"
+#include "game_engine/ConfigParser.hpp"
+#include "utils/RTypeError.hpp"
 
 namespace rtype {
 
+/// Initializes the SFML window, loads client settings, and prepares the keyboard button mapping.
 Sfml::Sfml(AssetManager& assets)
 	: _window(sf::VideoMode({client_config::WINDOW_WIDTH, client_config::WINDOW_HEIGHT}), "R-Type"),
 	  _assets(assets),
-	  _joystickId(0)
+	  _joystickId(0),
+	  _autoFireEnabled(false),
+	  _autoFireKeyWasPressed(false),
+	  _joystickAutoFireWasPressed(false)
 {
+	const std::string configFile = std::string(client_config::SETTINGS_FILE);
+	std::map<std::string, std::string> config = engine::ConfigParser::parseFile(configFile);
+	_engineSettings.loadFromMap(config);
+	_bindings.loadFromMap(config);
+	if (config.empty()) {
+		_engineSettings.saveToMap(config);
+		_bindings.saveToMap(config);
+		if (!engine::ConfigParser::saveFile(configFile, config)) {
+			throw ConfigError("Unable to create settings file: " + configFile);
+		}
+	}
+
+	const std::vector<ActionType> allActions = {
+		ActionType::Up, ActionType::Down, ActionType::Left,
+		ActionType::Right, ActionType::Fire, ActionType::AutoFire};
+	_keyboardButtons.clear();
+	_keyboardButtons.reserve(allActions.size());
+	for (ActionType action : allActions) {
+		const sf::Keyboard::Key key = _bindings.getBinding(action);
+		_keyboardButtons.push_back({key, action});
+	}
 	_window.setFramerateLimit(60);
 }
 
@@ -42,56 +72,94 @@ void Sfml::handleEvent()
 	}
 }
 
-std::uint8_t Sfml::buttons() const
+/// Returns a bitmask of the currently pressed buttons, combining keyboard and joystick input.
+std::uint8_t Sfml::buttons()
 {
 	return keyboardButtons() | joystickButtons();
 }
 
-std::uint8_t Sfml::keyboardButtons() const
+/// Returns a bitmask of the currently pressed keyboard buttons, based on the configured key bindings.
+std::uint8_t Sfml::keyboardButtons()
 {
 	if (!_window.hasFocus()) {
+		_autoFireKeyWasPressed = false;
 		return 0;
 	}
 	std::uint8_t value = 0;
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) {
-		value |= game::BUTTON_UP;
+	for (const auto& [key, action] : _keyboardButtons) {
+		if (key == sf::Keyboard::Key::Unknown) {
+			continue;
+		}
+		const bool pressed = sf::Keyboard::isKeyPressed(key);
+		if (action == ActionType::AutoFire) {
+			if (pressed && !_autoFireKeyWasPressed) {
+				_autoFireEnabled = !_autoFireEnabled;
+			}
+			_autoFireKeyWasPressed = pressed;
+			continue;
+		}
+		if (!pressed) {
+			continue;
+		}
+		switch (action) {
+			case ActionType::Up:
+				value |= game::BUTTON_UP;
+				break;
+			case ActionType::Down:
+				value |= game::BUTTON_DOWN;
+				break;
+			case ActionType::Left:
+				value |= game::BUTTON_LEFT;
+				break;
+			case ActionType::Right:
+				value |= game::BUTTON_RIGHT;
+				break;
+			case ActionType::Fire:
+				value |= game::BUTTON_FIRE;
+				break;
+			case ActionType::AutoFire:
+				break;
+		}
 	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down)) {
-		value |= game::BUTTON_DOWN;
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left)) {
-		value |= game::BUTTON_LEFT;
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right)) {
-		value |= game::BUTTON_RIGHT;
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
+	if (_autoFireEnabled) {
 		value |= game::BUTTON_FIRE;
 	}
 	return value;
 }
 
-std::uint8_t Sfml::joystickButtons() const
+/// Returns a bitmask of the currently pressed joystick buttons, based on the configured deadzone and fire button.
+std::uint8_t Sfml::joystickButtons()
 {
 	if (!sf::Joystick::isConnected(_joystickId)) {
+		_joystickAutoFireWasPressed = false;
 		return 0;
 	}
 	std::uint8_t value = 0;
 	const float horizontal = sf::Joystick::getAxisPosition(_joystickId, sf::Joystick::Axis::X);
 	const float vertical = sf::Joystick::getAxisPosition(_joystickId, sf::Joystick::Axis::Y);
-	if (vertical < -JOYSTICK_THRESHOLD) {
+	const float threshold = static_cast<float>(_bindings.deadzone());
+	if (vertical < -threshold) {
 		value |= game::BUTTON_UP;
 	}
-	if (vertical > JOYSTICK_THRESHOLD) {
+	if (vertical > threshold) {
 		value |= game::BUTTON_DOWN;
 	}
-	if (horizontal < -JOYSTICK_THRESHOLD) {
+	if (horizontal < -threshold) {
 		value |= game::BUTTON_LEFT;
 	}
-	if (horizontal > JOYSTICK_THRESHOLD) {
+	if (horizontal > threshold) {
 		value |= game::BUTTON_RIGHT;
 	}
-	if (sf::Joystick::isButtonPressed(_joystickId, 0)) {
+	const unsigned int buttonCount = sf::Joystick::getButtonCount(_joystickId);
+	if (_bindings.joystickFire() < buttonCount && sf::Joystick::isButtonPressed(_joystickId, _bindings.joystickFire())) {
+		value |= game::BUTTON_FIRE;
+	}
+	const bool autoFirePressed = _bindings.joystickAutoFire() < buttonCount && sf::Joystick::isButtonPressed(_joystickId, _bindings.joystickAutoFire());
+	if (autoFirePressed && !_joystickAutoFireWasPressed) {
+		_autoFireEnabled = !_autoFireEnabled;
+	}
+	_joystickAutoFireWasPressed = autoFirePressed;
+	if (_autoFireEnabled) {
 		value |= game::BUTTON_FIRE;
 	}
 	return value;
@@ -121,6 +189,9 @@ void Sfml::drawBackground(std::string_view texture, float offset)
 /// Translates a library independent sprite command into an SFML draw call.
 void Sfml::drawSprite(const render::SpriteDraw& command)
 {
+	if (!_engineSettings.screenFlashEnabled() && command.texture == sprites::EXPLOSION_SHEET) {
+		return;
+	}
 	const render::Rect& region = command.region;
 	sf::Sprite sprite = _assets.sprite(command.texture, sf::IntRect({region.position.x, region.position.y}, {region.size.x, region.size.y}));
 	sprite.setOrigin({command.originX, command.originY});

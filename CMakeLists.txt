@@ -74,7 +74,7 @@ add_executable(r-type_server
 
 target_link_libraries(r-type_server PRIVATE rtype_protocol rtype_logger rtype_engine asio::asio Threads::Threads)
 if(WIN32)
-    target_compile_definitions(r-type_server PRIVATE _WIN32_WINNT=0x0601)
+    target_compile_definitions(r-type_server PRIVATE _WIN32_WINNT=0x0601 NOMINMAX)
     target_link_libraries(r-type_server PRIVATE bcrypt ws2_32)
 endif()
 
@@ -102,7 +102,7 @@ add_executable(r-type_client
 target_link_libraries(r-type_client PRIVATE rtype_client_core rtype_logger
     asio::asio Threads::Threads SFML::Graphics SFML::Window SFML::System SFML::Audio)
 if(WIN32)
-    target_compile_definitions(r-type_client PRIVATE _WIN32_WINNT=0x0601)
+    target_compile_definitions(r-type_client PRIVATE _WIN32_WINNT=0x0601 NOMINMAX)
     target_link_libraries(r-type_client PRIVATE ws2_32)
 endif()
 

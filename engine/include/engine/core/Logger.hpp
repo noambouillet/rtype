@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Configurable logger
 */
@@ -13,7 +13,7 @@
 #include <ostream>
 #include <string>
 
-namespace rtype {
+namespace engine::core {
 
 class Logger {
 private:

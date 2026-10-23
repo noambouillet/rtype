@@ -7,30 +7,15 @@
 
 #pragma once
 
-#include <exception>
 #include <string>
-#include <utility>
+
+#include "engine/core/Error.hpp"
 
 namespace rtype {
 
-class RTypeError : public std::exception {
-private:
-	std::string _message;
-
+class RTypeError : public engine::core::Error {
 public:
-	explicit RTypeError(std::string message) : _message(std::move(message))
-	{
-	}
-
-	const char* what() const noexcept override
-	{
-		return _message.c_str();
-	}
-};
-
-class LoggerError : public RTypeError {
-public:
-	explicit LoggerError(const std::string& message) : RTypeError(message)
+	explicit RTypeError(const std::string& message) : Error(message)
 	{
 	}
 };
@@ -52,13 +37,6 @@ public:
 class AudioError : public RTypeError {
 public:
 	explicit AudioError(const std::string& message) : RTypeError(message)
-	{
-	}
-};
-
-class ConfigError : public RTypeError {
-public:
-	explicit ConfigError(const std::string& message) : RTypeError(message)
 	{
 	}
 };

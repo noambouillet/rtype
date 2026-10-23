@@ -1,20 +1,20 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Configurable logger implementation
 */
 
-#include "Logger.hpp"
+#include "engine/core/Logger.hpp"
 
 #include <ctime>
 #include <iomanip>
 #include <sstream>
 #include <string>
 
-#include "RTypeError.hpp"
+#include "engine/core/Error.hpp"
 
-namespace rtype {
+namespace engine::core {
 
 Logger::Logger(std::ostream& output) : _output(output), _verbose(false)
 {

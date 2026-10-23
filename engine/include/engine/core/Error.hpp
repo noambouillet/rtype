@@ -1,27 +1,38 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
-** EcsError
+** Engine error types
 */
 
 #pragma once
+
 #include <exception>
 #include <string>
+#include <utility>
 
-class EcsError : public std::exception {
+namespace engine::core {
+
+class Error : public std::exception {
+private:
+	std::string _message;
+
 public:
-	explicit EcsError(const std::string& message) : _message(message)
+	explicit Error(std::string message) : _message(std::move(message))
 	{
 	}
-	~EcsError() override = default;
+
 	const char* what() const noexcept override
 	{
 		return _message.c_str();
 	}
+};
 
-private:
-	std::string _message;
+class EcsError : public Error {
+public:
+	explicit EcsError(const std::string& message) : Error(message)
+	{
+	}
 };
 
 class CoordinatorError : public EcsError {
@@ -30,3 +41,19 @@ public:
 	{
 	}
 };
+
+class ConfigError : public Error {
+public:
+	explicit ConfigError(const std::string& message) : Error(message)
+	{
+	}
+};
+
+class LoggerError : public Error {
+public:
+	explicit LoggerError(const std::string& message) : Error(message)
+	{
+	}
+};
+
+}

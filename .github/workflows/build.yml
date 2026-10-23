@@ -7,6 +7,32 @@ on:
     branches: [main]
 
 jobs:
+  engine-only:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install System Dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake ninja-build
+
+      - name: Check engine has no game references
+        run: |
+          if grep -rniE "rtype|bydo|player" engine/; then
+            echo "engine/ must not reference the game." >&2
+            exit 1
+          fi
+
+      - name: Configure engine
+        run: cmake -S engine -B build-engine -G Ninja
+
+      - name: Build engine
+        run: cmake --build build-engine
+
+      - name: Install engine
+        run: cmake --install build-engine --prefix "${{ github.workspace }}/engine-install"
+
   build-linux:
     runs-on: self-hosted
 

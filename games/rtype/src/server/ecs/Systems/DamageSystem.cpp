@@ -10,16 +10,16 @@
 namespace rtype::ecs {
 
 /// Builds the signature the system needs (Health): the entities that can be damaged.
-Signature DamageSystem::signature(Coordinator& coordinator)
+engine::core::Signature DamageSystem::signature(engine::core::Coordinator& coordinator)
 {
-	Signature sig;
+	engine::core::Signature sig;
 
 	sig.set(coordinator.getComponentType<Health>());
 	return sig;
 }
 
 /// Applies `Damage` in both directions for every pair in `collisions`.
-std::vector<HealthChange> DamageSystem::update(Coordinator& coordinator, const std::vector<CollisionPair>& collisions)
+std::vector<HealthChange> DamageSystem::update(engine::core::Coordinator& coordinator, const std::vector<engine::core::CollisionPair>& collisions)
 {
 	std::vector<HealthChange> changes;
 	for (const auto& [a, b] : collisions) {
@@ -35,9 +35,9 @@ std::vector<HealthChange> DamageSystem::update(Coordinator& coordinator, const s
 
 /// Removes the `attacker`'s Damage from the `target`'s Health.
 /// Marks the target with `Destroy` once its health reaches zero.
-std::optional<HealthChange> DamageSystem::applyDamage(Coordinator& coordinator, Entity attacker, Entity target)
+std::optional<HealthChange> DamageSystem::applyDamage(engine::core::Coordinator& coordinator, engine::core::Entity attacker, engine::core::Entity target)
 {
-	if (!entities.contains(target) || !coordinator.hasComponent<Damage>(attacker) || coordinator.hasComponent<Destroy>(target)) {
+	if (!entities.contains(target) || !coordinator.hasComponent<Damage>(attacker) || coordinator.hasComponent<engine::core::Destroy>(target)) {
 		return std::nullopt;
 	}
 
@@ -45,8 +45,8 @@ std::optional<HealthChange> DamageSystem::applyDamage(Coordinator& coordinator, 
 	const auto& damage = coordinator.getComponent<Damage>(attacker);
 
 	health.hp -= damage.amount;
-	if (health.hp <= 0 && !coordinator.hasComponent<Destroy>(target))
-		coordinator.addComponent(target, Destroy{});
+	if (health.hp <= 0 && !coordinator.hasComponent<engine::core::Destroy>(target))
+		coordinator.addComponent(target, engine::core::Destroy{});
 	return HealthChange{target, health.hp};
 }
 

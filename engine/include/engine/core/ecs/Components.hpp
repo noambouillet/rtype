@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Components
 */
@@ -10,9 +10,9 @@
 #include <string>
 #include <vector>
 
-#include "game_engine/Graphics/GraphicsBackend.hpp"
+#include "engine/render/GraphicsBackend.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 
 struct Position {
 	float x = 0.0F;
@@ -22,15 +22,6 @@ struct Position {
 struct Velocity {
 	float x = 0.0F;
 	float y = 0.0F;
-};
-
-struct Health {
-	int maxHP = 0;
-	int hp = 0;
-};
-
-struct Damage {
-	int amount = 0;
 };
 
 struct Sprite {

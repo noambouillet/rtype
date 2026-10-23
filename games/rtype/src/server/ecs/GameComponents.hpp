@@ -21,6 +21,15 @@ constexpr std::uint32_t PLAYER_PROJECTILE = 0b0100;
 constexpr std::uint32_t ENEMY_PROJECTILE = 0b1000;
 }
 
+struct Health {
+	int maxHP = 0;
+	int hp = 0;
+};
+
+struct Damage {
+	int amount = 0;
+};
+
 struct Replicated {
 	game::EntityType type = game::EntityType::Enemy;
 	std::uint8_t owner = game::NO_OWNER;

@@ -137,6 +137,25 @@ cmake --build build --config Release --parallel
 
 The build system defines a custom CMake target called `rtype_assets`. Every time the client binary is compiled, CMake automatically synchronizes the root `assets/` directory (containing spritesheets, music, sound effects, and fonts) into the executable's output directory (`$<TARGET_FILE_DIR:r-type_client>/assets`). This ensures the client can locate media assets regardless of the current working directory.
 
+### Building the Engine Alone
+
+The engine in `engine/` is a standalone CMake project with no dependency on the game. It can be built and installed on its own:
+
+```bash
+cmake -S engine -B build-engine -G Ninja
+cmake --build build-engine
+cmake --install build-engine --prefix install
+```
+
+A game can then consume it like any third-party package:
+
+```cmake
+find_package(Engine 0.1 CONFIG REQUIRED)
+target_link_libraries(my_game PRIVATE engine::core)
+```
+
+`games/rtype/CMakeLists.txt` follows this pattern: built from the repository root it uses the `engine::core` target from `add_subdirectory(engine)`, and built alone it calls `find_package(Engine)` (pass the install prefix in `CMAKE_PREFIX_PATH`).
+
 ---
 
 ## 6. Build Artifacts

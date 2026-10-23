@@ -8,17 +8,15 @@ The project features a custom cross-platform game engine built from scratch arou
 
 ## Quick Start (TL;DR)
 
-Get the game running on Linux in four commands:
+Get the game running on Linux in three commands:
 
 ```bash
-# 1. Clone repository with submodules
+# 1. Clone repository with submodules if you don't cloned it already
 git clone --recursive https://github.com/EpitechPGE3-2026/G-ING-500-LIL-5-1-rtype-1.git r-type
 cd r-type
 
-# 2. Bootstrap vcpkg & build
-./vcpkg/bootstrap-vcpkg.sh
-cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel
+# 2. Build with automated script (handles dependencies, vcpkg & parallel compilation)
+./build.sh
 
 # 3. Start authoritative server (Terminal 1)
 ./build/r-type_server
@@ -27,7 +25,7 @@ cmake --build build --parallel
 ./build/r-type_client
 ```
 
-> **Windows (PowerShell):** Replace `./vcpkg/bootstrap-vcpkg.sh` with `.\vcpkg\bootstrap-vcpkg.bat`, and run `cmake --build build --config Release --parallel`. Binaries will be generated under `build/Release/`.
+> **Windows (PowerShell):** Run `.\build.ps1` instead of `./build.sh`. Binaries will be generated under `build/Release/`.
 
 ---
 
@@ -45,7 +43,7 @@ cmake --build build --parallel
 
 ## Dependencies & Requirements
 
-Dependencies are automatically resolved and compiled via [vcpkg](https://vcpkg.io/) in **Manifest Mode** (`vcpkg.json`). You do not need to install Asio or SFML system-wide.
+System packages, toolchains, and third-party libraries are handled automatically by the automated build scripts (`build.sh` / `build.ps1`).
 
 ### System Requirements
 
@@ -53,18 +51,7 @@ Dependencies are automatically resolved and compiled via [vcpkg](https://vcpkg.i
 - **Build System:** CMake >= 3.21 and Ninja (or Make).
 - **Version Control:** Git (with submodules enabled).
 
-### Linux Packages (Ubuntu / Debian)
-
-Install development libraries required for building SFML:
-
-```bash
-sudo apt-get update && sudo apt-get install -y \
-    git cmake ninja-build curl zip unzip tar \
-    pkg-config build-essential \
-    libx11-dev libxcursor-dev libxi-dev \
-    libgl1-mesa-dev libfontconfig1-dev \
-    libudev-dev
-```
+> **Manual Dependency Setup:** The automated scripts will check and install missing tools and graphic/audio libraries for your Linux distribution (APT, DNF, Pacman) or Windows (via Winget). If you prefer installing packages manually, see the [**Manual Package Installation Guide**](docs/build_instructions.md#step-1-install-system-dependencies).
 
 ### Managed Third-Party Libraries
 
@@ -75,48 +62,75 @@ sudo apt-get update && sudo apt-get install -y \
 
 ## Build Instructions
 
-### 1. Initialize Submodules
+Automated scripts are provided in the repository root to detect your operating system, check and install any missing system dependencies (compiler, CMake, SFML libraries), initialize the `vcpkg` git submodule, bootstrap `vcpkg`, and compile the project in parallel.
 
-If you cloned without `--recursive`, initialize the `vcpkg` submodule first:
+### 1. Automated Build (One-Step Build)
 
+#### Linux / macOS
 ```bash
-git submodule update --init --recursive
+# Standard build (prompts before installing missing dependencies)
+./build.sh
+
+# Non-interactive / CI build (auto-accepts package installations)
+./build.sh -y
+
+# Clean rebuild (deletes build directory before building)
+./build.sh --clean
+
+# Cross-compile Windows 64-bit binaries (.exe) via MinGW on Linux
+./build.sh -w
+
+# Specify a custom build directory
+./build.sh -b custom_build
 ```
 
-### 2. Bootstrap Vcpkg
+**Available Options:**
+| Flag | Description |
+|---|---|
+| `-w`, `--windows` | Cross-compile 64-bit Windows binaries (.exe) using MinGW (defaults to `build-windows/`) |
+| `-b`, `--build-dir <DIR>` | Set a custom build output directory (default: `build` or `build-windows`) |
+| `-c`, `--clean` | Wipe the target build directory before configuring and compiling |
+| `-y`, `--yes` | Automatically confirm package installation with the system package manager without prompting |
+| `-h`, `--help` | Display the script usage help |
 
-Compile the package manager executable once:
+#### Windows (PowerShell)
+```powershell
+# Standard build with MSVC (prompts before downloading missing tools)
+.\build.ps1
 
-- **Linux:** `./vcpkg/bootstrap-vcpkg.sh`
-- **Windows:** `.\vcpkg\bootstrap-vcpkg.bat`
+# Non-interactive build (auto-downloads missing Git, CMake, or MSVC)
+.\build.ps1 -Yes
 
-### 3. Configure with CMake
+# Clean rebuild
+.\build.ps1 -Clean
 
-- **Linux:**
-  ```bash
-  cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
-  ```
-- **Windows (MSVC):**
-  ```powershell
-  cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake"
-  ```
-- **Cross-Compilation (Linux to Windows via MinGW):**
-  ```bash
-  cmake -S . -B build-windows -G Ninja -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
-      -DVCPKG_TARGET_TRIPLET=x64-mingw-dynamic \
-      -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="$PWD/mingw-toolchain.cmake"
-  ```
-
-### 4. Compile
-
-```bash
-cmake --build build --parallel
+# Custom build directory
+.\build.ps1 -BuildDir "custom_build"
 ```
 
-> **Asset Synchronization:** The build system automatically copies the `assets/` directory (sprites, sounds, music, fonts) into the client binary output folder so the game can be launched from any working directory.
+**Available Options:**
+| Parameter | Description |
+|---|---|
+| `-Yes`, `-y` | Automatically download and install missing tools without prompting |
+| `-BuildDir <DIR>`, `-b` | Set a custom build directory (default: `build`) |
+| `-Clean`, `-c` | Wipe the target build directory before configuring and compiling |
+| `-Help`, `-h` | Display the help documentation |
 
-For comprehensive toolchain details and troubleshooting, see the [**Full Build Guide**](docs/build_instructions.md).
+### 2. Build Output and Binaries
+
+Once the build finishes successfully, executables and media assets are placed in the output directory:
+
+| Target Platform / Host | Server Executable | Client Executable |
+|---|---|---|
+| **Linux (Native)** | `build/r-type_server` | `build/r-type_client` |
+| **Windows (Native MSVC)** | `build/Release/r-type_server.exe` | `build/Release/r-type_client.exe` |
+| **Windows (Cross-compiled via MinGW)** | `build-windows/r-type_server.exe` | `build-windows/r-type_client.exe` |
+
+> **Asset Synchronization:** The root `assets/` folder (textures, fonts, music, audio effects) is automatically copied into the client's output folder on each compile.
+
+### 3. Manual Build (Optional / Advanced)
+
+If you prefer to configure, bootstrap `vcpkg`, and compile manually without using `build.sh` or `build.ps1`, refer to the detailed step-by-step instructions in the [**Manual Build Guide**](docs/build_instructions.md#3-manual-build-optional--advanced).
 
 ---
 
@@ -165,7 +179,6 @@ Controls and accessibility settings can be customized in `settings.cfg` (generat
 | **Move Up / Down / Left / Right** | `Z` / `S` / `Q` / `D` (or Arrows) | Left Analog Stick / D-Pad |
 | **Fire Weapon** | `Space` | Button 0 (A / Cross) |
 | **Toggle Auto-Fire** | `X` | Button 1 (B / Circle) |
-
 - **Controller Deadzone:** Adjust `joystick_deadzone = 30` to counter stick drift.
 - **Visual Accessibility:** Set `screen_flash = false` to suppress bright explosion flashes for photosensitive safety.
 
@@ -219,6 +232,8 @@ r-type/
 │   └── utils/                  # Shared protocol encoders/decoders and logging
 ├── vcpkg/                      # Vcpkg package manager (Git submodule)
 ├── website/                    # Doxygen documentation website configuration
+├── build.sh                    # Automated setup & build script (Linux / macOS)
+├── build.ps1                   # Automated setup & build script (Windows PowerShell)
 ├── CMakeLists.txt              # Root CMake build definition
 ├── LICENSE                     # MIT License
 ├── mingw-toolchain.cmake       # MinGW cross-compilation toolchain file
@@ -232,7 +247,7 @@ r-type/
 
 For in-depth architectural and technical documentation:
 
-- [**Build Instructions**](docs/build_instructions.md): Prerequisites, toolchains, vcpkg bootstrap, and CMake build steps.
+- [**Build Instructions**](docs/build_instructions.md): Automated one-step setup and build (`build.sh` / `build.ps1`), toolchains, and CMake manual compilation steps.
 - [**Run Instructions**](docs/run_instructions.md): Server and client CLI flags, `settings.cfg`, and multi-client testing.
 - [**Architecture & Systems Overview**](docs/architecture.md): Subsystems breakdown (Engine vs Client vs Server), Render, Physics, and Network systems.
 - [**Entity Component System (ECS) Guide**](docs/ecs_guide.md): In-depth look at our ECS paradigm, generational IDs, and sparse sets.

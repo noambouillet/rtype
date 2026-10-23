@@ -64,6 +64,8 @@ r-type/
 │   └── utils/                  # Shared protocol encoders/decoders and logging
 ├── vcpkg/                      # Vcpkg package manager (Git submodule)
 ├── website/                    # Doxygen documentation website configuration
+├── build.sh                    # Automated setup & build script (Linux / macOS)
+├── build.ps1                   # Automated setup & build script (Windows PowerShell)
 ├── CMakeLists.txt              # Root CMake build definition
 ├── mingw-toolchain.cmake       # MinGW cross-compilation toolchain file
 ├── settings.cfg                # Client runtime settings (keybinds, controller, flash)
@@ -86,7 +88,7 @@ This project is developed by:
 
 For detailed instructions and technical documentation, refer to the guides below:
 
-- [**Build Instructions**](docs/build_instructions.md): Prerequisites, toolchains, vcpkg bootstrap, and CMake build steps for Linux and Windows.
+- [**Build Instructions**](docs/build_instructions.md): Automated one-step setup and build (`build.sh` / `build.ps1`), toolchains, and CMake manual compilation steps.
 - [**Run Instructions**](docs/run_instructions.md): How to launch the server and client, CLI parameters, `settings.cfg`, and testing multiple clients.
 - [**Architecture & Systems Overview**](docs/architecture.md): High-level system breakdown (Engine vs Client vs Server) and details on Network, Render, and Physics systems.
 - [**Entity Component System (ECS) Guide**](docs/ecs_guide.md): In-depth look at our ECS paradigm, generational IDs, sparse set memory, and system signatures.

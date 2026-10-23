@@ -13,7 +13,7 @@
 #include <optional>
 #include <vector>
 
-#include "Coordinator.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
 #include "server/ecs/Systems/ReplicationSystem.hpp"
 #include "server/game/GameConfig.hpp"
 #include "server/game/WorldEvent.hpp"
@@ -43,8 +43,8 @@ private:
 	void syncPlayerEntities(const Input& input, WorldEventCollector& events);
 	void runSystems(const Input& input, float deltaTime, WorldEventCollector& events);
 
-	ecs::Coordinator _coordinator;
-	std::array<std::optional<ecs::Entity>, MAX_PLAYERS> _playerEntities;
+	engine::core::Coordinator _coordinator;
+	std::array<std::optional<engine::core::Entity>, MAX_PLAYERS> _playerEntities;
 };
 
 }

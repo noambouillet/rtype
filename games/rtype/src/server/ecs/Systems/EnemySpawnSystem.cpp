@@ -23,9 +23,9 @@ EnemySpawnSystem::EnemySpawnSystem() : _rng(std::random_device{}())
 }
 
 /// Builds the signature the system needs (WaveSpawner).
-Signature EnemySpawnSystem::signature(Coordinator& coordinator)
+engine::core::Signature EnemySpawnSystem::signature(engine::core::Coordinator& coordinator)
 {
-	Signature sig;
+	engine::core::Signature sig;
 
 	sig.set(coordinator.getComponentType<WaveSpawner>());
 	return sig;
@@ -33,11 +33,11 @@ Signature EnemySpawnSystem::signature(Coordinator& coordinator)
 
 /// Counts each spawner down and sends a wave when it reaches zero.
 /// `active` is true when at least one player is connected
-void EnemySpawnSystem::update(Coordinator& coordinator, float elapsedTime, bool active)
+void EnemySpawnSystem::update(engine::core::Coordinator& coordinator, float elapsedTime, bool active)
 {
 	if (!active)
 		return;
-	for (const Entity& e : entities) {
+	for (const engine::core::Entity& e : entities) {
 		auto& spawner = coordinator.getComponent<WaveSpawner>(e);
 
 		spawner.timer -= elapsedTime;
@@ -50,7 +50,7 @@ void EnemySpawnSystem::update(Coordinator& coordinator, float elapsedTime, bool 
 
 /// Sends a lone Scant or a lone Bink on the ground now and then, otherwise a group of Patapata or a line of Bugs,
 /// picked at random, at a random height kept far enough from the edges for their movement to stay inside the world.
-void EnemySpawnSystem::spawnWave(Coordinator& coordinator)
+void EnemySpawnSystem::spawnWave(engine::core::Coordinator& coordinator)
 {
 	if (std::bernoulli_distribution(config::SCANT_WAVE_CHANCE)(_rng)) {
 		std::uniform_real_distribution<float> height(config::SCANT_HEIGHT, config::WORLD_HEIGHT - config::SCANT_HEIGHT);

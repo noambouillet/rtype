@@ -13,15 +13,15 @@
 #include <string_view>
 #include <variant>
 
-#include "Components.hpp"
 #include "client/view/SpriteRegions.hpp"
+#include "engine/core/ecs/Components.hpp"
 #include "game/GameTypes.hpp"
 
 namespace rtype::client {
 
 struct EffectArt {
 	std::string_view texture;
-	std::span<const render::Rect> frames;
+	std::span<const engine::render::Rect> frames;
 	float frameSeconds;
 };
 
@@ -45,22 +45,22 @@ EffectSystem::EffectSystem() : _firePredictor{}
 {
 }
 
-ecs::Signature EffectSystem::signature(ecs::Coordinator& coordinator)
+engine::core::Signature EffectSystem::signature(engine::core::Coordinator& coordinator)
 {
-	ecs::Signature signature;
+	engine::core::Signature signature;
 	signature.set(coordinator.getComponentType<Effect>());
 	return signature;
 }
 
 /// Adds one bounded effect entity and keeps repeated hits from stacking.
-void EffectSystem::add(ecs::Coordinator& coordinator, EffectKind kind, ecs::Position position,
+void EffectSystem::add(engine::core::Coordinator& coordinator, EffectKind kind, engine::core::Position position,
 	std::optional<std::uint32_t> targetId, std::optional<std::uint8_t> followPlayer)
 {
 	if (targetId) {
-		for (ecs::Entity existing : entities) {
+		for (engine::core::Entity existing : entities) {
 			const Effect& effect = coordinator.getComponent<Effect>(existing);
 			if (effect.targetId == targetId && effect.kind == kind) {
-				coordinator.getComponent<ecs::Position>(existing) = position;
+				coordinator.getComponent<engine::core::Position>(existing) = position;
 				return;
 			}
 		}
@@ -72,31 +72,31 @@ void EffectSystem::add(ecs::Coordinator& coordinator, EffectKind kind, ecs::Posi
 	if (art.frames.empty()) {
 		return;
 	}
-	const render::Rect first = art.frames.front();
-	const ecs::Entity entity = coordinator.createEntity();
+	const engine::render::Rect first = art.frames.front();
+	const engine::core::Entity entity = coordinator.createEntity();
 	coordinator.addComponent(entity, position);
-	coordinator.addComponent(entity, ecs::Sprite{std::string(art.texture), first,
+	coordinator.addComponent(entity, engine::core::Sprite{std::string(art.texture), first,
 										 static_cast<float>(first.size.x) / 2.0F, static_cast<float>(first.size.y) / 2.0F, 2.0F, 0.0F, 10});
-	coordinator.addComponent(entity, ecs::Animation{{art.frames.begin(), art.frames.end()}, art.frameSeconds, 0.0F, false});
+	coordinator.addComponent(entity, engine::core::Animation{{art.frames.begin(), art.frames.end()}, art.frameSeconds, 0.0F, false});
 	coordinator.addComponent(entity, Effect{kind, art.frameSeconds * static_cast<float>(art.frames.size()), targetId, followPlayer});
 }
 
 /// Removes a surviving-hit cue when that entity is destroyed.
-void EffectSystem::removeHitSpark(ecs::Coordinator& coordinator, std::uint32_t targetId)
+void EffectSystem::removeHitSpark(engine::core::Coordinator& coordinator, std::uint32_t targetId)
 {
-	std::vector<ecs::Entity> removed;
-	for (ecs::Entity entity : entities) {
+	std::vector<engine::core::Entity> removed;
+	for (engine::core::Entity entity : entities) {
 		const Effect& effect = coordinator.getComponent<Effect>(entity);
 		if (effect.kind == EffectKind::HitSpark && effect.targetId == targetId) {
 			removed.push_back(entity);
 		}
 	}
-	for (ecs::Entity entity : removed) {
+	for (engine::core::Entity entity : removed) {
 		coordinator.destroyEntity(entity);
 	}
 }
 
-void EffectSystem::handle(ecs::Coordinator& coordinator, [[maybe_unused]] const ClientNetworkSystem& network,
+void EffectSystem::handle(engine::core::Coordinator& coordinator, [[maybe_unused]] const ClientNetworkSystem& network,
 	const SpawnEvent& event, std::optional<std::uint8_t> localPlayerId)
 {
 	if (event.kind == game::EntityType::PlayerProjectile && (!localPlayerId || event.owner != *localPlayerId)) {
@@ -104,7 +104,7 @@ void EffectSystem::handle(ecs::Coordinator& coordinator, [[maybe_unused]] const 
 	}
 }
 
-void EffectSystem::handle(ecs::Coordinator& coordinator, [[maybe_unused]] const ClientNetworkSystem& network,
+void EffectSystem::handle(engine::core::Coordinator& coordinator, [[maybe_unused]] const ClientNetworkSystem& network,
 	const DestroyEvent& event)
 {
 	removeHitSpark(coordinator, event.id);
@@ -113,14 +113,14 @@ void EffectSystem::handle(ecs::Coordinator& coordinator, [[maybe_unused]] const 
 	}
 }
 
-void EffectSystem::handle(ecs::Coordinator& coordinator, const ClientNetworkSystem& network, const DamageEvent& event)
+void EffectSystem::handle(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network, const DamageEvent& event)
 {
 	if (const auto entity = network.find(event.id)) {
-		add(coordinator, EffectKind::HitSpark, coordinator.getComponent<ecs::Position>(*entity), event.id);
+		add(coordinator, EffectKind::HitSpark, coordinator.getComponent<engine::core::Position>(*entity), event.id);
 	}
 }
 
-void EffectSystem::handle(ecs::Coordinator& coordinator, [[maybe_unused]] const ClientNetworkSystem& network,
+void EffectSystem::handle(engine::core::Coordinator& coordinator, [[maybe_unused]] const ClientNetworkSystem& network,
 	const DeathEvent& event)
 {
 	removeHitSpark(coordinator, event.id);
@@ -128,7 +128,7 @@ void EffectSystem::handle(ecs::Coordinator& coordinator, [[maybe_unused]] const 
 }
 
 /// Converts game notices into effect entities before rendering the frame.
-void EffectSystem::consume(ecs::Coordinator& coordinator, const ClientNetworkSystem& network,
+void EffectSystem::consume(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network,
 	const std::vector<ViewEvent>& events, std::optional<std::uint8_t> localPlayerId)
 {
 	for (const ViewEvent& event : events) {
@@ -145,10 +145,10 @@ void EffectSystem::consume(ecs::Coordinator& coordinator, const ClientNetworkSys
 }
 
 /// Starts the local weapon burst immediately while the server owns the shot entity.
-bool EffectSystem::predictLocalFire(ecs::Coordinator& coordinator, const ClientNetworkSystem& network,
+bool EffectSystem::predictLocalFire(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network,
 	std::uint8_t buttons, std::optional<std::uint8_t> localPlayerId)
 {
-	std::optional<ecs::Position> position;
+	std::optional<engine::core::Position> position;
 	if (localPlayerId && (network.aliveMask() & (1 << *localPlayerId)) != 0) {
 		position = network.playerPosition(coordinator, *localPlayerId);
 	}
@@ -162,10 +162,10 @@ bool EffectSystem::predictLocalFire(ecs::Coordinator& coordinator, const ClientN
 }
 
 /// Advances effect lifetime and follows living targets without touching network records.
-void EffectSystem::update(ecs::Coordinator& coordinator, const ClientNetworkSystem& network, float deltaTime)
+void EffectSystem::update(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network, float deltaTime)
 {
-	std::vector<ecs::Entity> expired;
-	for (ecs::Entity entity : entities) {
+	std::vector<engine::core::Entity> expired;
+	for (engine::core::Entity entity : entities) {
 		Effect& effect = coordinator.getComponent<Effect>(entity);
 		effect.remaining -= std::max(0.0F, deltaTime);
 		if (effect.remaining <= 0.0F) {
@@ -175,15 +175,15 @@ void EffectSystem::update(ecs::Coordinator& coordinator, const ClientNetworkSyst
 		if (effect.followPlayer) {
 			if (auto position = network.playerPosition(coordinator, *effect.followPlayer)) {
 				position->x += PLAYER_WEAPON_OFFSET;
-				coordinator.getComponent<ecs::Position>(entity) = *position;
+				coordinator.getComponent<engine::core::Position>(entity) = *position;
 			}
 		} else if (effect.kind == EffectKind::HitSpark && effect.targetId) {
 			if (const auto target = network.find(*effect.targetId)) {
-				coordinator.getComponent<ecs::Position>(entity) = coordinator.getComponent<ecs::Position>(*target);
+				coordinator.getComponent<engine::core::Position>(entity) = coordinator.getComponent<engine::core::Position>(*target);
 			}
 		}
 	}
-	for (ecs::Entity entity : expired) {
+	for (engine::core::Entity entity : expired) {
 		coordinator.destroyEntity(entity);
 	}
 }

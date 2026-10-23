@@ -15,12 +15,12 @@
 
 #include "AssetManager.hpp"
 #include "KeyBindings.hpp"
-#include "game_engine/EngineSettings.hpp"
-#include "game_engine/Graphics/GraphicsBackend.hpp"
+#include "engine/core/EngineSettings.hpp"
+#include "engine/render/GraphicsBackend.hpp"
 
 namespace rtype {
 
-class Sfml : public render::IGraphicsBackend {
+class Sfml : public engine::render::IGraphicsBackend {
 public:
 	explicit Sfml(AssetManager& assets);
 	bool isOpen() const;
@@ -28,7 +28,7 @@ public:
 	std::uint8_t buttons();
 	void beginFrame() override;
 	void drawBackground(std::string_view texture, float offset) override;
-	void drawSprite(const render::SpriteDraw& command) override;
+	void drawSprite(const engine::render::SpriteDraw& command) override;
 	void endFrame() override;
 
 private:
@@ -37,7 +37,7 @@ private:
 
 	sf::RenderWindow _window;
 	AssetManager& _assets;
-	engine::EngineSettings _engineSettings;
+	engine::core::EngineSettings _engineSettings;
 	KeyBindings _bindings;
 	std::vector<std::pair<sf::Keyboard::Key, ActionType>> _keyboardButtons;
 	std::uint32_t _joystickId;

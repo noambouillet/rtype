@@ -7,28 +7,28 @@
 
 #include "HitSystem.hpp"
 
-#include "Components.hpp"
+#include "engine/core/ecs/Components.hpp"
 #include "server/ecs/GameComponents.hpp"
 
 namespace rtype::ecs {
 
 /// Builds the signature the system needs (DestroyOnHit).
-Signature HitSystem::signature(Coordinator& coordinator)
+engine::core::Signature HitSystem::signature(engine::core::Coordinator& coordinator)
 {
-	Signature sig;
+	engine::core::Signature sig;
 
 	sig.set(coordinator.getComponentType<DestroyOnHit>());
 	return sig;
 }
 
 /// Keeps only the first collision for each entity destroyed on hit.
-std::vector<CollisionPair> HitSystem::update(Coordinator& coordinator, const std::vector<CollisionPair>& collisions)
+std::vector<engine::core::CollisionPair> HitSystem::update(engine::core::Coordinator& coordinator, const std::vector<engine::core::CollisionPair>& collisions)
 {
-	std::vector<CollisionPair> accepted;
+	std::vector<engine::core::CollisionPair> accepted;
 	accepted.reserve(collisions.size());
 	for (const auto& [a, b] : collisions) {
-		if ((entities.contains(a) && coordinator.hasComponent<Destroy>(a)) ||
-			(entities.contains(b) && coordinator.hasComponent<Destroy>(b))) {
+		if ((entities.contains(a) && coordinator.hasComponent<engine::core::Destroy>(a)) ||
+			(entities.contains(b) && coordinator.hasComponent<engine::core::Destroy>(b))) {
 			continue;
 		}
 		accepted.push_back({a, b});
@@ -39,10 +39,10 @@ std::vector<CollisionPair> HitSystem::update(Coordinator& coordinator, const std
 }
 
 /// Adds `Destroy` to `entity` when this system tracks it and it is not already marked.
-void HitSystem::markHit(Coordinator& coordinator, Entity entity)
+void HitSystem::markHit(engine::core::Coordinator& coordinator, engine::core::Entity entity)
 {
-	if (entities.contains(entity) && !coordinator.hasComponent<Destroy>(entity)) {
-		coordinator.addComponent(entity, Destroy{});
+	if (entities.contains(entity) && !coordinator.hasComponent<engine::core::Destroy>(entity)) {
+		coordinator.addComponent(entity, engine::core::Destroy{});
 	}
 }
 

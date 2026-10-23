@@ -24,7 +24,7 @@ static std::uint64_t generateNonce()
 }
 
 /// Creates a client with a fresh nonce for this join attempt.
-GameClient::GameClient(IClientTransport& transport)
+GameClient::GameClient(engine::net::IClientTransport& transport)
 	: _udp(transport), _nonce(generateNonce()), _sessionId(0), _nextSequence(1), _playerId(0), _lastButtons(0), _joinAttempts(0), _status(ClientStatus::Joining), _worldSnapshot{}, _events{}
 {
 }

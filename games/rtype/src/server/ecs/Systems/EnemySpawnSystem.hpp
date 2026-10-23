@@ -9,19 +9,19 @@
 
 #include <random>
 
-#include "Coordinator.hpp"
-#include "System.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
+#include "engine/core/ecs/System.hpp"
 
 namespace rtype::ecs {
 
-class EnemySpawnSystem : public System {
+class EnemySpawnSystem : public engine::core::System {
 public:
 	EnemySpawnSystem();
-	Signature signature(Coordinator& coordinator);
-	void update(Coordinator& coordinator, float elapsedTime, bool active);
+	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	void update(engine::core::Coordinator& coordinator, float elapsedTime, bool active);
 
 private:
-	void spawnWave(Coordinator& coordinator);
+	void spawnWave(engine::core::Coordinator& coordinator);
 
 	std::mt19937 _rng;
 };

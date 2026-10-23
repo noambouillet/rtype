@@ -14,7 +14,7 @@
 namespace rtype {
 
 /// Records a completed replicated entity, including its initial position and owner.
-void WorldEventCollector::recordSpawn(ecs::Coordinator& coordinator, ecs::Entity entity)
+void WorldEventCollector::recordSpawn(engine::core::Coordinator& coordinator, engine::core::Entity entity)
 {
 	const std::optional<ecs::ReplicatedState> state = coordinator.getSystem<ecs::ReplicationSystem>().capture(coordinator, entity);
 	if (state) {
@@ -23,7 +23,7 @@ void WorldEventCollector::recordSpawn(ecs::Coordinator& coordinator, ecs::Entity
 }
 
 /// Records the final surviving health of an entity once per tick.
-void WorldEventCollector::recordDamage(ecs::Coordinator& coordinator, ecs::Entity entity)
+void WorldEventCollector::recordDamage(engine::core::Coordinator& coordinator, engine::core::Entity entity)
 {
 	const std::optional<ecs::ReplicatedState> state = coordinator.getSystem<ecs::ReplicationSystem>().capture(coordinator, entity);
 	if (!state || state->health == 0) {
@@ -39,7 +39,7 @@ void WorldEventCollector::recordDamage(ecs::Coordinator& coordinator, ecs::Entit
 }
 
 /// Records a terminal event before the entity loses its components.
-void WorldEventCollector::recordRemoval(ecs::Coordinator& coordinator, ecs::Entity entity)
+void WorldEventCollector::recordRemoval(engine::core::Coordinator& coordinator, engine::core::Entity entity)
 {
 	const std::optional<ecs::ReplicatedState> state = coordinator.getSystem<ecs::ReplicationSystem>().capture(coordinator, entity);
 	if (!state) {

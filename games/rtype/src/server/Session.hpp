@@ -10,7 +10,7 @@
 #include <chrono>
 #include <cstdint>
 
-#include "game_engine/Network/Transport.hpp"
+#include "engine/net/Transport.hpp"
 
 namespace rtype {
 
@@ -18,7 +18,7 @@ class Session {
 private:
 	using Clock = std::chrono::steady_clock;
 
-	network::Endpoint _address;
+	engine::net::Endpoint _address;
 	std::uint64_t _nonce;
 	std::uint32_t _id;
 	std::uint32_t _nextSequence;
@@ -34,12 +34,12 @@ public:
 		std::uint8_t buttons;
 	};
 
-	Session(network::Endpoint address, std::uint64_t nonce, Clock::time_point now, std::uint32_t id);
+	Session(engine::net::Endpoint address, std::uint64_t nonce, Clock::time_point now, std::uint32_t id);
 
-	[[nodiscard]] const network::Endpoint& address() const;
+	[[nodiscard]] const engine::net::Endpoint& address() const;
 	[[nodiscard]] std::uint64_t nonce() const;
 	[[nodiscard]] std::uint32_t id() const;
-	void refresh(network::Endpoint address, Clock::time_point now);
+	void refresh(engine::net::Endpoint address, Clock::time_point now);
 	void acceptInput(Input input, Clock::time_point now);
 	std::uint32_t takeNextSequence();
 	[[nodiscard]] bool hasExpired(Clock::time_point now, Clock::duration timeout) const;

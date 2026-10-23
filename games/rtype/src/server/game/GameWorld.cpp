@@ -7,12 +7,12 @@
 
 #include "GameWorld.hpp"
 
-#include "CollisionSystem.hpp"
-#include "Components.hpp"
-#include "DamageSystem.hpp"
-#include "DestroySystem.hpp"
-#include "MovementSystem.hpp"
+#include "engine/core/ecs/Components.hpp"
+#include "engine/core/systems/CollisionSystem.hpp"
+#include "engine/core/systems/DestroySystem.hpp"
+#include "engine/core/systems/MovementSystem.hpp"
 #include "server/ecs/GameComponents.hpp"
+#include "server/ecs/Systems/DamageSystem.hpp"
 #include "server/ecs/Systems/EnemySpawnSystem.hpp"
 #include "server/ecs/Systems/FormationSystem.hpp"
 #include "server/ecs/Systems/HitSystem.hpp"
@@ -27,7 +27,7 @@ namespace rtype {
 
 /// Registers T and gives it the signature its own `signature()` describes.
 template <typename T>
-static void registerSystem(ecs::Coordinator& coordinator)
+static void registerSystem(engine::core::Coordinator& coordinator)
 {
 	auto& system = coordinator.registerSystem<T>();
 	coordinator.setSystemSignature<T>(system.signature(coordinator));
@@ -44,12 +44,12 @@ GameWorld::GameWorld() : _coordinator{}, _playerEntities{}
 /// Registers every component type; systems need them to build their signatures.
 void GameWorld::registerComponents()
 {
-	_coordinator.registerComponent<ecs::Position>();
-	_coordinator.registerComponent<ecs::Velocity>();
+	_coordinator.registerComponent<engine::core::Position>();
+	_coordinator.registerComponent<engine::core::Velocity>();
 	_coordinator.registerComponent<ecs::Health>();
 	_coordinator.registerComponent<ecs::Damage>();
-	_coordinator.registerComponent<ecs::Destroy>();
-	_coordinator.registerComponent<ecs::Collider>();
+	_coordinator.registerComponent<engine::core::Destroy>();
+	_coordinator.registerComponent<engine::core::Collider>();
 	_coordinator.registerComponent<ecs::Replicated>();
 	_coordinator.registerComponent<ecs::PlayerControl>();
 	_coordinator.registerComponent<ecs::Weapon>();
@@ -70,12 +70,12 @@ void GameWorld::registerSystems()
 	registerSystem<ecs::FormationSystem>(_coordinator);
 	registerSystem<ecs::SineMotionSystem>(_coordinator);
 	registerSystem<ecs::HoverMotionSystem>(_coordinator);
-	registerSystem<ecs::MovementSystem>(_coordinator);
-	registerSystem<ecs::CollisionSystem>(_coordinator);
+	registerSystem<engine::core::MovementSystem>(_coordinator);
+	registerSystem<engine::core::CollisionSystem>(_coordinator);
 	registerSystem<ecs::DamageSystem>(_coordinator);
 	registerSystem<ecs::HitSystem>(_coordinator);
 	registerSystem<ecs::OffscreenSystem>(_coordinator);
-	registerSystem<ecs::DestroySystem>(_coordinator);
+	registerSystem<engine::core::DestroySystem>(_coordinator);
 	registerSystem<ecs::ReplicationSystem>(_coordinator);
 }
 
@@ -92,21 +92,21 @@ std::vector<WorldEvent> GameWorld::update(const Input& input, float deltaTime)
 void GameWorld::runSystems(const Input& input, float deltaTime, WorldEventCollector& events)
 {
 	_coordinator.getSystem<ecs::PlayerControlSystem>().update(_coordinator, input.buttons);
-	const std::vector<ecs::Entity> projectiles = _coordinator.getSystem<ecs::WeaponSystem>().update(_coordinator, deltaTime);
-	for (const ecs::Entity& projectile : projectiles) {
+	const std::vector<engine::core::Entity> projectiles = _coordinator.getSystem<ecs::WeaponSystem>().update(_coordinator, deltaTime);
+	for (const engine::core::Entity& projectile : projectiles) {
 		events.recordSpawn(_coordinator, projectile);
 	}
 	_coordinator.getSystem<ecs::EnemySpawnSystem>().update(_coordinator, deltaTime, input.connectedMask != 0);
-	const std::vector<ecs::Entity> enemies = _coordinator.getSystem<ecs::FormationSystem>().update(_coordinator, deltaTime);
-	for (const ecs::Entity& enemy : enemies) {
+	const std::vector<engine::core::Entity> enemies = _coordinator.getSystem<ecs::FormationSystem>().update(_coordinator, deltaTime);
+	for (const engine::core::Entity& enemy : enemies) {
 		events.recordSpawn(_coordinator, enemy);
 	}
 	_coordinator.getSystem<ecs::SineMotionSystem>().update(_coordinator, deltaTime);
 	_coordinator.getSystem<ecs::HoverMotionSystem>().update(_coordinator, deltaTime);
-	_coordinator.getSystem<ecs::MovementSystem>().update(_coordinator, deltaTime);
-	_coordinator.getSystem<ecs::CollisionSystem>().update(_coordinator);
-	const std::vector<ecs::CollisionPair>& collisions = _coordinator.getSystem<ecs::CollisionSystem>().collisions();
-	const std::vector<ecs::CollisionPair> accepted = _coordinator.getSystem<ecs::HitSystem>().update(_coordinator, collisions);
+	_coordinator.getSystem<engine::core::MovementSystem>().update(_coordinator, deltaTime);
+	_coordinator.getSystem<engine::core::CollisionSystem>().update(_coordinator);
+	const std::vector<engine::core::CollisionPair>& collisions = _coordinator.getSystem<engine::core::CollisionSystem>().collisions();
+	const std::vector<engine::core::CollisionPair> accepted = _coordinator.getSystem<ecs::HitSystem>().update(_coordinator, collisions);
 	const std::vector<ecs::HealthChange> changes = _coordinator.getSystem<ecs::DamageSystem>().update(_coordinator, accepted);
 	for (const ecs::HealthChange& change : changes) {
 		if (change.remainingHealth > 0) {
@@ -114,10 +114,10 @@ void GameWorld::runSystems(const Input& input, float deltaTime, WorldEventCollec
 		}
 	}
 	_coordinator.getSystem<ecs::OffscreenSystem>().update(_coordinator, config::WORLD_WIDTH, config::WORLD_HEIGHT, config::OFFSCREEN_MARGIN);
-	for (const ecs::Entity& removed : _coordinator.getSystem<ecs::DestroySystem>().entities) {
+	for (const engine::core::Entity& removed : _coordinator.getSystem<engine::core::DestroySystem>().entities) {
 		events.recordRemoval(_coordinator, removed);
 	}
-	_coordinator.getSystem<ecs::DestroySystem>().update(_coordinator);
+	_coordinator.getSystem<engine::core::DestroySystem>().update(_coordinator);
 }
 
 /// Synchronizes player ships with sessions and reports newly spawned ships.
@@ -129,7 +129,7 @@ void GameWorld::syncPlayerEntities(const Input& input, WorldEventCollector& even
 		const bool connected = (input.connectedMask & playerMask) != 0;
 
 		if (connected && !_playerEntities[playerId]) {
-			const ecs::Entity player = prefabs::createPlayer(_coordinator, static_cast<std::uint8_t>(playerId));
+			const engine::core::Entity player = prefabs::createPlayer(_coordinator, static_cast<std::uint8_t>(playerId));
 			_playerEntities[playerId] = player;
 			events.recordSpawn(_coordinator, player);
 		} else if (!connected) {

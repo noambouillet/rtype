@@ -7,15 +7,15 @@
 
 #pragma once
 
-#include "Coordinator.hpp"
-#include "System.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
+#include "engine/core/ecs/System.hpp"
 
 namespace rtype::ecs {
 
-class OffscreenSystem : public System {
+class OffscreenSystem : public engine::core::System {
 public:
-	Signature signature(Coordinator& coordinator);
-	void update(Coordinator& coordinator, float worldWidth, float worldHeight, float margin);
+	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	void update(engine::core::Coordinator& coordinator, float worldWidth, float worldHeight, float margin);
 };
 
 }

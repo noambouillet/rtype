@@ -10,15 +10,15 @@
 #include <chrono>
 #include <csignal>
 
+#include "engine/net/Transport.hpp"
 #include "game/GameWorld.hpp"
-#include "game_engine/Network/Transport.hpp"
 #include "network/ServerNetworkService.hpp"
 
 namespace rtype {
 
 class GameServer {
 public:
-	explicit GameServer(network::IServerTransport& transport);
+	explicit GameServer(engine::net::IServerTransport& transport);
 	void run(const volatile std::sig_atomic_t& running);
 	GameWorld::Input tick();
 

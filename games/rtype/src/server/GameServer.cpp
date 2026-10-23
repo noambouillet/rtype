@@ -11,7 +11,7 @@
 
 namespace rtype {
 
-GameServer::GameServer(network::IServerTransport& transport) : _network(transport), _world{}
+GameServer::GameServer(engine::net::IServerTransport& transport) : _network(transport), _world{}
 {
 }
 

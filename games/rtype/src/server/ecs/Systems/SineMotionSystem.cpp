@@ -9,29 +9,29 @@
 
 #include <cmath>
 
-#include "Components.hpp"
+#include "engine/core/ecs/Components.hpp"
 #include "server/ecs/GameComponents.hpp"
 
 namespace rtype::ecs {
 
 /// Builds the signature the system needs (SineMotion + Velocity): the enemies weaving on a sine wave.
-Signature SineMotionSystem::signature(Coordinator& coordinator)
+engine::core::Signature SineMotionSystem::signature(engine::core::Coordinator& coordinator)
 {
-	Signature sig;
+	engine::core::Signature sig;
 
 	sig.set(coordinator.getComponentType<SineMotion>());
-	sig.set(coordinator.getComponentType<Velocity>());
+	sig.set(coordinator.getComponentType<engine::core::Velocity>());
 	return sig;
 }
 
 /// Sets each velocity to the derivative of motion while moving left.
-void SineMotionSystem::update(Coordinator& coordinator, float elapsedTime)
+void SineMotionSystem::update(engine::core::Coordinator& coordinator, float elapsedTime)
 {
-	for (const Entity& e : entities) {
+	for (const engine::core::Entity& e : entities) {
 		auto& motion = coordinator.getComponent<SineMotion>(e);
 
 		motion.elapsed += elapsedTime;
-		coordinator.getComponent<Velocity>(e) = {-motion.speed,
+		coordinator.getComponent<engine::core::Velocity>(e) = {-motion.speed,
 			motion.amplitude * motion.frequency * std::cos(motion.frequency * motion.elapsed + motion.phase)};
 	}
 }

@@ -80,7 +80,7 @@ static std::uint32_t encodePosition(float position)
 }
 
 /// Creates the game server: binds the UDP port and starts an empty world.
-ServerNetworkService::ServerNetworkService(network::IServerTransport& transport)
+ServerNetworkService::ServerNetworkService(engine::net::IServerTransport& transport)
 	: _network(transport), _sessions{}, _issuedSessionIds{}, _tick(0)
 {
 }
@@ -134,7 +134,7 @@ GameWorld::Input ServerNetworkService::tick()
 }
 
 /// Validates one client datagram and updates its session.
-void ServerNetworkService::handleDatagram(const network::Datagram& datagram, Clock::time_point now)
+void ServerNetworkService::handleDatagram(const engine::net::Datagram& datagram, Clock::time_point now)
 {
 	const auto& bytes = datagram.bytes;
 	const network::ParsedHeader parsed = network::parseClientHeader(bytes);
@@ -155,7 +155,7 @@ void ServerNetworkService::handleDatagram(const network::Datagram& datagram, Clo
 }
 
 /// Validates a join request before reading its nonce.
-void ServerNetworkService::handleJoinDatagram(const network::Datagram& datagram, const network::Header& header,
+void ServerNetworkService::handleJoinDatagram(const engine::net::Datagram& datagram, const network::Header& header,
 	const network::ParsedHeader& parsed, Clock::time_point now)
 {
 	if (const auto error = network::validateClientPayload(header, datagram.bytes)) {
@@ -166,7 +166,7 @@ void ServerNetworkService::handleJoinDatagram(const network::Datagram& datagram,
 }
 
 /// Validates and applies a packet for an existing session.
-void ServerNetworkService::handleSessionDatagram(const network::Datagram& datagram, const network::Header& header,
+void ServerNetworkService::handleSessionDatagram(const engine::net::Datagram& datagram, const network::Header& header,
 	const network::ParsedHeader& parsed, Clock::time_point now)
 {
 	for (std::size_t index = 0; index < _sessions.size(); index++) {
@@ -192,7 +192,7 @@ void ServerNetworkService::handleSessionDatagram(const network::Datagram& datagr
 }
 
 /// Creates a session or repeats its acceptance for a known nonce.
-void ServerNetworkService::handleJoin(const network::Datagram& datagram, std::uint64_t nonce, Clock::time_point now)
+void ServerNetworkService::handleJoin(const engine::net::Datagram& datagram, std::uint64_t nonce, Clock::time_point now)
 {
 	if (handleRepeatedJoin(datagram, nonce, now)) {
 		return;
@@ -213,7 +213,7 @@ void ServerNetworkService::handleJoin(const network::Datagram& datagram, std::ui
 }
 
 /// Refreshes a session and repeats its acceptance when the nonce is known.
-bool ServerNetworkService::handleRepeatedJoin(const network::Datagram& datagram, std::uint64_t nonce, Clock::time_point now)
+bool ServerNetworkService::handleRepeatedJoin(const engine::net::Datagram& datagram, std::uint64_t nonce, Clock::time_point now)
 {
 	for (std::size_t index = 0; index < _sessions.size(); index++) {
 		auto& session = _sessions[index];
@@ -267,7 +267,7 @@ void ServerNetworkService::sendJoinAccepted(const Session& session, std::uint8_t
 }
 
 /// Sends a server-full response for a join request.
-void ServerNetworkService::sendJoinRejected(const network::Datagram& datagram, std::uint64_t nonce)
+void ServerNetworkService::sendJoinRejected(const engine::net::Datagram& datagram, std::uint64_t nonce)
 {
 	std::vector<std::uint8_t> payload;
 	network::appendU64(payload, nonce);

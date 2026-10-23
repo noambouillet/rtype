@@ -15,7 +15,7 @@
 #include <variant>
 #include <vector>
 
-#include "game_engine/Network/Transport.hpp"
+#include "engine/net/Transport.hpp"
 #include "utils/network/Protocol.hpp"
 
 namespace rtype::network {
@@ -98,7 +98,7 @@ private:
 	void sendInput(std::uint8_t buttons);
 	std::uint32_t takeSequence();
 
-	IClientTransport& _udp;
+	engine::net::IClientTransport& _udp;
 	std::uint64_t _nonce;
 	std::uint32_t _sessionId;
 	std::uint32_t _nextSequence;
@@ -114,7 +114,7 @@ private:
 	std::vector<WorldEventNotice> _events;
 
 public:
-	explicit GameClient(IClientTransport& transport);
+	explicit GameClient(engine::net::IClientTransport& transport);
 	void tick(std::uint8_t buttons);
 	void disconnect();
 	std::optional<PlayerDeparture> takeDeparture();

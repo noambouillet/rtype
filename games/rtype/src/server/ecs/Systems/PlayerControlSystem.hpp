@@ -10,18 +10,18 @@
 #include <array>
 #include <cstdint>
 
-#include "Coordinator.hpp"
-#include "System.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
+#include "engine/core/ecs/System.hpp"
 #include "server/game/GameConfig.hpp"
 
 namespace rtype::ecs {
 
-class PlayerControlSystem : public System {
+class PlayerControlSystem : public engine::core::System {
 public:
 	using Buttons = std::array<std::uint8_t, config::MAX_PLAYERS>;
 
-	Signature signature(Coordinator& coordinator);
-	void update(Coordinator& coordinator, const Buttons& buttons);
+	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	void update(engine::core::Coordinator& coordinator, const Buttons& buttons);
 };
 
 }

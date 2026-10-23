@@ -14,12 +14,12 @@
 #include <string>
 #include <vector>
 
-#include "game_engine/Network/Transport.hpp"
+#include "engine/net/Transport.hpp"
 #include "utils/network/Protocol.hpp"
 
 namespace rtype::network {
 
-class UdpClient : public IClientTransport {
+class UdpClient : public engine::net::IClientTransport {
 private:
 	static constexpr std::size_t MAX_PENDING = 256;
 	asio::ip::udp::endpoint resolveServer(const std::string& host, std::uint16_t port);

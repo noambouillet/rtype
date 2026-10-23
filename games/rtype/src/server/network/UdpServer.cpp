@@ -48,10 +48,10 @@ void UdpServer::receiveNext()
 }
 
 /// Transfers all pending datagrams to the calling game thread.
-std::vector<Datagram> UdpServer::receivePending()
+std::vector<engine::net::Datagram> UdpServer::receivePending()
 {
 	std::scoped_lock lock(_mutex);
-	std::vector<Datagram> result;
+	std::vector<engine::net::Datagram> result;
 
 	result.reserve(_pending.size());
 	while (!_pending.empty()) {
@@ -62,7 +62,7 @@ std::vector<Datagram> UdpServer::receivePending()
 }
 
 /// Schedules one datagram for transmission from the network thread.
-void UdpServer::send(const Endpoint& recipient, std::vector<std::uint8_t> bytes)
+void UdpServer::send(const engine::net::Endpoint& recipient, std::vector<std::uint8_t> bytes)
 {
 	if (bytes.empty()) {
 		return;

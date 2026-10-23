@@ -9,19 +9,19 @@
 
 #include <vector>
 
-#include "CollisionSystem.hpp"
-#include "Coordinator.hpp"
-#include "System.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
+#include "engine/core/ecs/System.hpp"
+#include "engine/core/systems/CollisionSystem.hpp"
 
 namespace rtype::ecs {
 
-class HitSystem : public System {
+class HitSystem : public engine::core::System {
 public:
-	Signature signature(Coordinator& coordinator);
-	std::vector<CollisionPair> update(Coordinator& coordinator, const std::vector<CollisionPair>& collisions);
+	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	std::vector<engine::core::CollisionPair> update(engine::core::Coordinator& coordinator, const std::vector<engine::core::CollisionPair>& collisions);
 
 private:
-	void markHit(Coordinator& coordinator, Entity entity);
+	void markHit(engine::core::Coordinator& coordinator, engine::core::Entity entity);
 };
 
 }

@@ -11,9 +11,9 @@
 #include <utility>
 #include <variant>
 
-#include "Components.hpp"
 #include "client/view/ClientComponents.hpp"
 #include "client/view/SpriteCatalog.hpp"
+#include "engine/core/ecs/Components.hpp"
 
 namespace rtype::client {
 
@@ -21,9 +21,9 @@ ClientNetworkSystem::ClientNetworkSystem() : _entitiesByServerId{}, _lastApplied
 {
 }
 
-ecs::Signature ClientNetworkSystem::signature(ecs::Coordinator& coordinator)
+engine::core::Signature ClientNetworkSystem::signature(engine::core::Coordinator& coordinator)
 {
-	ecs::Signature required;
+	engine::core::Signature required;
 	required.set(coordinator.getComponentType<NetworkIdentity>());
 	return required;
 }
@@ -46,7 +46,7 @@ static ViewEvent toViewEvent(const network::WorldEventNotice& notice)
 }
 
 /// Polls the session, reconciles a new authoritative snapshot, and transfers notices.
-std::vector<ViewEvent> ClientNetworkSystem::update(ecs::Coordinator& coordinator, network::GameClient& client, std::uint8_t buttons)
+std::vector<ViewEvent> ClientNetworkSystem::update(engine::core::Coordinator& coordinator, network::GameClient& client, std::uint8_t buttons)
 {
 	client.tick(buttons);
 	if (const auto& snapshot = client.worldSnapshot()) {
@@ -60,7 +60,7 @@ std::vector<ViewEvent> ClientNetworkSystem::update(ecs::Coordinator& coordinator
 }
 
 /// Mirrors only entity appearance and position from a newer full snapshot.
-void ClientNetworkSystem::applySnapshot(ecs::Coordinator& coordinator, const network::WorldSnapshot& snapshot)
+void ClientNetworkSystem::applySnapshot(engine::core::Coordinator& coordinator, const network::WorldSnapshot& snapshot)
 {
 	if (_lastAppliedTick && snapshot.tick <= *_lastAppliedTick) {
 		return;
@@ -92,10 +92,10 @@ void ClientNetworkSystem::applySnapshot(ecs::Coordinator& coordinator, const net
 }
 
 /// Creates the client presentation components for an entity first seen in a snapshot.
-ecs::Entity ClientNetworkSystem::createVisualEntity(ecs::Coordinator& coordinator, const network::WorldEntity& serverEntity)
+engine::core::Entity ClientNetworkSystem::createVisualEntity(engine::core::Coordinator& coordinator, const network::WorldEntity& serverEntity)
 {
-	const ecs::Entity visualEntity = coordinator.createEntity();
-	coordinator.addComponent(visualEntity, ecs::Position{serverEntity.x, serverEntity.y});
+	const engine::core::Entity visualEntity = coordinator.createEntity();
+	coordinator.addComponent(visualEntity, engine::core::Position{serverEntity.x, serverEntity.y});
 	coordinator.addComponent(visualEntity, spriteFor(serverEntity.entityType, serverEntity.spriteId));
 	if (auto animation = animationFor(serverEntity.entityType)) {
 		coordinator.addComponent(visualEntity, std::move(*animation));
@@ -107,23 +107,23 @@ ecs::Entity ClientNetworkSystem::createVisualEntity(ecs::Coordinator& coordinato
 }
 
 /// Refreshes an existing presentation entity from authoritative state.
-void ClientNetworkSystem::updateVisualEntity(ecs::Coordinator& coordinator, ecs::Entity visualEntity, const network::WorldEntity& serverEntity)
+void ClientNetworkSystem::updateVisualEntity(engine::core::Coordinator& coordinator, engine::core::Entity visualEntity, const network::WorldEntity& serverEntity)
 {
-	coordinator.getComponent<ecs::Position>(visualEntity) = {serverEntity.x, serverEntity.y};
+	coordinator.getComponent<engine::core::Position>(visualEntity) = {serverEntity.x, serverEntity.y};
 	NetworkIdentity& identity = coordinator.getComponent<NetworkIdentity>(visualEntity);
 	if (identity.kind != serverEntity.entityType || identity.variant != serverEntity.spriteId) {
-		coordinator.getComponent<ecs::Sprite>(visualEntity) = spriteFor(serverEntity.entityType, serverEntity.spriteId);
+		coordinator.getComponent<engine::core::Sprite>(visualEntity) = spriteFor(serverEntity.entityType, serverEntity.spriteId);
 		const auto animation = animationFor(serverEntity.entityType);
-		if (animation && !coordinator.hasComponent<ecs::Animation>(visualEntity)) {
+		if (animation && !coordinator.hasComponent<engine::core::Animation>(visualEntity)) {
 			coordinator.addComponent(visualEntity, *animation);
-		} else if (!animation && coordinator.hasComponent<ecs::Animation>(visualEntity)) {
-			coordinator.removeComponent<ecs::Animation>(visualEntity);
+		} else if (!animation && coordinator.hasComponent<engine::core::Animation>(visualEntity)) {
+			coordinator.removeComponent<engine::core::Animation>(visualEntity);
 		}
 	}
 	identity = {serverEntity.entityId, serverEntity.entityType, serverEntity.ownerPlayerId, serverEntity.spriteId};
 }
 
-std::optional<ecs::Entity> ClientNetworkSystem::find(std::uint32_t serverId) const
+std::optional<engine::core::Entity> ClientNetworkSystem::find(std::uint32_t serverId) const
 {
 	const auto entry = _entitiesByServerId.find(serverId);
 	if (entry == _entitiesByServerId.end()) {
@@ -133,12 +133,12 @@ std::optional<ecs::Entity> ClientNetworkSystem::find(std::uint32_t serverId) con
 }
 
 /// Locates an authoritative player's visible ship without exposing protocol records.
-std::optional<ecs::Position> ClientNetworkSystem::playerPosition(ecs::Coordinator& coordinator, std::uint8_t playerId) const
+std::optional<engine::core::Position> ClientNetworkSystem::playerPosition(engine::core::Coordinator& coordinator, std::uint8_t playerId) const
 {
-	for (const ecs::Entity entity : entities) {
+	for (const engine::core::Entity entity : entities) {
 		const NetworkIdentity& identity = coordinator.getComponent<NetworkIdentity>(entity);
 		if (identity.kind == game::EntityType::Player && identity.owner == playerId) {
-			return coordinator.getComponent<ecs::Position>(entity);
+			return coordinator.getComponent<engine::core::Position>(entity);
 		}
 	}
 	return std::nullopt;

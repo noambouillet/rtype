@@ -9,16 +9,16 @@
 
 #include <vector>
 
-#include "Coordinator.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
 #include "server/game/WorldEvent.hpp"
 
 namespace rtype {
 
 class WorldEventCollector {
 public:
-	void recordSpawn(ecs::Coordinator& coordinator, ecs::Entity entity);
-	void recordDamage(ecs::Coordinator& coordinator, ecs::Entity entity);
-	void recordRemoval(ecs::Coordinator& coordinator, ecs::Entity entity);
+	void recordSpawn(engine::core::Coordinator& coordinator, engine::core::Entity entity);
+	void recordDamage(engine::core::Coordinator& coordinator, engine::core::Entity entity);
+	void recordRemoval(engine::core::Coordinator& coordinator, engine::core::Entity entity);
 	std::vector<WorldEvent> take();
 
 private:

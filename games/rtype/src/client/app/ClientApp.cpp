@@ -24,7 +24,7 @@
 #include "client/network/UdpClient.hpp"
 #include "client/view/ClientWorld.hpp"
 #include "client/view/SpriteRegions.hpp"
-#include "utils/Logger.hpp"
+#include "engine/core/Logger.hpp"
 
 namespace rtype {
 
@@ -36,16 +36,16 @@ static void stopClient([[maybe_unused]] int signal)
 }
 
 /// Creates a separate logger for this client process.
-static std::unique_ptr<Logger> makeLogger(const std::string& logFile)
+static std::unique_ptr<engine::core::Logger> makeLogger(const std::string& logFile)
 {
 	if (logFile.empty()) {
-		return std::make_unique<Logger>(std::cout);
+		return std::make_unique<engine::core::Logger>(std::cout);
 	}
-	return std::make_unique<Logger>(std::filesystem::path(logFile));
+	return std::make_unique<engine::core::Logger>(std::filesystem::path(logFile));
 }
 
 /// Reports a change in the client's session state.
-static bool reportStatus(const network::GameClient& client, Logger& logger)
+static bool reportStatus(const network::GameClient& client, engine::core::Logger& logger)
 {
 	switch (client.status()) {
 		case network::ClientStatus::Connected:
@@ -66,7 +66,7 @@ static bool reportStatus(const network::GameClient& client, Logger& logger)
 }
 
 /// Writes any server notices received during the latest network update.
-static void reportNotices(network::GameClient& client, Logger& logger)
+static void reportNotices(network::GameClient& client, engine::core::Logger& logger)
 {
 	if (const auto departure = client.takeDeparture()) {
 		logger.info("Player " + std::to_string(departure->playerId) + " left");
@@ -78,7 +78,7 @@ static void reportNotices(network::GameClient& client, Logger& logger)
 
 /// Polls one frame and sends the current input state.
 static bool updateFrame(Sfml& window, SoundPlayer& audio, network::GameClient& client, rtype::client::ClientWorld& view,
-	Logger& logger, network::ClientStatus& previous, std::chrono::steady_clock::time_point& lastFrame)
+	engine::core::Logger& logger, network::ClientStatus& previous, std::chrono::steady_clock::time_point& lastFrame)
 {
 	window.handleEvent();
 	if (!window.isOpen()) {

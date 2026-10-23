@@ -13,7 +13,7 @@
 namespace rtype::client {
 
 /// Selects the image and geometry used to present a gameplay entity.
-ecs::Sprite spriteFor(game::EntityType kind, std::uint8_t variant)
+engine::core::Sprite spriteFor(game::EntityType kind, std::uint8_t variant)
 {
 	switch (kind) {
 		case game::EntityType::Player: {
@@ -43,12 +43,12 @@ ecs::Sprite spriteFor(game::EntityType kind, std::uint8_t variant)
 }
 
 /// Supplies the looping projectile frames; other entities are static.
-std::optional<ecs::Animation> animationFor(game::EntityType kind)
+std::optional<engine::core::Animation> animationFor(game::EntityType kind)
 {
 	if (kind != game::EntityType::PlayerProjectile) {
 		return std::nullopt;
 	}
-	return ecs::Animation{{sprites::PLAYER_SHOT_FRAMES.begin(), sprites::PLAYER_SHOT_FRAMES.end()}, 0.08F, 0.0F, true};
+	return engine::core::Animation{{sprites::PLAYER_SHOT_FRAMES.begin(), sprites::PLAYER_SHOT_FRAMES.end()}, 0.08F, 0.0F, true};
 }
 
 }

@@ -11,8 +11,8 @@
 #include <optional>
 #include <vector>
 
-#include "Coordinator.hpp"
-#include "System.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
+#include "engine/core/ecs/System.hpp"
 #include "game/GameTypes.hpp"
 
 namespace rtype::ecs {
@@ -27,11 +27,11 @@ struct ReplicatedState {
 	float y;
 };
 
-class ReplicationSystem : public System {
+class ReplicationSystem : public engine::core::System {
 public:
-	Signature signature(Coordinator& coordinator);
-	std::optional<ReplicatedState> capture(Coordinator& coordinator, Entity entity) const;
-	std::vector<ReplicatedState> collect(Coordinator& coordinator);
+	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	std::optional<ReplicatedState> capture(engine::core::Coordinator& coordinator, engine::core::Entity entity) const;
+	std::vector<ReplicatedState> collect(engine::core::Coordinator& coordinator);
 };
 
 }

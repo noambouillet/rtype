@@ -13,8 +13,8 @@
 
 #include "client/GameConfig.hpp"
 #include "client/view/SpriteRegions.hpp"
+#include "engine/core/ConfigParser.hpp"
 #include "game/GameTypes.hpp"
-#include "game_engine/ConfigParser.hpp"
 #include "utils/RTypeError.hpp"
 
 namespace rtype {
@@ -29,14 +29,14 @@ Sfml::Sfml(AssetManager& assets)
 	  _joystickAutoFireWasPressed(false)
 {
 	const std::string configFile = std::string(client_config::SETTINGS_FILE);
-	std::map<std::string, std::string> config = engine::ConfigParser::parseFile(configFile);
+	std::map<std::string, std::string> config = engine::core::ConfigParser::parseFile(configFile);
 	_engineSettings.loadFromMap(config);
 	_bindings.loadFromMap(config);
 	if (config.empty()) {
 		_engineSettings.saveToMap(config);
 		_bindings.saveToMap(config);
-		if (!engine::ConfigParser::saveFile(configFile, config)) {
-			throw ConfigError("Unable to create settings file: " + configFile);
+		if (!engine::core::ConfigParser::saveFile(configFile, config)) {
+			throw engine::core::ConfigError("Unable to create settings file: " + configFile);
 		}
 	}
 
@@ -187,12 +187,12 @@ void Sfml::drawBackground(std::string_view texture, float offset)
 }
 
 /// Translates a library independent sprite command into an SFML draw call.
-void Sfml::drawSprite(const render::SpriteDraw& command)
+void Sfml::drawSprite(const engine::render::SpriteDraw& command)
 {
 	if (!_engineSettings.screenFlashEnabled() && command.texture == sprites::EXPLOSION_SHEET) {
 		return;
 	}
-	const render::Rect& region = command.region;
+	const engine::render::Rect& region = command.region;
 	sf::Sprite sprite = _assets.sprite(command.texture, sf::IntRect({region.position.x, region.position.y}, {region.size.x, region.size.y}));
 	sprite.setOrigin({command.originX, command.originY});
 	sprite.setScale({command.scale, command.scale});

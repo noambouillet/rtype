@@ -18,8 +18,8 @@
 #include <system_error>
 
 #include "GameServer.hpp"
+#include "engine/core/Logger.hpp"
 #include "network/UdpServer.hpp"
-#include "utils/Logger.hpp"
 
 namespace rtype {
 
@@ -79,13 +79,13 @@ static int runServer(const ServerOptions& options)
 {
 	std::signal(SIGINT, stopServer);
 	std::signal(SIGTERM, stopServer);
-	std::unique_ptr<Logger> logger;
+	std::unique_ptr<engine::core::Logger> logger;
 
 	try {
 		if (options.logFile.empty()) {
-			logger = std::make_unique<Logger>(std::cout);
+			logger = std::make_unique<engine::core::Logger>(std::cout);
 		} else {
-			logger = std::make_unique<Logger>(std::filesystem::path(options.logFile));
+			logger = std::make_unique<engine::core::Logger>(std::filesystem::path(options.logFile));
 		}
 		logger->setVerbose(true);
 		network::UdpServer transport(options.port);

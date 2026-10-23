@@ -10,16 +10,16 @@
 #include <random>
 #include <vector>
 
-#include "Coordinator.hpp"
-#include "System.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
+#include "engine/core/ecs/System.hpp"
 
 namespace rtype::ecs {
 
-class FormationSystem : public System {
+class FormationSystem : public engine::core::System {
 public:
 	FormationSystem();
-	Signature signature(Coordinator& coordinator);
-	std::vector<Entity> update(Coordinator& coordinator, float elapsedTime);
+	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	std::vector<engine::core::Entity> update(engine::core::Coordinator& coordinator, float elapsedTime);
 
 private:
 	std::mt19937 _rng;

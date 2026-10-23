@@ -11,35 +11,35 @@
 #include <string>
 #include <vector>
 
-#include "AudioSystem.hpp"
-#include "Components.hpp"
-#include "RenderSystem.hpp"
 #include "client/view/ClientComponents.hpp"
 #include "client/view/ClientNetworkSystem.hpp"
 #include "client/view/EffectSystem.hpp"
 #include "client/view/SoundEventSystem.hpp"
+#include "engine/core/ecs/Components.hpp"
+#include "engine/core/systems/AudioSystem.hpp"
+#include "engine/core/systems/RenderSystem.hpp"
 
 namespace rtype::client {
 
 ClientWorld::ClientWorld()
 {
-	_coordinator.registerComponent<ecs::Position>();
-	_coordinator.registerComponent<ecs::Sprite>();
-	_coordinator.registerComponent<ecs::Animation>();
+	_coordinator.registerComponent<engine::core::Position>();
+	_coordinator.registerComponent<engine::core::Sprite>();
+	_coordinator.registerComponent<engine::core::Animation>();
 	_coordinator.registerComponent<NetworkIdentity>();
 	_coordinator.registerComponent<Effect>();
-	_coordinator.registerComponent<ecs::Sound>();
+	_coordinator.registerComponent<engine::core::Sound>();
 	auto& network = _coordinator.registerSystem<ClientNetworkSystem>();
 	_coordinator.setSystemSignature<ClientNetworkSystem>(network.signature(_coordinator));
 	auto& effects = _coordinator.registerSystem<EffectSystem>();
 	_coordinator.setSystemSignature<EffectSystem>(effects.signature(_coordinator));
-	auto& render = _coordinator.registerSystem<ecs::RenderSystem>();
-	_coordinator.setSystemSignature<ecs::RenderSystem>(render.signature(_coordinator));
+	auto& render = _coordinator.registerSystem<engine::core::RenderSystem>();
+	_coordinator.setSystemSignature<engine::core::RenderSystem>(render.signature(_coordinator));
 	render.setBackground("background.png", 40.0F);
 	auto& sounds = _coordinator.registerSystem<SoundEventSystem>();
 	_coordinator.setSystemSignature<SoundEventSystem>(sounds.signature(_coordinator));
-	auto& audio = _coordinator.registerSystem<ecs::AudioSystem>();
-	_coordinator.setSystemSignature<ecs::AudioSystem>(audio.signature(_coordinator));
+	auto& audio = _coordinator.registerSystem<engine::core::AudioSystem>();
+	_coordinator.setSystemSignature<engine::core::AudioSystem>(audio.signature(_coordinator));
 	audio.setMusic(std::string(SoundEventSystem::MUSIC), SoundEventSystem::MUSIC_VOLUME);
 }
 
@@ -59,14 +59,14 @@ void ClientWorld::update(network::GameClient& client, std::uint8_t buttons, floa
 	effects.update(_coordinator, network, deltaTime);
 }
 
-void ClientWorld::render(render::IGraphicsBackend& backend, float deltaTime)
+void ClientWorld::render(engine::render::IGraphicsBackend& backend, float deltaTime)
 {
-	_coordinator.getSystem<ecs::RenderSystem>().render(_coordinator, backend, deltaTime);
+	_coordinator.getSystem<engine::core::RenderSystem>().render(_coordinator, backend, deltaTime);
 }
 
-void ClientWorld::playAudio(audio::IAudioBackend& backend)
+void ClientWorld::playAudio(engine::audio::IAudioBackend& backend)
 {
-	_coordinator.getSystem<ecs::AudioSystem>().play(_coordinator, backend);
+	_coordinator.getSystem<engine::core::AudioSystem>().play(_coordinator, backend);
 }
 
 }

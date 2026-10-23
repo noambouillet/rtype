@@ -9,22 +9,22 @@
 
 #include <cstdint>
 
-#include "Components.hpp"
-#include "Coordinator.hpp"
+#include "engine/core/ecs/Components.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
 #include "server/ecs/GameComponents.hpp"
 
 namespace rtype::prefabs {
 
-bool canSpawnReplicated(ecs::Coordinator& coordinator);
-ecs::Entity createPlayer(ecs::Coordinator& coordinator, std::uint8_t playerId);
-ecs::Entity createPlayerProjectile(ecs::Coordinator& coordinator, std::uint8_t playerId, ecs::Position origin);
-ecs::Entity createEnemyProjectile(ecs::Coordinator& coordinator, ecs::Position origin, ecs::Velocity velocity);
-ecs::Entity createPatapata(ecs::Coordinator& coordinator, float baseY, float phase, float firstShot);
-ecs::Entity createBug(ecs::Coordinator& coordinator, float y, float firstShot);
-ecs::Entity createScantBeam(ecs::Coordinator& coordinator, ecs::Position origin);
-ecs::Entity createBink(ecs::Coordinator& coordinator, float firstShot);
-ecs::Entity createScant(ecs::Coordinator& coordinator, float y, float firstShot);
-ecs::Entity createFormation(ecs::Coordinator& coordinator, game::EnemyKind kind, float y, int count);
-ecs::Entity createWaveSpawner(ecs::Coordinator& coordinator);
+bool canSpawnReplicated(engine::core::Coordinator& coordinator);
+engine::core::Entity createPlayer(engine::core::Coordinator& coordinator, std::uint8_t playerId);
+engine::core::Entity createPlayerProjectile(engine::core::Coordinator& coordinator, std::uint8_t playerId, engine::core::Position origin);
+engine::core::Entity createEnemyProjectile(engine::core::Coordinator& coordinator, engine::core::Position origin, engine::core::Velocity velocity);
+engine::core::Entity createPatapata(engine::core::Coordinator& coordinator, float baseY, float phase, float firstShot);
+engine::core::Entity createBug(engine::core::Coordinator& coordinator, float y, float firstShot);
+engine::core::Entity createScantBeam(engine::core::Coordinator& coordinator, engine::core::Position origin);
+engine::core::Entity createBink(engine::core::Coordinator& coordinator, float firstShot);
+engine::core::Entity createScant(engine::core::Coordinator& coordinator, float y, float firstShot);
+engine::core::Entity createFormation(engine::core::Coordinator& coordinator, game::EnemyKind kind, float y, int count);
+engine::core::Entity createWaveSpawner(engine::core::Coordinator& coordinator);
 
 }

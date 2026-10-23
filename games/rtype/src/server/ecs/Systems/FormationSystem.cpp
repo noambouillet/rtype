@@ -9,7 +9,7 @@
 
 #include <numbers>
 
-#include "Components.hpp"
+#include "engine/core/ecs/Components.hpp"
 #include "server/ecs/GameComponents.hpp"
 #include "server/game/GameConfig.hpp"
 #include "server/game/Prefabs.hpp"
@@ -37,9 +37,9 @@ static float fireCooldown(game::EnemyKind kind)
 }
 
 /// Builds the signature the system needs (FormationSpawner).
-Signature FormationSystem::signature(Coordinator& coordinator)
+engine::core::Signature FormationSystem::signature(engine::core::Coordinator& coordinator)
 {
-	Signature sig;
+	engine::core::Signature sig;
 
 	sig.set(coordinator.getComponentType<FormationSpawner>());
 	return sig;
@@ -48,10 +48,10 @@ Signature FormationSystem::signature(Coordinator& coordinator)
 /// Spawns one enemy of the formation's kind every `delay` seconds; the spawner is destroyed once all are out.
 /// Bugs start at the same point and follow the path of the one before, Patapata get their own height within
 /// `spread` and a random phase, Binks walk on the ground.
-std::vector<Entity> FormationSystem::update(Coordinator& coordinator, float elapsedTime)
+std::vector<engine::core::Entity> FormationSystem::update(engine::core::Coordinator& coordinator, float elapsedTime)
 {
-	std::vector<Entity> spawned;
-	for (const Entity& e : entities) {
+	std::vector<engine::core::Entity> spawned;
+	for (const engine::core::Entity& e : entities) {
 		auto& formation = coordinator.getComponent<FormationSpawner>(e);
 
 		formation.timer -= elapsedTime;
@@ -76,8 +76,8 @@ std::vector<Entity> FormationSystem::update(Coordinator& coordinator, float elap
 			else
 				spawned.push_back(prefabs::createPatapata(coordinator, y, phase(_rng), firstShot(_rng)));
 		}
-		if (done && !coordinator.hasComponent<Destroy>(e))
-			coordinator.addComponent(e, Destroy{});
+		if (done && !coordinator.hasComponent<engine::core::Destroy>(e))
+			coordinator.addComponent(e, engine::core::Destroy{});
 	}
 	return spawned;
 }

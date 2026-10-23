@@ -15,11 +15,11 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "game_engine/Audio/AudioBackend.hpp"
+#include "engine/audio/AudioBackend.hpp"
 
 namespace rtype {
 
-class SoundPlayer : public audio::IAudioBackend {
+class SoundPlayer : public engine::audio::IAudioBackend {
 public:
 	SoundPlayer();
 	void playMusic(std::string_view name, float volume) override;

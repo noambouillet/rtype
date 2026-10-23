@@ -1,20 +1,20 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Render system
 */
 
-#include "RenderSystem.hpp"
+#include "engine/core/systems/RenderSystem.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <utility>
 #include <vector>
 
-#include "Components.hpp"
+#include "engine/core/ecs/Components.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 
 RenderSystem::RenderSystem() : _backgroundTexture{}, _backgroundSpeed(0.0F), _backgroundOffset(0.0F)
 {

@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Network transport interfaces
 */
@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-namespace rtype::network {
+namespace engine::net {
 
 struct Endpoint {
 	std::string address;

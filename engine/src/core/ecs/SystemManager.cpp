@@ -1,13 +1,13 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** SystemManager
 */
 
-#include "SystemManager.hpp"
+#include "engine/core/ecs/SystemManager.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 
 /// Removes the destroyed entity from all registered systems.
 void SystemManager::entityDestroyed(Entity entity)

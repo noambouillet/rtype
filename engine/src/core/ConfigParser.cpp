@@ -1,19 +1,19 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Generic key-value configuration file parser
 */
 
-#include "ConfigParser.hpp"
+#include "engine/core/ConfigParser.hpp"
 
 #include <filesystem>
 #include <fstream>
 #include <string_view>
 
-#include "utils/RTypeError.hpp"
+#include "engine/core/Error.hpp"
 
-namespace rtype::engine {
+namespace engine::core {
 
 static std::string_view trim(std::string_view value)
 {

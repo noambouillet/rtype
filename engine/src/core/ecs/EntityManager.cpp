@@ -1,15 +1,15 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** EntityManager
 */
 
-#include "EntityManager.hpp"
+#include "engine/core/ecs/EntityManager.hpp"
 
 #include <algorithm>
 
-namespace rtype::ecs {
+namespace engine::core {
 
 /// The capacity is clamped so no valid entity can ever equal the null entity.
 EntityManager::EntityManager(std::size_t maxEntities)

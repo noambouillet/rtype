@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Types
 */
@@ -10,7 +10,7 @@
 #include <bitset>
 #include <cstdint>
 
-namespace rtype::ecs {
+namespace engine::core {
 
 constexpr std::size_t MAX_COMPONENTS = 64;
 using ComponentType = std::uint8_t;

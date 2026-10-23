@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Generic key-value configuration file parser
 */
@@ -10,7 +10,7 @@
 #include <map>
 #include <string>
 
-namespace rtype::engine {
+namespace engine::core {
 
 class ConfigParser {
 public:

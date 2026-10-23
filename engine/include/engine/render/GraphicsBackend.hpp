@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Graphics backend interface
 */
@@ -9,7 +9,7 @@
 
 #include <string_view>
 
-namespace rtype::render {
+namespace engine::render {
 
 struct Point {
 	int x;

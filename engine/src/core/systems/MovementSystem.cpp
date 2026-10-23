@@ -1,13 +1,13 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** MovementSystem
 */
 
-#include "MovementSystem.hpp"
+#include "engine/core/systems/MovementSystem.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 
 /// Builds the signature the system needs (Position + Velocity).
 Signature MovementSystem::signature(Coordinator& coordinator)

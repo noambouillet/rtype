@@ -1,13 +1,13 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** ComponentManager
 */
 
-#include "ComponentManager.hpp"
+#include "engine/core/ecs/ComponentManager.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 ComponentManager::ComponentManager(std::size_t maxEntities) : _maxEntities(maxEntities), _nextType(0)
 {
 }

@@ -1,13 +1,13 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Generic engine settings
 */
 
-#include "EngineSettings.hpp"
+#include "engine/core/EngineSettings.hpp"
 
-namespace rtype::engine {
+namespace engine::core {
 
 void EngineSettings::loadFromMap(const std::map<std::string, std::string>& data)
 {

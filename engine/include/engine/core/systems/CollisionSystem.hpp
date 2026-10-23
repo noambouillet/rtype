@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** CollisionSystem
 */
@@ -9,11 +9,11 @@
 
 #include <vector>
 
-#include "Components.hpp"
-#include "Coordinator.hpp"
-#include "System.hpp"
+#include "engine/core/ecs/Components.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
+#include "engine/core/ecs/System.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 
 struct CollisionPair {
 	Entity a;

@@ -1,14 +1,14 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** System
 */
 
 #pragma once
-#include "Coordinator.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 /// Register a new system of type T and return a reference to it.
 template <typename T>
 T& Coordinator::registerSystem()

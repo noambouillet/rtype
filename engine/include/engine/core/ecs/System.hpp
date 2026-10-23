@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** System
 */
@@ -9,9 +9,9 @@
 
 #include <set>
 
-#include "Entity.hpp"
+#include "engine/core/ecs/Entity.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 
 class System {
 public:

@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Audio system
 */
@@ -9,11 +9,11 @@
 
 #include <string>
 
-#include "Coordinator.hpp"
-#include "System.hpp"
-#include "game_engine/Audio/AudioBackend.hpp"
+#include "engine/audio/AudioBackend.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
+#include "engine/core/ecs/System.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 
 class AudioSystem : public System {
 public:

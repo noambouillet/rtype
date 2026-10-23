@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Coordinator
 */
@@ -8,12 +8,12 @@
 #pragma once
 #include <cstddef>
 
-#include "ComponentManager.hpp"
-#include "Entity.hpp"
-#include "EntityManager.hpp"
-#include "SystemManager.hpp"
+#include "engine/core/ecs/ComponentManager.hpp"
+#include "engine/core/ecs/Entity.hpp"
+#include "engine/core/ecs/EntityManager.hpp"
+#include "engine/core/ecs/SystemManager.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 class Coordinator {
 public:
 	explicit Coordinator(std::size_t maxEntities = EntityManager::DEFAULT_MAX_ENTITIES);
@@ -49,5 +49,5 @@ private:
 };
 }
 
-#include "Component.tpp"
-#include "System.tpp"
+#include "engine/core/ecs/CoordinatorComponent.tpp"
+#include "engine/core/ecs/CoordinatorSystem.tpp"

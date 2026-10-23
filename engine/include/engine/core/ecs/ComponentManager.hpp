@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** ComponentManager
 */
@@ -13,9 +13,9 @@
 #include <typeindex>
 #include <unordered_map>
 
-#include "ComponentArray.hpp"
+#include "engine/core/ecs/ComponentArray.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 class ComponentManager {
 public:
 	explicit ComponentManager(std::size_t maxEntities);
@@ -43,4 +43,4 @@ private:
 	std::shared_ptr<ComponentArray<T>> getArray();
 };
 }
-#include "ComponentManager.tpp"
+#include "engine/core/ecs/ComponentManager.tpp"

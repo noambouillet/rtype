@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** EntityManager
 */
@@ -12,10 +12,10 @@
 #include <queue>
 #include <vector>
 
-#include "Entity.hpp"
-#include "Types.hpp"
+#include "engine/core/ecs/Entity.hpp"
+#include "engine/core/ecs/Types.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 
 class EntityManager {
 public:

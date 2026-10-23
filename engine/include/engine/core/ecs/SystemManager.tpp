@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** SystemManager
 */
@@ -9,7 +9,7 @@
 
 #include <cassert>
 
-namespace rtype::ecs {
+namespace engine::core {
 
 /// Registers a new system of type T. The SystemManager takes exclusive
 /// ownership of the system and returns a reference for the user to manipulate.

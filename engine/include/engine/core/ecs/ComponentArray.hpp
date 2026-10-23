@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** ComponentArray
 */
@@ -12,9 +12,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "IComponentArray.hpp"
+#include "engine/core/ecs/IComponentArray.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 template <typename T>
 class ComponentArray : public IComponentArray {
 public:
@@ -33,4 +33,4 @@ private:
 	std::vector<T> _data;
 };
 }
-#include "ComponentArray.tpp"
+#include "engine/core/ecs/ComponentArray.tpp"

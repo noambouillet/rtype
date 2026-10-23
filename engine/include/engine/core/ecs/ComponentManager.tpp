@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** ComponentManager
 */
@@ -8,9 +8,9 @@
 #pragma once
 #include <utility>
 
-#include "ComponentManager.hpp"
+#include "engine/core/ecs/ComponentManager.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 /// Register a new component type T and give it the next free ComponentType id.
 template <typename T>
 void ComponentManager::registerComponent()

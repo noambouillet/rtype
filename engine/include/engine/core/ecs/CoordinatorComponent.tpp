@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Component
 */
@@ -9,9 +9,9 @@
 #include <cassert>
 #include <utility>
 
-#include "Coordinator.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 /// Register a new component type T so it can be added to entities.
 template <typename T>
 void Coordinator::registerComponent()

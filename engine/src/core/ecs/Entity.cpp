@@ -1,13 +1,13 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Entity
 */
 
-#include "Entity.hpp"
+#include "engine/core/ecs/Entity.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 
 /// Builds the null entity, which never refers to a living entity.
 Entity::Entity() : _id(NULL_ID)

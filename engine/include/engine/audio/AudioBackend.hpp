@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Audio backend interface
 */
@@ -9,7 +9,7 @@
 
 #include <string_view>
 
-namespace rtype::audio {
+namespace engine::audio {
 
 class IAudioBackend {
 public:

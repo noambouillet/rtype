@@ -1,17 +1,17 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Coordinator
 */
 
-#include "Coordinator.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
 
 #include <stdexcept>
 
-#include "EcsError.hpp"
+#include "engine/core/Error.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 Coordinator::Coordinator(std::size_t maxEntities)
 	: _entitiesManager(maxEntities), _componentsManager(_entitiesManager.maxEntities())
 {

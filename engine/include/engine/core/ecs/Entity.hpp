@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Entity
 */
@@ -10,7 +10,7 @@
 #include <compare>
 #include <cstdint>
 
-namespace rtype::ecs {
+namespace engine::core {
 
 class Entity {
 public:

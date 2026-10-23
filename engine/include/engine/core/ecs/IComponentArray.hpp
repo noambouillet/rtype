@@ -1,19 +1,19 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** IComponentArray
 */
 
 #pragma once
-#include "Entity.hpp"
-#include "Types.hpp"
+#include "engine/core/ecs/Entity.hpp"
+#include "engine/core/ecs/Types.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 class IComponentArray {
 public:
 	IComponentArray() = default;
 	virtual ~IComponentArray() = default;
 	virtual void entityDestroyed(Entity e) = 0;
 };
-}  // namepsace rtype::ecs
+}

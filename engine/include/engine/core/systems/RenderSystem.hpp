@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Render system
 */
@@ -9,11 +9,11 @@
 
 #include <string>
 
-#include "Coordinator.hpp"
-#include "System.hpp"
-#include "game_engine/Graphics/GraphicsBackend.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
+#include "engine/core/ecs/System.hpp"
+#include "engine/render/GraphicsBackend.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 
 class RenderSystem : public System {
 public:

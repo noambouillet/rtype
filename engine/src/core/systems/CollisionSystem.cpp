@@ -1,15 +1,15 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** CollisionSystem
 */
 
-#include "CollisionSystem.hpp"
+#include "engine/core/systems/CollisionSystem.hpp"
 
 #include <iterator>
 
-namespace rtype::ecs {
+namespace engine::core {
 
 /// Builds the signature the system needs (Position + Collider).
 Signature CollisionSystem::signature(Coordinator& coordinator)

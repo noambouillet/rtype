@@ -1,18 +1,18 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** Audio system
 */
 
-#include "AudioSystem.hpp"
+#include "engine/core/systems/AudioSystem.hpp"
 
 #include <utility>
 #include <vector>
 
-#include "Components.hpp"
+#include "engine/core/ecs/Components.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 
 AudioSystem::AudioSystem() : _music{}, _musicVolume(0.0F), _musicStarted(false)
 {

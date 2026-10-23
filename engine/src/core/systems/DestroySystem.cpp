@@ -1,15 +1,15 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** DestroySystem
 */
 
-#include "DestroySystem.hpp"
+#include "engine/core/systems/DestroySystem.hpp"
 
 #include <vector>
 
-namespace rtype::ecs {
+namespace engine::core {
 
 /// Builds the signature the system needs (Destroy): the entities marked for removal.
 Signature DestroySystem::signature(Coordinator& coordinator)

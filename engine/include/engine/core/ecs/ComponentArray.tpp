@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** ComponentArray
 */
@@ -8,9 +8,9 @@
 #pragma once
 #include <utility>
 
-#include "ComponentArray.hpp"
+#include "engine/core/ecs/ComponentArray.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 template <typename T>
 ComponentArray<T>::ComponentArray(std::size_t maxEntities) : _sparse(maxEntities, NONE)
 {

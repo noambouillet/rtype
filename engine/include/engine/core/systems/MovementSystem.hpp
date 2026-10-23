@@ -1,17 +1,17 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** MovementSystem
 */
 
 #pragma once
 
-#include "Components.hpp"
-#include "Coordinator.hpp"
-#include "System.hpp"
+#include "engine/core/ecs/Components.hpp"
+#include "engine/core/ecs/Coordinator.hpp"
+#include "engine/core/ecs/System.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 
 class MovementSystem : public System {
 public:

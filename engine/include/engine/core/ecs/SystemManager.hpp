@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** SystemManager
 */
@@ -11,11 +11,11 @@
 #include <typeindex>
 #include <unordered_map>
 
-#include "Entity.hpp"
-#include "System.hpp"
-#include "Types.hpp"
+#include "engine/core/ecs/Entity.hpp"
+#include "engine/core/ecs/System.hpp"
+#include "engine/core/ecs/Types.hpp"
 
-namespace rtype::ecs {
+namespace engine::core {
 
 class SystemManager {
 public:
@@ -41,4 +41,4 @@ private:
 
 }
 
-#include "SystemManager.tpp"
+#include "engine/core/ecs/SystemManager.tpp"

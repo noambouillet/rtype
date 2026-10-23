@@ -48,10 +48,10 @@ Players with motor impairments often experience restricted fine motor control, r
 
 The input subsystem decouples hardware events from game actions:
 
-- **Configurable Key Map** (`src/client/SFML/KeyBindings.cpp`):
+- **Configurable Key Map** (`games/rtype/src/client/SFML/KeyBindings.cpp`):
   - Every gameplay action (`Up`, `Down`, `Left`, `Right`, `Fire`, `AutoFire`) can be mapped to any key in the `sf::Keyboard::Key` enum via `settings.cfg`.
   - The configuration parser supports natural key names (e.g., `Z`, `Q`, `S`, `D`, `Space`, `Enter`, `Escape`).
-- **Native Gamepad / Joystick Integration** (`src/client/SFML/Sfml.cpp`):
+- **Native Gamepad / Joystick Integration** (`games/rtype/src/client/SFML/Sfml.cpp`):
   - Standardized analog axis sampling with configurable deadzone filtering.
   - Configurable button indices for firing (`0`) and auto-fire toggling (`1`).
 - **Unified Hardware Polling** (`Sfml::buttons()`):
@@ -117,10 +117,10 @@ Horizontal space shooters feature high contrast, dense projectile patterns, and 
 
 Visual configuration is managed through the engine settings subsystem:
 
-- **Engine Configuration** (`src/game_engine/EngineSettings.cpp`):
+- **Engine Configuration** (`engine/src/core/EngineSettings.cpp`):
   - Reads `screen_flash = true|false` from `settings.cfg`.
   - Exposes `EngineSettings::screenFlashEnabled() const`.
-- **Render Interception in SFML Backend** (`src/client/SFML/Sfml.cpp`):
+- **Render Interception in SFML Backend** (`games/rtype/src/client/SFML/Sfml.cpp`):
   Inside `Sfml::drawSprite()`, the renderer verifies the flash setting before rasterizing explosive spritesheets:
   ```cpp
   if (!_engineSettings.screenFlashEnabled() && command.texture == sprites::EXPLOSION_SHEET) {

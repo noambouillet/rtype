@@ -86,7 +86,28 @@ For more details on server/client CLI parameters and runtime settings, refer to 
 
 ---
 
-## 3. Manual Build (Optional / Advanced)
+## 3. Building the Engine Alone (Standalone)
+
+To strictly enforce separation of concerns, the engine in `engine/` is a standalone CMake project with no dependency on the game. It can be built and installed on its own:
+
+```bash
+cmake -S engine -B build-engine -G Ninja
+cmake --build build-engine
+cmake --install build-engine --prefix install
+```
+
+A game can then consume it like any third-party package:
+
+```cmake
+find_package(Engine 0.1 CONFIG REQUIRED)
+target_link_libraries(my_game PRIVATE engine::core)
+```
+
+`games/rtype/CMakeLists.txt` follows this pattern: built from the repository root it uses the `engine::core` target from `add_subdirectory(engine)`. If built entirely standalone, it resolves via `find_package(Engine)` (by passing the install prefix in `CMAKE_PREFIX_PATH`).
+
+---
+
+## 4. Manual Build (Optional / Advanced)
 
 If you prefer to configure and build manually without using `build.sh` or `build.ps1`:
 

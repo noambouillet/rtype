@@ -43,30 +43,30 @@ r-type/
 │   ├── RFC.md                  # UDP network binary protocol specification
 │   ├── R-TYPE.md               # Original game design and assignment reference
 │   └── run_instructions.md     # Server/client execution and CLI arguments
-├── src/
-│   ├── client/                 # SFML graphical client and presentation systems
-│   │   ├── app/                # Client application lifecycle and CLI parsing
-│   │   ├── network/            # Asynchronous UDP client transport
-│   │   ├── SFML/               # SFML 3 graphics, audio backends, and keybindings
-│   │   └── view/               # Client view ECS, sprite catalog, and prediction
-│   ├── game/                   # Shared game types, button bitmasks, and constants
-│   ├── game_engine/            # Custom ECS core library (rtype_engine)
-│   │   ├── Audio/              # Abstract audio backend interface
-│   │   ├── Component/          # Sparse set ComponentArray and ComponentManager
-│   │   ├── Coordinator/        # ECS facade coordinating entities and managers
-│   │   ├── Entity/             # 32-bit generational Entity and EntityManager
-│   │   ├── Graphics/           # Abstract graphics backend interface
-│   │   └── System/             # SystemManager and core systems (movement, collision...)
-│   ├── server/                 # Authoritative headless game server (r-type_server)
-│   │   ├── ecs/                # Server gameplay systems (weapon, spawn, combat...)
-│   │   ├── game/               # Server GameWorld, tick loop, prefabs, and events
-│   │   └── network/            # Asynchronous UDP server transport and sessions
-│   └── utils/                  # Shared protocol encoders/decoders and logging
+├── engine/                     # Standalone engine project (find_package(Engine))
+│   ├── cmake/                  # EngineConfig.cmake.in package template
+│   ├── include/engine/         # Public headers
+│   │   ├── audio/              # Abstract audio backend interface
+│   │   ├── core/               # Errors, logger, config parser, engine settings
+│   │   │   ├── ecs/            # Entities, sparse set components, systems, Coordinator
+│   │   │   └── systems/        # Generic systems (movement, collision, render...)
+│   │   ├── net/                # Abstract client/server transport interfaces
+│   │   └── render/             # Abstract graphics backend interface
+│   ├── src/                    # Private engine implementation
+│   ├── CMakeLists.txt          # Engine build, install, and export rules (engine::core)
+│   └── vcpkg.json              # Engine-only dependencies
+├── games/
+│   └── rtype/                  # R-Type game, links engine::core like a third-party lib
+│       ├── src/client/         # SFML graphical client and presentation systems
+│       ├── src/game/           # Shared game types, button bitmasks, and constants
+│       ├── src/server/         # Authoritative headless game server (r-type_server)
+│       ├── src/utils/          # Shared protocol encoders/decoders and game errors
+│       └── CMakeLists.txt      # Game targets (r-type_server, r-type_client)
 ├── vcpkg/                      # Vcpkg package manager (Git submodule)
 ├── website/                    # Doxygen documentation website configuration
 ├── build.sh                    # Automated setup & build script (Linux / macOS)
 ├── build.ps1                   # Automated setup & build script (Windows PowerShell)
-├── CMakeLists.txt              # Root CMake build definition
+├── CMakeLists.txt              # Root build: adds engine/ and games/rtype/
 ├── mingw-toolchain.cmake       # MinGW cross-compilation toolchain file
 ├── settings.cfg                # Client runtime settings (keybinds, controller, flash)
 └── vcpkg.json                  # Manifest specifying external dependencies (Asio, SFML)

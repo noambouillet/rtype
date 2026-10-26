@@ -1,5 +1,6 @@
 add_library(engine_audio
     src/AudioSystem.cpp
+    src/sfml/SfmlAudio.cpp
 )
 add_library(engine::audio ALIAS engine_audio)
 

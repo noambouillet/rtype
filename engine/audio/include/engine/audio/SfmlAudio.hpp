@@ -1,39 +1,35 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
-** SFML audio playback
+** SFML audio backend
 */
 
 #pragma once
 
-#include <SFML/Audio.hpp>
 #include <filesystem>
-#include <list>
-#include <string>
+#include <memory>
 #include <string_view>
-#include <unordered_map>
-#include <unordered_set>
 
 #include "engine/audio/AudioBackend.hpp"
 
-namespace rtype {
+namespace engine::audio {
 
-class SoundPlayer : public engine::audio::IAudioBackend {
+class SfmlAudio : public IAudioBackend {
 public:
-	SoundPlayer();
+	explicit SfmlAudio(std::filesystem::path root);
+	~SfmlAudio() override;
+	SfmlAudio(const SfmlAudio&) = delete;
+	SfmlAudio& operator=(const SfmlAudio&) = delete;
+
 	void playMusic(std::string_view name, float volume) override;
 	void stopMusic() override;
 	void playSound(std::string_view name, float volume) override;
 
 private:
-	sf::SoundBuffer& loadBuffer(const std::string& name);
-
-	std::filesystem::path _root;
-	sf::Music _music;
-	std::unordered_map<std::string, sf::SoundBuffer> _buffers;
-	std::unordered_set<std::string> _missing;
-	std::list<sf::Sound> _playing;
+	// SFML types stay in the .cpp, so games never include SFML headers.
+	struct Implementation;
+	std::unique_ptr<Implementation> _implementation;
 };
 
 }

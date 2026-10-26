@@ -1,46 +1,66 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
-** SFML audio playback
+** SFML audio backend
 */
 
+#include "engine/audio/SfmlAudio.hpp"
+
+#include <SFML/Audio.hpp>
+#include <list>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
 
-#include "SoundPlayer.hpp"
-#include "utils/RTypeError.hpp"
+#include "engine/audio/AudioError.hpp"
 
-namespace rtype {
+namespace engine::audio {
 
-SoundPlayer::SoundPlayer() : _root("assets/sounds")
+struct SfmlAudio::Implementation {
+	std::filesystem::path root;
+	sf::Music music;
+	std::unordered_map<std::string, sf::SoundBuffer> buffers;
+	std::unordered_set<std::string> missing;
+	std::list<sf::Sound> playing;
+
+	sf::SoundBuffer& loadBuffer(const std::string& name);
+};
+
+/// Creates a backend that loads music and sounds from files under `root`.
+SfmlAudio::SfmlAudio(std::filesystem::path root) : _implementation(std::make_unique<Implementation>())
 {
+	_implementation->root = std::move(root);
 }
 
-/// Plays music in a loop, or keeps the game silent if the file cannot be opened.
-void SoundPlayer::playMusic(std::string_view name, float volume)
+SfmlAudio::~SfmlAudio() = default;
+
+/// Plays music in a loop, or stays silent if the file cannot be opened.
+void SfmlAudio::playMusic(std::string_view name, float volume)
 {
-	const std::filesystem::path musicPath = _root / std::filesystem::path(name).lexically_normal();
-	if (!_music.openFromFile(musicPath)) {
+	const std::filesystem::path musicPath = _implementation->root / std::filesystem::path(name).lexically_normal();
+	if (!_implementation->music.openFromFile(musicPath)) {
 		return;
 	}
-	_music.setLooping(true);
-	_music.setVolume(volume);
-	_music.play();
+	_implementation->music.setLooping(true);
+	_implementation->music.setVolume(volume);
+	_implementation->music.play();
 }
 
-void SoundPlayer::stopMusic()
+void SfmlAudio::stopMusic()
 {
-	_music.stop();
+	_implementation->music.stop();
 }
 
 /// Loads "name" into the cache or throws if the file cannot be read.
-sf::SoundBuffer& SoundPlayer::loadBuffer(const std::string& name)
+sf::SoundBuffer& SfmlAudio::Implementation::loadBuffer(const std::string& name)
 {
-	const auto [bufferEntry, wasInserted] = _buffers.try_emplace(name);
+	const auto [bufferEntry, wasInserted] = buffers.try_emplace(name);
 	if (wasInserted) {
-		const std::filesystem::path soundPath = _root / std::filesystem::path(name).lexically_normal();
+		const std::filesystem::path soundPath = root / std::filesystem::path(name).lexically_normal();
 		if (!bufferEntry->second.loadFromFile(soundPath)) {
-			_buffers.erase(bufferEntry);
+			buffers.erase(bufferEntry);
 			throw AudioError("Cannot load sound: " + soundPath.string());
 		}
 	}
@@ -48,19 +68,19 @@ sf::SoundBuffer& SoundPlayer::loadBuffer(const std::string& name)
 }
 
 /// Plays a cached sound once, or nothing if its file is missing.
-void SoundPlayer::playSound(std::string_view name, float volume)
+void SfmlAudio::playSound(std::string_view name, float volume)
 {
 	const std::string key(name);
-	if (_missing.contains(key)) {
+	if (_implementation->missing.contains(key)) {
 		return;
 	}
-	std::erase_if(_playing, [](const sf::Sound& sound) { return sound.getStatus() == sf::Sound::Status::Stopped; });
+	std::erase_if(_implementation->playing, [](const sf::Sound& sound) { return sound.getStatus() == sf::Sound::Status::Stopped; });
 	try {
-		sf::Sound& sound = _playing.emplace_back(loadBuffer(key));
+		sf::Sound& sound = _implementation->playing.emplace_back(_implementation->loadBuffer(key));
 		sound.setVolume(volume);
 		sound.play();
 	} catch (const AudioError&) {
-		_missing.insert(key);
+		_implementation->missing.insert(key);
 	}
 }
 

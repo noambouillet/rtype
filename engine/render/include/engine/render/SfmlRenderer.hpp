@@ -1,49 +1,54 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** SFML graphics backend
 */
 
 #pragma once
 
-#include <SFML/Graphics.hpp>
 #include <cstdint>
+#include <filesystem>
+#include <memory>
+#include <string>
 #include <string_view>
-#include <utility>
-#include <vector>
 
-#include "AssetManager.hpp"
-#include "KeyBindings.hpp"
-#include "engine/core/EngineSettings.hpp"
 #include "engine/render/GraphicsBackend.hpp"
 
-namespace rtype {
+namespace engine::render {
 
-class Sfml : public engine::render::IGraphicsBackend {
+struct WindowConfig {
+	std::uint32_t width = 1280;
+	std::uint32_t height = 720;
+	std::string title = "Engine";
+	std::uint32_t frameRateLimit = 60;
+	std::filesystem::path assetRoot = "assets";
+	// Drawn in place of any texture that cannot be loaded; must exist under assetRoot.
+	std::filesystem::path fallbackTexture = "magenta-checkerboard-200px.png";
+};
+
+class SfmlRenderer : public IGraphicsBackend {
 public:
-	explicit Sfml(AssetManager& assets);
+	explicit SfmlRenderer(const WindowConfig& config);
+	~SfmlRenderer() override;
+	SfmlRenderer(const SfmlRenderer&) = delete;
+	SfmlRenderer& operator=(const SfmlRenderer&) = delete;
+
 	bool isOpen() const;
+	bool hasFocus() const;
+	void close();
 	void handleEvent();
-	std::uint8_t buttons();
+	void preload(std::string_view texture);
+
 	void beginFrame() override;
 	void drawBackground(std::string_view texture, float offset) override;
-	void drawSprite(const engine::render::SpriteDraw& command) override;
+	void drawSprite(const SpriteDraw& command) override;
 	void endFrame() override;
 
 private:
-	std::uint8_t keyboardButtons();
-	std::uint8_t joystickButtons();
-
-	sf::RenderWindow _window;
-	AssetManager& _assets;
-	engine::core::EngineSettings _engineSettings;
-	KeyBindings _bindings;
-	std::vector<std::pair<sf::Keyboard::Key, ActionType>> _keyboardButtons;
-	std::uint32_t _joystickId;
-	bool _autoFireEnabled;
-	bool _autoFireKeyWasPressed;
-	bool _joystickAutoFireWasPressed;
+	// SFML types stay in the .cpp, so games never include SFML headers.
+	struct Implementation;
+	std::unique_ptr<Implementation> _implementation;
 };
 
 }

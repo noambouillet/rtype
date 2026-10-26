@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** SFML texture cache and spritesheet access
 */
@@ -10,14 +10,16 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
+#include <utility>
 
-#include "utils/RTypeError.hpp"
+#include "engine/render/GraphicsError.hpp"
 
-namespace rtype {
+namespace engine::render {
 
-AssetManager::AssetManager() : _root("assets")
+AssetManager::AssetManager(std::filesystem::path root, const std::filesystem::path& fallbackFile)
+	: _root(std::move(root)), _fallbackFile(fallbackFile.lexically_normal())
 {
-	const std::filesystem::path fallbackPath = _root / std::filesystem::path(FALLBACK_FILE);
+	const std::filesystem::path fallbackPath = _root / _fallbackFile;
 	if (!_fallbackTexture.loadFromFile(fallbackPath)) {
 		throw GraphicsError("Cannot load fallback asset: " + fallbackPath.string());
 	}
@@ -27,7 +29,7 @@ AssetManager::AssetManager() : _root("assets")
 void AssetManager::preload(std::string_view name)
 {
 	const std::filesystem::path key = std::filesystem::path(name).lexically_normal();
-	if (key == std::filesystem::path(FALLBACK_FILE)) {
+	if (key == _fallbackFile) {
 		return;
 	}
 	loadTexture(key);
@@ -59,7 +61,7 @@ sf::Texture& AssetManager::loadTexture(const std::filesystem::path& name)
 const sf::Texture& AssetManager::texture(std::string_view name)
 {
 	const std::filesystem::path key = std::filesystem::path(name).lexically_normal();
-	if (key == std::filesystem::path(FALLBACK_FILE) || _missing.contains(key)) {
+	if (key == _fallbackFile || _missing.contains(key)) {
 		return _fallbackTexture;
 	}
 	try {

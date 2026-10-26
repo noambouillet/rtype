@@ -10,6 +10,7 @@
 #include <algorithm>
 
 #include "engine/core/ecs/Components.hpp"
+#include "engine/physics/Components.hpp"
 #include "server/ecs/GameComponents.hpp"
 
 namespace rtype::ecs {
@@ -31,9 +32,9 @@ void OffscreenSystem::update(engine::core::Coordinator& coordinator, float world
 		auto& pos = coordinator.getComponent<engine::core::Position>(e);
 
 		if (coordinator.getComponent<Offscreen>(e).action == OffscreenAction::Block) {
-			engine::core::Collider box{};
-			if (coordinator.hasComponent<engine::core::Collider>(e))
-				box = coordinator.getComponent<engine::core::Collider>(e);
+			engine::physics::Collider box{};
+			if (coordinator.hasComponent<engine::physics::Collider>(e))
+				box = coordinator.getComponent<engine::physics::Collider>(e);
 			pos.x = std::clamp(pos.x, -box.offsetX, worldWidth - box.offsetX - box.width);
 			pos.y = std::clamp(pos.y, -box.offsetY, worldHeight - box.offsetY - box.height);
 			continue;

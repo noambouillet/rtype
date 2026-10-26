@@ -117,7 +117,7 @@ Horizontal space shooters feature high contrast, dense projectile patterns, and 
 
 Visual configuration is managed through the engine settings subsystem:
 
-- **Engine Configuration** (`engine/src/core/EngineSettings.cpp`):
+- **Engine Configuration** (`engine/core/src/EngineSettings.cpp`):
   - Reads `screen_flash = true|false` from `settings.cfg`.
   - Exposes `EngineSettings::screenFlashEnabled() const`.
 - **Render Interception in SFML Backend** (`games/rtype/src/client/SFML/Sfml.cpp`):

@@ -19,7 +19,7 @@ engine::core::Signature DamageSystem::signature(engine::core::Coordinator& coord
 }
 
 /// Applies `Damage` in both directions for every pair in `collisions`.
-std::vector<HealthChange> DamageSystem::update(engine::core::Coordinator& coordinator, const std::vector<engine::core::CollisionPair>& collisions)
+std::vector<HealthChange> DamageSystem::update(engine::core::Coordinator& coordinator, const std::vector<engine::physics::CollisionPair>& collisions)
 {
 	std::vector<HealthChange> changes;
 	for (const auto& [a, b] : collisions) {

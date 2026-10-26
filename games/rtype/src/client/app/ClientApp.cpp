@@ -8,6 +8,7 @@
 #include "ClientApp.hpp"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <csignal>
 #include <cstdint>
@@ -25,6 +26,7 @@
 #include "client/view/ClientWorld.hpp"
 #include "client/view/SpriteRegions.hpp"
 #include "engine/core/Logger.hpp"
+#include "engine/render/AssetManager.hpp"
 
 namespace rtype {
 
@@ -78,12 +80,14 @@ static void reportNotices(network::GameClient& client, engine::core::Logger& log
 
 /// Polls one frame and sends the current input state.
 static bool updateFrame(Sfml& window, SoundPlayer& audio, network::GameClient& client, rtype::client::ClientWorld& view,
-	engine::core::Logger& logger, network::ClientStatus& previous, std::chrono::steady_clock::time_point& lastFrame)
+	engine::core::Logger& logger, network::ClientStatus& previous, std::chrono::steady_clock::time_point& lastFrame,
+	engine::render::AssetManager& assets)
 {
 	window.handleEvent();
 	if (!window.isOpen()) {
 		return true;
 	}
+	assets.update(window);
 	const auto now = std::chrono::steady_clock::now();
 	const float deltaTime = std::clamp(std::chrono::duration<float>(now - lastFrame).count(), 0.0F, 0.1F);
 	lastFrame = now;
@@ -101,6 +105,35 @@ static bool updateFrame(Sfml& window, SoundPlayer& audio, network::GameClient& c
 	return true;
 }
 
+/// Resolves the path to the game manifest file.
+static std::string resolveClientManifestPath()
+{
+	const std::array<std::string, 3> candidates = {
+		"assets/manifest.json",
+		"games/rtype/assets/manifest.json",
+		"../assets/manifest.json"};
+	for (const auto& candidate : candidates) {
+		if (std::filesystem::exists(candidate)) {
+			return candidate;
+		}
+	}
+	return "assets/manifest.json";
+}
+
+/// Runs the main rendering and event loop for the client.
+static bool runClientLoop(Sfml& window, SoundPlayer& audio, network::GameClient& client,
+	rtype::client::ClientWorld& view, engine::core::Logger& logger, engine::render::AssetManager& assets)
+{
+	auto previous = client.status();
+	auto lastFrame = std::chrono::steady_clock::now();
+	while (running != 0 && window.isOpen()) {
+		if (!updateFrame(window, audio, client, view, logger, previous, lastFrame, assets)) {
+			return false;
+		}
+	}
+	return true;
+}
+
 /// Runs the graphical client until the window closes or a signal arrives.
 int runClient(const ClientOptions& options)
 {
@@ -108,28 +141,18 @@ int runClient(const ClientOptions& options)
 	std::signal(SIGTERM, stopClient);
 	auto logger = makeLogger(options.logFile);
 	logger->setVerbose(true);
-	AssetManager assets;
-	assets.preload(sprites::PLAYER_SHEET);
-	assets.preload(sprites::SHOT_SHEET);
-	assets.preload(sprites::ENEMY_SHEET);
-	assets.preload("background.png");
-	assets.preload(sprites::EXPLOSION_SHEET);
+	engine::render::AssetManager assets;
 	network::UdpClient transport(options.host, options.port);
 	network::GameClient client(transport);
 	Sfml window(assets);
+	assets.loadManifest(resolveClientManifestPath(), window);
 	SoundPlayer audio;
 	rtype::client::ClientWorld view;
-	auto previous = client.status();
-	auto lastFrame = std::chrono::steady_clock::now();
 	logger->info("Connecting to " + options.host + ':' + std::to_string(options.port));
-	while (running != 0 && window.isOpen()) {
-		if (!updateFrame(window, audio, client, view, *logger, previous, lastFrame)) {
-			return 1;
-		}
-	}
+	const bool success = runClientLoop(window, audio, client, view, *logger, assets);
 	client.disconnect();
 	logger->info("Disconnected");
-	return 0;
+	return success ? 0 : 1;
 }
 
 }

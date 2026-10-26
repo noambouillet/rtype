@@ -8,21 +8,29 @@
 #include "Sfml.hpp"
 
 #include <cmath>
+#include <filesystem>
+#include <iostream>
 #include <map>
 #include <string>
+#include <tuple>
 
 #include "client/GameConfig.hpp"
 #include "client/view/SpriteRegions.hpp"
 #include "engine/core/ConfigParser.hpp"
+#include "engine/core/Error.hpp"
+#include "engine/render/AssetManager.hpp"
 #include "game/GameTypes.hpp"
-#include "utils/RTypeError.hpp"
 
 namespace rtype {
 
 /// Initializes the SFML window, loads client settings, and prepares the keyboard button mapping.
-Sfml::Sfml(AssetManager& assets)
+Sfml::Sfml(engine::render::AssetManager& assets)
 	: _window(sf::VideoMode({client_config::WINDOW_WIDTH, client_config::WINDOW_HEIGHT}), "R-Type"),
 	  _assets(assets),
+	  _loadedTextures{},
+	  _pathToTextureId{},
+	  _nextTextureId(1),
+	  _fallbackTextureId(0),
 	  _joystickId(0),
 	  _autoFireEnabled(false),
 	  _autoFireKeyWasPressed(false),
@@ -52,6 +60,7 @@ Sfml::Sfml(AssetManager& assets)
 	_window.setFramerateLimit(60);
 }
 
+/// Checks whether the underlying SFML render window is open.
 bool Sfml::isOpen() const
 {
 	return _window.isOpen();
@@ -165,6 +174,45 @@ std::uint8_t Sfml::joystickButtons()
 	return value;
 }
 
+/// Resolves a texture iterator by identifier with fallback support.
+std::unordered_map<engine::render::TextureId, sf::Texture>::iterator Sfml::resolveTexture(
+	engine::render::TextureId textureId)
+{
+	auto textureIterator = _loadedTextures.find(textureId);
+	if (textureIterator != _loadedTextures.end()) {
+		return textureIterator;
+	}
+	textureIterator = _loadedTextures.find(_fallbackTextureId);
+	if (textureIterator != _loadedTextures.end()) {
+		return textureIterator;
+	}
+	return _loadedTextures.begin();
+}
+
+/// Loads a texture from file into the SFML texture cache and returns an ID.
+engine::render::TextureId Sfml::loadTextureFromFile(const std::string& filepath)
+{
+	const auto existingMapping = _pathToTextureId.find(filepath);
+	if (existingMapping != _pathToTextureId.end()) {
+		std::ignore = _loadedTextures[existingMapping->second].loadFromFile(std::filesystem::path(filepath));
+		return existingMapping->second;
+	}
+
+	sf::Texture loadedTexture;
+	if (!loadedTexture.loadFromFile(std::filesystem::path(filepath))) {
+		std::cerr << "Sfml error: Failed to load texture: " << filepath << "\n";
+		return 0;
+	}
+	const engine::render::TextureId assignedTextureId = _nextTextureId++;
+	_loadedTextures.emplace(assignedTextureId, std::move(loadedTexture));
+	_pathToTextureId.emplace(filepath, assignedTextureId);
+	if (_fallbackTextureId == 0 && filepath.find("magenta-checkerboard") != std::string::npos) {
+		_fallbackTextureId = assignedTextureId;
+	}
+	return assignedTextureId;
+}
+
+/// Clears the window for the upcoming frame.
 void Sfml::beginFrame()
 {
 	_window.clear(sf::Color::Black);
@@ -173,17 +221,23 @@ void Sfml::beginFrame()
 /// Draws the repeated background at the offset selected by the render system.
 void Sfml::drawBackground(std::string_view texture, float offset)
 {
-	_assets.setRepeated(texture, true);
-	const sf::Texture& image = _assets.texture(texture);
-	const sf::Vector2u size = _window.getSize();
-	if (size.x == 0 || size.y == 0 || image.getSize().x == 0) {
+	const engine::render::TextureId textureId = _assets.getTexture(std::string(texture));
+	const auto textureIterator = resolveTexture(textureId);
+	if (textureIterator == _loadedTextures.end()) {
 		return;
 	}
-	const float wrapped = std::fmod(offset, static_cast<float>(image.getSize().x));
-	const int left = static_cast<int>(wrapped);
-	sf::Sprite sprite(image, sf::IntRect({left, 0}, {static_cast<int>(size.x) + 1, static_cast<int>(size.y)}));
-	sprite.setPosition({-(wrapped - static_cast<float>(left)), 0.0F});
-	_window.draw(sprite);
+	textureIterator->second.setRepeated(true);
+	const sf::Texture& backgroundImage = textureIterator->second;
+	const sf::Vector2u windowSize = _window.getSize();
+	if (windowSize.x == 0 || windowSize.y == 0 || backgroundImage.getSize().x == 0) {
+		return;
+	}
+	const float wrappedOffset = std::fmod(offset, static_cast<float>(backgroundImage.getSize().x));
+	const int leftPosition = static_cast<int>(wrappedOffset);
+	sf::Sprite backgroundSprite(backgroundImage,
+		sf::IntRect({leftPosition, 0}, {static_cast<int>(windowSize.x) + 1, static_cast<int>(windowSize.y)}));
+	backgroundSprite.setPosition({-(wrappedOffset - static_cast<float>(leftPosition)), 0.0F});
+	_window.draw(backgroundSprite);
 }
 
 /// Translates a library independent sprite command into an SFML draw call.
@@ -192,15 +246,23 @@ void Sfml::drawSprite(const engine::render::SpriteDraw& command)
 	if (!_engineSettings.screenFlashEnabled() && command.texture == sprites::EXPLOSION_SHEET) {
 		return;
 	}
+	const engine::render::TextureId textureId = _assets.getTexture(std::string(command.texture));
+	const auto textureIterator = resolveTexture(textureId);
+	if (textureIterator == _loadedTextures.end()) {
+		return;
+	}
+	const sf::Texture& spriteTexture = textureIterator->second;
 	const engine::render::Rect& region = command.region;
-	sf::Sprite sprite = _assets.sprite(command.texture, sf::IntRect({region.position.x, region.position.y}, {region.size.x, region.size.y}));
-	sprite.setOrigin({command.originX, command.originY});
-	sprite.setScale({command.scale, command.scale});
-	sprite.setRotation(sf::degrees(command.rotation));
-	sprite.setPosition({command.x, command.y});
-	_window.draw(sprite);
+	sf::Sprite renderedSprite(spriteTexture,
+		sf::IntRect({region.position.x, region.position.y}, {region.size.x, region.size.y}));
+	renderedSprite.setOrigin({command.originX, command.originY});
+	renderedSprite.setScale({command.scale, command.scale});
+	renderedSprite.setRotation(sf::degrees(command.rotation));
+	renderedSprite.setPosition({command.x, command.y});
+	_window.draw(renderedSprite);
 }
 
+/// Displays the rendered frame onto the SFML window.
 void Sfml::endFrame()
 {
 	_window.display();

@@ -19,7 +19,7 @@ find_package(asio CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 find_package(SFML 3.0.2 EXACT COMPONENTS Graphics Window System Audio CONFIG REQUIRED)
 
-set(RTYPE_ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../assets" CACHE PATH "R-Type assets directory")
+set(RTYPE_ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets" CACHE PATH "R-Type assets directory")
 
 add_library(rtype_protocol src/utils/network/Protocol.cpp)
 target_include_directories(rtype_protocol PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -72,7 +72,6 @@ add_executable(r-type_client
     src/client/main.cpp
     src/client/app/ClientApp.cpp
     src/client/app/ClientOptions.cpp
-    src/client/SFML/AssetManager.cpp
     src/client/SFML/KeyBindings.cpp
     src/client/SFML/Sfml.cpp
     src/client/SFML/SoundPlayer.cpp

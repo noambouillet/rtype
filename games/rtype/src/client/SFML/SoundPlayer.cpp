@@ -13,7 +13,7 @@
 
 namespace rtype {
 
-SoundPlayer::SoundPlayer() : _root("assets/sounds")
+SoundPlayer::SoundPlayer() : _root("games/rtype/assets/sounds")
 {
 }
 

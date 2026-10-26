@@ -21,10 +21,11 @@
 #include "client/SFML/Sfml.hpp"
 #include "client/SFML/SoundPlayer.hpp"
 #include "client/network/GameClient.hpp"
-#include "client/network/UdpClient.hpp"
 #include "client/view/ClientWorld.hpp"
 #include "client/view/SpriteRegions.hpp"
 #include "engine/core/Logger.hpp"
+#include "engine/net/UdpClient.hpp"
+#include "utils/network/Protocol.hpp"
 
 namespace rtype {
 
@@ -114,7 +115,7 @@ int runClient(const ClientOptions& options)
 	assets.preload(sprites::ENEMY_SHEET);
 	assets.preload("background.png");
 	assets.preload(sprites::EXPLOSION_SHEET);
-	network::UdpClient transport(options.host, options.port);
+	engine::net::UdpClient transport(options.host, options.port, network::MAX_DATAGRAM_SIZE);
 	network::GameClient client(transport);
 	Sfml window(assets);
 	SoundPlayer audio;

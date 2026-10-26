@@ -150,11 +150,13 @@ cmake --install build-engine --prefix install
 A game can then consume it like any third-party package:
 
 ```cmake
-find_package(Engine 0.1 CONFIG REQUIRED)
-target_link_libraries(my_game PRIVATE engine::core)
+find_package(Engine 0.1 CONFIG REQUIRED COMPONENTS core physics net)
+target_link_libraries(my_game PRIVATE engine::core engine::physics engine::net)
 ```
 
-`games/rtype/CMakeLists.txt` follows this pattern: built from the repository root it uses the `engine::core` target from `add_subdirectory(engine)`, and built alone it calls `find_package(Engine)` (pass the install prefix in `CMAKE_PREFIX_PATH`).
+`games/rtype/CMakeLists.txt` follows this pattern: built from the repository root it uses the `engine::*` targets from `add_subdirectory(engine)`, and built alone it calls `find_package(Engine)` (pass the install prefix in `CMAKE_PREFIX_PATH`).
+
+The engine is split into modules selected with `ENGINE_BUILD_*` options, and the root build selects them with `RTYPE_BUILD_SERVER` / `RTYPE_BUILD_CLIENT`. See [Engine Modules](engine_modules.md).
 
 ---
 

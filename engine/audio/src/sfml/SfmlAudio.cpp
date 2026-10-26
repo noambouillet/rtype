@@ -5,10 +5,9 @@
 ** SFML audio playback
 */
 
-#include "SoundPlayer.hpp"
-
 #include <string>
 
+#include "SoundPlayer.hpp"
 #include "utils/RTypeError.hpp"
 
 namespace rtype {

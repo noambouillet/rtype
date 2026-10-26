@@ -5,12 +5,11 @@
 ** SFML graphics backend
 */
 
-#include "Sfml.hpp"
-
 #include <cmath>
 #include <map>
 #include <string>
 
+#include "Sfml.hpp"
 #include "client/GameConfig.hpp"
 #include "client/view/SpriteRegions.hpp"
 #include "engine/core/ConfigParser.hpp"

@@ -5,12 +5,12 @@
 ** SFML-specific client settings
 */
 
-#include "KeyBindings.hpp"
-
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
 #include <string>
+
+#include "KeyBindings.hpp"
 
 namespace rtype {
 

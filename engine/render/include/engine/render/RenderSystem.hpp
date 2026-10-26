@@ -13,14 +13,14 @@
 #include "engine/core/ecs/System.hpp"
 #include "engine/render/GraphicsBackend.hpp"
 
-namespace engine::core {
+namespace engine::render {
 
-class RenderSystem : public System {
+class RenderSystem : public core::System {
 public:
 	RenderSystem();
-	Signature signature(Coordinator& coordinator);
+	core::Signature signature(core::Coordinator& coordinator);
 	void setBackground(std::string texture, float speed);
-	void render(Coordinator& coordinator, render::IGraphicsBackend& backend, float deltaTime);
+	void render(core::Coordinator& coordinator, IGraphicsBackend& backend, float deltaTime);
 
 private:
 	std::string _backgroundTexture;

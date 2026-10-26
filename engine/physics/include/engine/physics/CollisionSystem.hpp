@@ -12,23 +12,24 @@
 #include "engine/core/ecs/Components.hpp"
 #include "engine/core/ecs/Coordinator.hpp"
 #include "engine/core/ecs/System.hpp"
+#include "engine/physics/Components.hpp"
 
-namespace engine::core {
+namespace engine::physics {
 
 struct CollisionPair {
-	Entity a;
-	Entity b;
+	core::Entity a;
+	core::Entity b;
 };
 
-class CollisionSystem : public System {
+class CollisionSystem : public core::System {
 public:
-	Signature signature(Coordinator& coordinator);
-	void update(Coordinator& coordinator);
+	core::Signature signature(core::Coordinator& coordinator);
+	void update(core::Coordinator& coordinator);
 	[[nodiscard]] const std::vector<CollisionPair>& collisions() const;
 
 private:
 	bool canCollide(const Collider& a, const Collider& b);
-	bool overlaps(const Position& posA, const Collider& colA, const Position& posB, const Collider& colB);
+	bool overlaps(const core::Position& posA, const Collider& colA, const core::Position& posB, const Collider& colB);
 	std::vector<CollisionPair> _collisions;
 };
 

@@ -5,32 +5,32 @@
 ** CollisionSystem
 */
 
-#include "engine/core/systems/CollisionSystem.hpp"
+#include "engine/physics/CollisionSystem.hpp"
 
 #include <iterator>
 
-namespace engine::core {
+namespace engine::physics {
 
 /// Builds the signature the system needs (Position + Collider).
-Signature CollisionSystem::signature(Coordinator& coordinator)
+core::Signature CollisionSystem::signature(core::Coordinator& coordinator)
 {
-	Signature sig;
+	core::Signature sig;
 
-	sig.set(coordinator.getComponentType<Position>());
+	sig.set(coordinator.getComponentType<core::Position>());
 	sig.set(coordinator.getComponentType<Collider>());
 	return sig;
 }
 
 /// Detects every pair of entities whose colliders overlap this frame.
-void CollisionSystem::update(Coordinator& coordinator)
+void CollisionSystem::update(core::Coordinator& coordinator)
 {
 	_collisions.clear();
 	for (auto a = entities.begin(); a != entities.end(); a++) {
-		const auto& posA = coordinator.getComponent<Position>(*a);
+		const auto& posA = coordinator.getComponent<core::Position>(*a);
 		const auto& colA = coordinator.getComponent<Collider>(*a);
 
 		for (auto b = std::next(a); b != entities.end(); b++) {
-			const auto& posB = coordinator.getComponent<Position>(*b);
+			const auto& posB = coordinator.getComponent<core::Position>(*b);
 			const auto& colB = coordinator.getComponent<Collider>(*b);
 
 			if (canCollide(colA, colB) && overlaps(posA, colA, posB, colB)) {
@@ -53,7 +53,7 @@ bool CollisionSystem::canCollide(const Collider& a, const Collider& b)
 }
 
 /// Tests whether two axis-aligned boxes overlap, offsets included.
-bool CollisionSystem::overlaps(const Position& posA, const Collider& colA, const Position& posB, const Collider& colB)
+bool CollisionSystem::overlaps(const core::Position& posA, const Collider& colA, const core::Position& posB, const Collider& colB)
 {
 	const float leftA = posA.x + colA.offsetX;
 	const float topA = posA.y + colA.offsetY;

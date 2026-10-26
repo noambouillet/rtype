@@ -5,7 +5,7 @@
 ** Render system
 */
 
-#include "engine/core/systems/RenderSystem.hpp"
+#include "engine/render/RenderSystem.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -13,8 +13,9 @@
 #include <vector>
 
 #include "engine/core/ecs/Components.hpp"
+#include "engine/render/Components.hpp"
 
-namespace engine::core {
+namespace engine::render {
 
 RenderSystem::RenderSystem() : _backgroundTexture{}, _backgroundSpeed(0.0F), _backgroundOffset(0.0F)
 {
@@ -28,30 +29,30 @@ void RenderSystem::setBackground(std::string texture, float speed)
 	_backgroundOffset = 0.0F;
 }
 
-Signature RenderSystem::signature(Coordinator& coordinator)
+core::Signature RenderSystem::signature(core::Coordinator& coordinator)
 {
-	Signature signature;
-	signature.set(coordinator.getComponentType<Position>());
+	core::Signature signature;
+	signature.set(coordinator.getComponentType<core::Position>());
 	signature.set(coordinator.getComponentType<Sprite>());
 	return signature;
 }
 
 /// Draws the scrolling background and every visual entity in layer order.
-void RenderSystem::render(Coordinator& coordinator, render::IGraphicsBackend& backend, float deltaTime)
+void RenderSystem::render(core::Coordinator& coordinator, IGraphicsBackend& backend, float deltaTime)
 {
 	_backgroundOffset += _backgroundSpeed * std::max(0.0F, deltaTime);
 	backend.beginFrame();
 	if (!_backgroundTexture.empty()) {
 		backend.drawBackground(_backgroundTexture, _backgroundOffset);
 	}
-	std::vector<Entity> ordered(entities.begin(), entities.end());
-	std::stable_sort(ordered.begin(), ordered.end(), [&coordinator](Entity left, Entity right) {
+	std::vector<core::Entity> ordered(entities.begin(), entities.end());
+	std::stable_sort(ordered.begin(), ordered.end(), [&coordinator](core::Entity left, core::Entity right) {
 		return coordinator.getComponent<Sprite>(left).layer < coordinator.getComponent<Sprite>(right).layer;
 	});
-	for (Entity entity : ordered) {
-		const Position& position = coordinator.getComponent<Position>(entity);
+	for (core::Entity entity : ordered) {
+		const core::Position& position = coordinator.getComponent<core::Position>(entity);
 		const Sprite& sprite = coordinator.getComponent<Sprite>(entity);
-		render::Rect region = sprite.region;
+		Rect region = sprite.region;
 		if (coordinator.hasComponent<Animation>(entity)) {
 			Animation& animation = coordinator.getComponent<Animation>(entity);
 			if (!animation.frames.empty() && animation.frameSeconds > 0.0F) {

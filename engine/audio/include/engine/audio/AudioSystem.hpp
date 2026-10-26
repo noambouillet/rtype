@@ -13,14 +13,14 @@
 #include "engine/core/ecs/Coordinator.hpp"
 #include "engine/core/ecs/System.hpp"
 
-namespace engine::core {
+namespace engine::audio {
 
-class AudioSystem : public System {
+class AudioSystem : public core::System {
 public:
 	AudioSystem();
-	Signature signature(Coordinator& coordinator);
+	core::Signature signature(core::Coordinator& coordinator);
 	void setMusic(std::string name, float volume);
-	void play(Coordinator& coordinator, audio::IAudioBackend& backend);
+	void play(core::Coordinator& coordinator, IAudioBackend& backend);
 
 private:
 	std::string _music;

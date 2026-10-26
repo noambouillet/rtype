@@ -8,7 +8,7 @@ endif()
 
 option(ENGINE_BUILD_RENDER "engine::render" ON)
 option(ENGINE_BUILD_AUDIO "engine::audio" ON)
-option(ENGINE_BUILD_INPUT "engine::input" ON)
+option(ENGINE_BUILD_INPUT "engine::input" OFF)
 option(ENGINE_BUILD_PHYSICS "engine::physics" ON)
 option(ENGINE_BUILD_NET "engine::net" ON)
 option(ENGINE_BUILD_SCRIPT "engine::script" OFF)

@@ -8,9 +8,10 @@
 #include "GameWorld.hpp"
 
 #include "engine/core/ecs/Components.hpp"
-#include "engine/core/systems/CollisionSystem.hpp"
 #include "engine/core/systems/DestroySystem.hpp"
 #include "engine/core/systems/MovementSystem.hpp"
+#include "engine/physics/CollisionSystem.hpp"
+#include "engine/physics/Components.hpp"
 #include "server/ecs/GameComponents.hpp"
 #include "server/ecs/Systems/DamageSystem.hpp"
 #include "server/ecs/Systems/EnemySpawnSystem.hpp"
@@ -49,7 +50,7 @@ void GameWorld::registerComponents()
 	_coordinator.registerComponent<ecs::Health>();
 	_coordinator.registerComponent<ecs::Damage>();
 	_coordinator.registerComponent<engine::core::Destroy>();
-	_coordinator.registerComponent<engine::core::Collider>();
+	_coordinator.registerComponent<engine::physics::Collider>();
 	_coordinator.registerComponent<ecs::Replicated>();
 	_coordinator.registerComponent<ecs::PlayerControl>();
 	_coordinator.registerComponent<ecs::Weapon>();
@@ -71,7 +72,7 @@ void GameWorld::registerSystems()
 	registerSystem<ecs::SineMotionSystem>(_coordinator);
 	registerSystem<ecs::HoverMotionSystem>(_coordinator);
 	registerSystem<engine::core::MovementSystem>(_coordinator);
-	registerSystem<engine::core::CollisionSystem>(_coordinator);
+	registerSystem<engine::physics::CollisionSystem>(_coordinator);
 	registerSystem<ecs::DamageSystem>(_coordinator);
 	registerSystem<ecs::HitSystem>(_coordinator);
 	registerSystem<ecs::OffscreenSystem>(_coordinator);
@@ -104,9 +105,9 @@ void GameWorld::runSystems(const Input& input, float deltaTime, WorldEventCollec
 	_coordinator.getSystem<ecs::SineMotionSystem>().update(_coordinator, deltaTime);
 	_coordinator.getSystem<ecs::HoverMotionSystem>().update(_coordinator, deltaTime);
 	_coordinator.getSystem<engine::core::MovementSystem>().update(_coordinator, deltaTime);
-	_coordinator.getSystem<engine::core::CollisionSystem>().update(_coordinator);
-	const std::vector<engine::core::CollisionPair>& collisions = _coordinator.getSystem<engine::core::CollisionSystem>().collisions();
-	const std::vector<engine::core::CollisionPair> accepted = _coordinator.getSystem<ecs::HitSystem>().update(_coordinator, collisions);
+	_coordinator.getSystem<engine::physics::CollisionSystem>().update(_coordinator);
+	const std::vector<engine::physics::CollisionPair>& collisions = _coordinator.getSystem<engine::physics::CollisionSystem>().collisions();
+	const std::vector<engine::physics::CollisionPair> accepted = _coordinator.getSystem<ecs::HitSystem>().update(_coordinator, collisions);
 	const std::vector<ecs::HealthChange> changes = _coordinator.getSystem<ecs::DamageSystem>().update(_coordinator, accepted);
 	for (const ecs::HealthChange& change : changes) {
 		if (change.remainingHealth > 0) {

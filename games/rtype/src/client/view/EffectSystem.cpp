@@ -15,6 +15,7 @@
 
 #include "client/view/SpriteRegions.hpp"
 #include "engine/core/ecs/Components.hpp"
+#include "engine/render/Components.hpp"
 #include "game/GameTypes.hpp"
 
 namespace rtype::client {
@@ -75,9 +76,9 @@ void EffectSystem::add(engine::core::Coordinator& coordinator, EffectKind kind, 
 	const engine::render::Rect first = art.frames.front();
 	const engine::core::Entity entity = coordinator.createEntity();
 	coordinator.addComponent(entity, position);
-	coordinator.addComponent(entity, engine::core::Sprite{std::string(art.texture), first,
+	coordinator.addComponent(entity, engine::render::Sprite{std::string(art.texture), first,
 										 static_cast<float>(first.size.x) / 2.0F, static_cast<float>(first.size.y) / 2.0F, 2.0F, 0.0F, 10});
-	coordinator.addComponent(entity, engine::core::Animation{{art.frames.begin(), art.frames.end()}, art.frameSeconds, 0.0F, false});
+	coordinator.addComponent(entity, engine::render::Animation{{art.frames.begin(), art.frames.end()}, art.frameSeconds, 0.0F, false});
 	coordinator.addComponent(entity, Effect{kind, art.frameSeconds * static_cast<float>(art.frames.size()), targetId, followPlayer});
 }
 

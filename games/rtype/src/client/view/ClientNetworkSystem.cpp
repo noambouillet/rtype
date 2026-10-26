@@ -14,6 +14,7 @@
 #include "client/view/ClientComponents.hpp"
 #include "client/view/SpriteCatalog.hpp"
 #include "engine/core/ecs/Components.hpp"
+#include "engine/render/Components.hpp"
 
 namespace rtype::client {
 
@@ -112,12 +113,12 @@ void ClientNetworkSystem::updateVisualEntity(engine::core::Coordinator& coordina
 	coordinator.getComponent<engine::core::Position>(visualEntity) = {serverEntity.x, serverEntity.y};
 	NetworkIdentity& identity = coordinator.getComponent<NetworkIdentity>(visualEntity);
 	if (identity.kind != serverEntity.entityType || identity.variant != serverEntity.spriteId) {
-		coordinator.getComponent<engine::core::Sprite>(visualEntity) = spriteFor(serverEntity.entityType, serverEntity.spriteId);
+		coordinator.getComponent<engine::render::Sprite>(visualEntity) = spriteFor(serverEntity.entityType, serverEntity.spriteId);
 		const auto animation = animationFor(serverEntity.entityType);
-		if (animation && !coordinator.hasComponent<engine::core::Animation>(visualEntity)) {
+		if (animation && !coordinator.hasComponent<engine::render::Animation>(visualEntity)) {
 			coordinator.addComponent(visualEntity, *animation);
-		} else if (!animation && coordinator.hasComponent<engine::core::Animation>(visualEntity)) {
-			coordinator.removeComponent<engine::core::Animation>(visualEntity);
+		} else if (!animation && coordinator.hasComponent<engine::render::Animation>(visualEntity)) {
+			coordinator.removeComponent<engine::render::Animation>(visualEntity);
 		}
 	}
 	identity = {serverEntity.entityId, serverEntity.entityType, serverEntity.ownerPlayerId, serverEntity.spriteId};

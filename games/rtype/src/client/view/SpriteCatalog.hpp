@@ -11,11 +11,12 @@
 #include <optional>
 
 #include "engine/core/ecs/Components.hpp"
+#include "engine/render/Components.hpp"
 #include "game/GameTypes.hpp"
 
 namespace rtype::client {
 
-engine::core::Sprite spriteFor(game::EntityType kind, std::uint8_t variant);
-std::optional<engine::core::Animation> animationFor(game::EntityType kind);
+engine::render::Sprite spriteFor(game::EntityType kind, std::uint8_t variant);
+std::optional<engine::render::Animation> animationFor(game::EntityType kind);
 
 }

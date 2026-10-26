@@ -10,15 +10,16 @@
 #include <cmath>
 
 #include "GameConfig.hpp"
+#include "engine/physics/Components.hpp"
 #include "server/ecs/GameComponents.hpp"
 #include "server/ecs/Systems/ReplicationSystem.hpp"
 
 namespace rtype::prefabs {
 
 /// Builds a box collider centred on the entity's position.
-static engine::core::Collider centredCollider(float width, float height, std::uint32_t tag, std::uint32_t mask)
+static engine::physics::Collider centredCollider(float width, float height, std::uint32_t tag, std::uint32_t mask)
 {
-	return engine::core::Collider{width, height, -width / 2.0F, -height / 2.0F, tag, mask};
+	return engine::physics::Collider{width, height, -width / 2.0F, -height / 2.0F, tag, mask};
 }
 
 /// Tells whether one more replicated entity still fits in a snapshot; the RFC delays spawns past 64.

@@ -7,9 +7,13 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
 #include <string_view>
 
 namespace engine::render {
+
+using TextureId = std::uint32_t;
 
 struct Point {
 	int x;
@@ -35,6 +39,8 @@ struct SpriteDraw {
 class IGraphicsBackend {
 public:
 	virtual ~IGraphicsBackend() = default;
+
+	virtual TextureId loadTextureFromFile(const std::string& filepath) = 0;
 	virtual void beginFrame() = 0;
 	virtual void drawBackground(std::string_view texture, float offset) = 0;
 	virtual void drawSprite(const SpriteDraw& sprite) = 0;

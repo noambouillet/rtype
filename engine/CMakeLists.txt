@@ -13,6 +13,8 @@ option(ENGINE_INSTALL "Generate the engine install and export rules" ${ENGINE_IS
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
+find_package(nlohmann_json CONFIG REQUIRED)
+
 add_library(engine_core
     src/core/ConfigParser.cpp
     src/core/EngineSettings.cpp
@@ -27,6 +29,7 @@ add_library(engine_core
     src/core/systems/DestroySystem.cpp
     src/core/systems/MovementSystem.cpp
     src/core/systems/RenderSystem.cpp
+    src/render/AssetManager.cpp
 )
 add_library(engine::core ALIAS engine_core)
 
@@ -39,6 +42,7 @@ target_include_directories(engine_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+target_link_libraries(engine_core PUBLIC nlohmann_json::nlohmann_json)
 
 if(MSVC)
     target_compile_options(engine_core PRIVATE /W4 $<$<BOOL:${ENGINE_WARNINGS_AS_ERRORS}>:/WX>)

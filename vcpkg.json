@@ -1,6 +1,10 @@
 {
   "name": "r-type",
   "version-string": "1.0.0",
-  "dependencies": ["asio", {"name": "sfml", "default-features": false, "features": ["graphics", "audio"]}],
+  "dependencies": [
+    "asio",
+    {"name": "sfml", "default-features": false, "features": ["graphics", "audio"]},
+    "nlohmann-json"
+  ],
   "builtin-baseline": "07f4812200df3d3c931c0c8a6081d3b21fe2bf9f"
 }

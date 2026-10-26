@@ -1,6 +1,25 @@
 {
   "name": "r-type",
   "version-string": "1.0.0",
-  "dependencies": ["asio", {"name": "sfml", "default-features": false, "features": ["graphics", "audio"]}],
-  "builtin-baseline": "07f4812200df3d3c931c0c8a6081d3b21fe2bf9f"
+  "builtin-baseline": "07f4812200df3d3c931c0c8a6081d3b21fe2bf9f",
+  "dependencies": [],
+  "default-features": ["client", "server"],
+  "features": {
+    "server": {
+      "description": "r-type_server: engine core, physics and net (no SFML)",
+      "dependencies": ["asio"]
+    },
+    "client": {
+      "description": "r-type_client: engine render, audio, input and net",
+      "dependencies": ["asio", {"name": "sfml", "default-features": false, "features": ["graphics", "audio", "window"]}]
+    },
+    "script": {
+      "description": "engine::script, Lua bindings",
+      "dependencies": ["lua", "sol2"]
+    },
+    "tools": {
+      "description": "engine::tools, console, profiler overlay and editor",
+      "dependencies": [{"name": "sfml", "default-features": false, "features": ["graphics", "window"]}]
+    }
+  }
 }

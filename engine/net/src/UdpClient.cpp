@@ -1,18 +1,19 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** UDP client transport implementation
 */
 
-#include "UdpClient.hpp"
+#include "engine/net/UdpClient.hpp"
 
-#include "utils/RTypeError.hpp"
+#include "engine/net/NetworkError.hpp"
 
-namespace rtype::network {
+namespace engine::net {
 
 /// Resolves the server and connects a UDP socket so only its packets are read.
-UdpClient::UdpClient(const std::string& host, std::uint16_t port) : _socket(_context), _receiveBuffer{}
+UdpClient::UdpClient(const std::string& host, std::uint16_t port, std::size_t maxDatagramSize)
+	: _socket(_context), _maxDatagramSize(maxDatagramSize), _receiveBuffer(maxDatagramSize + 1)
 {
 	connect(resolveServer(host, port));
 }
@@ -54,7 +55,7 @@ void UdpClient::connect(const asio::ip::udp::endpoint& endpoint)
 /// Sends a validated protocol packet to the connected server.
 void UdpClient::send(const std::vector<std::uint8_t>& bytes)
 {
-	if (bytes.empty() || bytes.size() > MAX_DATAGRAM_SIZE) {
+	if (bytes.empty() || bytes.size() > _maxDatagramSize) {
 		return;
 	}
 	asio::error_code error;

@@ -1,20 +1,19 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** UDP asynchronous handling
 */
 
-#include "UdpServer.hpp"
+#include "engine/net/UdpServer.hpp"
 
 #include <algorithm>
 #include <utility>
 
-#include "utils/network/Protocol.hpp"
+namespace engine::net {
 
-namespace rtype::network {
-
-UdpServer::UdpServer(std::uint16_t port) : _socket(_context, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)), _receiveBuffer{}, _queuedSends(0)
+UdpServer::UdpServer(std::uint16_t port, std::size_t maxDatagramSize)
+	: _socket(_context, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)), _receiveBuffer{}, _queuedSends(0), _maxDatagramSize(maxDatagramSize)
 {
 	receiveNext();
 	_thread = std::thread([this] { _context.run(); });
@@ -36,7 +35,7 @@ void UdpServer::receiveNext()
 			std::scoped_lock lock(_mutex);
 			if (_pending.size() < MAX_PENDING) {
 				// Keep one extra byte so the parser can reject oversized datagrams.
-				const auto storedSize = std::min(size, MAX_DATAGRAM_SIZE + 1);
+				const auto storedSize = std::min(size, _maxDatagramSize + 1);
 				_pending.push_back({{_sender.address().to_string(), _sender.port()},
 					{_receiveBuffer.begin(), _receiveBuffer.begin() + storedSize}});
 			}
@@ -48,10 +47,10 @@ void UdpServer::receiveNext()
 }
 
 /// Transfers all pending datagrams to the calling game thread.
-std::vector<engine::net::Datagram> UdpServer::receivePending()
+std::vector<Datagram> UdpServer::receivePending()
 {
 	std::scoped_lock lock(_mutex);
-	std::vector<engine::net::Datagram> result;
+	std::vector<Datagram> result;
 
 	result.reserve(_pending.size());
 	while (!_pending.empty()) {
@@ -62,7 +61,7 @@ std::vector<engine::net::Datagram> UdpServer::receivePending()
 }
 
 /// Schedules one datagram for transmission from the network thread.
-void UdpServer::send(const engine::net::Endpoint& recipient, std::vector<std::uint8_t> bytes)
+void UdpServer::send(const Endpoint& recipient, std::vector<std::uint8_t> bytes)
 {
 	if (bytes.empty()) {
 		return;

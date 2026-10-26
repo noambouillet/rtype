@@ -1,13 +1,12 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** UDP client transport
 */
 
 #pragma once
 
-#include <array>
 #include <asio.hpp>
 #include <cstddef>
 #include <cstdint>
@@ -15,11 +14,10 @@
 #include <vector>
 
 #include "engine/net/Transport.hpp"
-#include "utils/network/Protocol.hpp"
 
-namespace rtype::network {
+namespace engine::net {
 
-class UdpClient : public engine::net::IClientTransport {
+class UdpClient : public IClientTransport {
 private:
 	static constexpr std::size_t MAX_PENDING = 256;
 	asio::ip::udp::endpoint resolveServer(const std::string& host, std::uint16_t port);
@@ -27,10 +25,11 @@ private:
 
 	asio::io_context _context;
 	asio::ip::udp::socket _socket;
-	std::array<std::uint8_t, MAX_DATAGRAM_SIZE + 1> _receiveBuffer;
+	std::size_t _maxDatagramSize;
+	std::vector<std::uint8_t> _receiveBuffer;
 
 public:
-	UdpClient(const std::string& host, std::uint16_t port);
+	UdpClient(const std::string& host, std::uint16_t port, std::size_t maxDatagramSize);
 	void send(const std::vector<std::uint8_t>& bytes) override;
 	std::vector<std::vector<std::uint8_t>> receivePending() override;
 };

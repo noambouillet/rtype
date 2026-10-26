@@ -1,8 +1,8 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
-** UDP Server class definition
+** UDP server transport
 */
 
 #pragma once
@@ -18,9 +18,9 @@
 
 #include "engine/net/Transport.hpp"
 
-namespace rtype::network {
+namespace engine::net {
 
-class UdpServer : public engine::net::IServerTransport {
+class UdpServer : public IServerTransport {
 private:
 	static constexpr std::size_t MAX_PENDING = 256;
 	static constexpr std::size_t MAX_QUEUED_SENDS = 1024;
@@ -33,18 +33,19 @@ private:
 	asio::ip::udp::endpoint _sender;
 	std::array<std::uint8_t, MAX_UDP_DATAGRAM_SIZE> _receiveBuffer;
 	std::mutex _mutex;
-	std::deque<engine::net::Datagram> _pending;
+	std::deque<Datagram> _pending;
 	std::atomic<std::size_t> _queuedSends;
+	std::size_t _maxDatagramSize;
 	std::thread _thread;
 
 public:
-	explicit UdpServer(std::uint16_t port);
+	UdpServer(std::uint16_t port, std::size_t maxDatagramSize);
 	~UdpServer();
 	UdpServer(const UdpServer&) = delete;
 	UdpServer& operator=(const UdpServer&) = delete;
 
-	std::vector<engine::net::Datagram> receivePending() override;
-	void send(const engine::net::Endpoint& recipient, std::vector<std::uint8_t> bytes) override;
+	std::vector<Datagram> receivePending() override;
+	void send(const Endpoint& recipient, std::vector<std::uint8_t> bytes) override;
 };
 
 }

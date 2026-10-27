@@ -43,11 +43,13 @@ ClientWorld::ClientWorld(const engine::render::AssetManager& assets, bool screen
 	auto& render = _coordinator.registerSystem<engine::render::RenderSystem>();
 	_coordinator.setSystemSignature<engine::render::RenderSystem>(engine::render::RenderSystem::signature(_coordinator));
 	render.setBackground("background.png", 40.0F);
-	_coordinator.registerSystem<SoundEventSystem>();
+	auto& sounds = _coordinator.registerSystem<SoundEventSystem>();
+	sounds.setAssetManager(assets);
 	_coordinator.setSystemSignature<SoundEventSystem>(SoundEventSystem::signature(_coordinator));
 	auto& audio = _coordinator.registerSystem<engine::audio::AudioSystem>();
 	_coordinator.setSystemSignature<engine::audio::AudioSystem>(engine::audio::AudioSystem::signature(_coordinator));
-	audio.setMusic(std::string(SoundEventSystem::MUSIC), SoundEventSystem::MUSIC_VOLUME);
+	const std::string musicPath = assets.hasSound("music") ? assets.getSoundPath("music") : std::string(SoundEventSystem::MUSIC);
+	audio.setMusic(musicPath, SoundEventSystem::MUSIC_VOLUME);
 }
 
 /// Updates the network copy and temporary presentation state for one client frame.
@@ -61,7 +63,7 @@ void ClientWorld::update(float deltaTime, network::GameClient& client, std::uint
 	effects.consume(_coordinator, network, events, playerId);
 	sounds.consume(_coordinator, network, events, playerId);
 	if (effects.predictLocalFire(_coordinator, network, buttons, playerId)) {
-		rtype::client::SoundEventSystem::localFire(_coordinator);
+		sounds.localFire(_coordinator);
 	}
 	effects.update(_coordinator, network, deltaTime);
 }

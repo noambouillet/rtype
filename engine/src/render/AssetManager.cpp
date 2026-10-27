@@ -119,10 +119,9 @@ static void loadTexturesSection(const nlohmann::json& manifestJson, const std::f
 static Rect extractSpriteRect(const nlohmann::json& spriteData)
 {
 	Rect spriteRect{{0, 0}, {0, 0}};
-	if (!spriteData.contains("rect") || !spriteData["rect"].is_object()) {
-		return spriteRect;
-	}
-	const auto& rectData = spriteData["rect"];
+	const auto& rectData = (spriteData.contains("rect") && spriteData["rect"].is_object())
+							   ? spriteData["rect"]
+							   : spriteData;
 	spriteRect.position.x = rectData.value("x", 0);
 	spriteRect.position.y = rectData.value("y", 0);
 	spriteRect.size.x = rectData.contains("width") ? rectData["width"].get<int>() : rectData.value("w", 0);

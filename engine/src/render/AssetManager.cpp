@@ -188,6 +188,127 @@ static void loadSpritesSection(const nlohmann::json& manifestJson, TextureId fal
 	}
 }
 
+/// Iterates and registers all animation descriptors from the JSON object.
+static void loadAnimationsSection(const nlohmann::json& manifestJson, TextureId fallbackId,
+	const std::unordered_map<std::string, TextureId>& loadedTextures,
+	std::unordered_map<std::string, AnimationDescriptor>& loadedAnimations)
+{
+	if (!manifestJson.contains("animations") || !manifestJson["animations"].is_object()) {
+		return;
+	}
+	for (const auto& [animName, animData] : manifestJson["animations"].items()) {
+		if (!animData.is_object()) {
+			continue;
+		}
+		AnimationDescriptor anim{};
+		anim.name = animName;
+		anim.texture = resolveSpriteTexture(animName, animData, fallbackId, loadedTextures);
+		anim.frameSeconds = animData.value("frameSeconds", 0.1F);
+		anim.loop = animData.value("loop", false);
+		if (animData.contains("frames") && animData["frames"].is_array()) {
+			for (const auto& frameData : animData["frames"]) {
+				if (frameData.is_object()) {
+					anim.frames.push_back(extractSpriteRect(frameData));
+				}
+			}
+		}
+		loadedAnimations[animName] = std::move(anim);
+	}
+}
+
+/// Iterates and registers all sound filepaths from the JSON object.
+static void loadSoundsSection(const nlohmann::json& manifestJson, const std::filesystem::path& baseDirectory,
+	std::unordered_map<std::string, std::string>& soundPaths)
+{
+	if (!manifestJson.contains("sounds") || !manifestJson["sounds"].is_object()) {
+		return;
+	}
+	for (const auto& [soundKey, soundValue] : manifestJson["sounds"].items()) {
+		if (soundValue.is_string()) {
+			const std::filesystem::path resolved = resolveAssetPath(baseDirectory, soundValue.get<std::string>());
+			soundPaths[soundKey] = resolved.string();
+		}
+	}
+}
+
+/// Iterates and registers preload groups from the JSON object.
+static void loadGroupsSection(const nlohmann::json& manifestJson,
+	std::unordered_map<std::string, ManifestGroup>& groups)
+{
+	if (!manifestJson.contains("groups") || !manifestJson["groups"].is_object()) {
+		return;
+	}
+	for (const auto& [groupKey, groupVal] : manifestJson["groups"].items()) {
+		if (!groupVal.is_object()) {
+			continue;
+		}
+		ManifestGroup group{};
+		if (groupVal.contains("textures") && groupVal["textures"].is_array()) {
+			for (const auto& item : groupVal["textures"]) {
+				if (item.is_string()) {
+					group.textures.push_back(item.get<std::string>());
+				}
+			}
+		}
+		if (groupVal.contains("sounds") && groupVal["sounds"].is_array()) {
+			for (const auto& item : groupVal["sounds"]) {
+				if (item.is_string()) {
+					group.sounds.push_back(item.get<std::string>());
+				}
+			}
+		}
+		groups[groupKey] = std::move(group);
+	}
+}
+
+/// Helper that registers a single tag for a given key, resolving texture IDs and aliases.
+static void registerSingleTag(const std::string& key, const std::string& tagName,
+	const nlohmann::json& manifestJson,
+	std::unordered_map<std::string, std::unordered_set<std::string>>& assetTags,
+	const std::unordered_map<std::string, TextureId>& loadedTextures,
+	std::unordered_map<TextureId, std::unordered_set<std::string>>& textureTags)
+{
+	assetTags[key].insert(tagName);
+
+	const auto textureIterator = loadedTextures.find(key);
+	if (textureIterator != loadedTextures.end()) {
+		textureTags[textureIterator->second].insert(tagName);
+	}
+
+	if (manifestJson.contains("textures") && manifestJson["textures"].is_object() &&
+		manifestJson["textures"].contains(key) && manifestJson["textures"][key].is_string()) {
+		const std::string fileName = manifestJson["textures"][key].get<std::string>();
+		assetTags[fileName].insert(tagName);
+
+		const auto fileIterator = loadedTextures.find(fileName);
+		if (fileIterator != loadedTextures.end()) {
+			textureTags[fileIterator->second].insert(tagName);
+		}
+	}
+}
+
+/// Iterates and registers tags from the JSON object.
+static void loadTagsSection(const nlohmann::json& manifestJson,
+	std::unordered_map<std::string, std::unordered_set<std::string>>& assetTags,
+	const std::unordered_map<std::string, TextureId>& loadedTextures,
+	std::unordered_map<TextureId, std::unordered_set<std::string>>& textureTags)
+{
+	if (!manifestJson.contains("tags") || !manifestJson["tags"].is_object()) {
+		return;
+	}
+
+	for (const auto& [tagName, tagItems] : manifestJson["tags"].items()) {
+		if (!tagItems.is_array()) {
+			continue;
+		}
+		for (const auto& item : tagItems) {
+			if (item.is_string()) {
+				registerSingleTag(item.get<std::string>(), tagName, manifestJson, assetTags, loadedTextures, textureTags);
+			}
+		}
+	}
+}
+
 /// Parses the JSON manifest file to register all textures and sprites.
 void AssetManager::loadManifest(const std::string& path, IGraphicsBackend& graphics)
 {
@@ -202,14 +323,55 @@ void AssetManager::loadManifest(const std::string& path, IGraphicsBackend& graph
 	_manifestPath = manifestPath.string();
 	std::error_code errorCode;
 	_lastWriteTime = std::filesystem::last_write_time(manifestPath, errorCode);
-	const std::filesystem::path baseDirectory = manifestPath.parent_path();
+	_baseDirectory = manifestPath.parent_path();
 
-	_fallbackTexture = loadFallbackTexture(manifestJson, baseDirectory, graphics);
+	_fallbackTexture = loadFallbackTexture(manifestJson, _baseDirectory, graphics);
 	_fallbackSprite = SpriteDescriptor{_fallbackTexture, Rect{{0, 0}, {0, 0}}, 0.0F, 0.0F};
+	_fallbackAnimation = AnimationDescriptor{"fallback", _fallbackTexture, {}, 0.0F, false};
+
+	_sprites.clear();
+	_textures.clear();
+	_animations.clear();
+	_soundPaths.clear();
+	_groups.clear();
+	_assetTags.clear();
+	_textureTags.clear();
 	_textures[std::string(DEFAULT_FALLBACK_FILE)] = _fallbackTexture;
 
-	loadTexturesSection(manifestJson, baseDirectory, graphics, _fallbackTexture, _textures);
+	loadTexturesSection(manifestJson, _baseDirectory, graphics, _fallbackTexture, _textures);
 	loadSpritesSection(manifestJson, _fallbackTexture, _textures, _sprites);
+	loadAnimationsSection(manifestJson, _fallbackTexture, _textures, _animations);
+	loadSoundsSection(manifestJson, _baseDirectory, _soundPaths);
+	loadGroupsSection(manifestJson, _groups);
+	loadTagsSection(manifestJson, _assetTags, _textures, _textureTags);
+}
+
+/// Preloads assets belonging to a specified group.
+void AssetManager::preload(const std::string& group, IGraphicsBackend& graphics)
+{
+	const auto groupIt = _groups.find(group);
+	if (groupIt == _groups.end()) {
+		return;
+	}
+
+	for (const auto& texKey : groupIt->second.textures) {
+		if (_textures.find(texKey) == _textures.end()) {
+			const std::filesystem::path resolved = resolveAssetPath(_baseDirectory, texKey);
+			const TextureId id = graphics.loadTextureFromFile(resolved.string());
+			if (id != 0) {
+				_textures[texKey] = id;
+			} else {
+				std::cerr << "AssetManager warning: Preload failed for texture '" << texKey << "'\n";
+			}
+		}
+	}
+
+	for (const auto& soundKey : groupIt->second.sounds) {
+		if (_soundPaths.find(soundKey) == _soundPaths.end()) {
+			const std::filesystem::path resolved = resolveAssetPath(_baseDirectory, soundKey);
+			_soundPaths[soundKey] = resolved.string();
+		}
+	}
 }
 
 /// Retrieves a sprite descriptor or logs a warning and returns the fallback sprite.
@@ -219,19 +381,41 @@ const SpriteDescriptor& AssetManager::getSprite(const std::string& name) const
 	if (spriteIterator != _sprites.end()) {
 		return spriteIterator->second;
 	}
-	std::cerr << "AssetManager warning: Requested sprite '" << name << "' is missing, returning fallback ID\n";
+	std::cerr << "AssetManager warning: Requested sprite '" << name << "' is missing, returning fallback\n";
 	return _fallbackSprite;
 }
 
-/// Retrieves a texture ID or logs a warning and returns the fallback texture ID.
+/// Retrieves a texture identifier by its key name.
 TextureId AssetManager::getTexture(const std::string& name) const
 {
 	const auto textureIterator = _textures.find(name);
 	if (textureIterator != _textures.end()) {
 		return textureIterator->second;
 	}
-	std::cerr << "AssetManager warning: Requested texture '" << name << "' is missing, returning fallback ID\n";
+	std::cerr << "AssetManager warning: Requested texture '" << name << "' is missing, returning fallback\n";
 	return _fallbackTexture;
+}
+
+/// Retrieves an animation descriptor or logs a warning and returns the fallback animation.
+const AnimationDescriptor& AssetManager::getAnimation(const std::string& name) const
+{
+	const auto animIterator = _animations.find(name);
+	if (animIterator != _animations.end()) {
+		return animIterator->second;
+	}
+	std::cerr << "AssetManager warning: Requested animation '" << name << "' is missing, returning fallback\n";
+	return _fallbackAnimation;
+}
+
+/// Retrieves a resolved sound file path by name.
+const std::string& AssetManager::getSoundPath(const std::string& name) const
+{
+	const auto soundIterator = _soundPaths.find(name);
+	if (soundIterator != _soundPaths.end()) {
+		return soundIterator->second;
+	}
+	static const std::string EMPTY_PATH;
+	return EMPTY_PATH;
 }
 
 /// Hot-reloads the manifest file if its modification timestamp has changed.
@@ -265,6 +449,42 @@ bool AssetManager::hasSprite(const std::string& name) const
 	return _sprites.find(name) != _sprites.end();
 }
 
+/// Checks whether an animation exists by name.
+bool AssetManager::hasAnimation(const std::string& name) const
+{
+	return _animations.find(name) != _animations.end();
+}
+
+/// Checks whether a sound exists by name.
+bool AssetManager::hasSound(const std::string& name) const
+{
+	return _soundPaths.find(name) != _soundPaths.end();
+}
+
+/// Checks whether an asset key or its associated texture has the specified tag.
+bool AssetManager::hasTag(const std::string& key, const std::string& tag) const
+{
+	const auto tagIt = _assetTags.find(key);
+	if (tagIt != _assetTags.end() && tagIt->second.contains(tag)) {
+		return true;
+	}
+	const auto spriteIt = _sprites.find(key);
+	if (spriteIt != _sprites.end()) {
+		return hasTag(spriteIt->second.texture, tag);
+	}
+	return false;
+}
+
+/// Checks whether a texture identifier has the specified tag.
+bool AssetManager::hasTag(TextureId id, const std::string& tag) const
+{
+	const auto tagIt = _textureTags.find(id);
+	if (tagIt != _textureTags.end() && tagIt->second.contains(tag)) {
+		return true;
+	}
+	return false;
+}
+
 /// Returns the identifier of the fallback texture.
 TextureId AssetManager::fallbackTexture() const
 {
@@ -275,6 +495,12 @@ TextureId AssetManager::fallbackTexture() const
 const SpriteDescriptor& AssetManager::fallbackSprite() const
 {
 	return _fallbackSprite;
+}
+
+/// Returns the descriptor of the fallback animation.
+const AnimationDescriptor& AssetManager::fallbackAnimation() const
+{
+	return _fallbackAnimation;
 }
 
 }

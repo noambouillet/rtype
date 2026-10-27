@@ -1,16 +1,8 @@
 {
   "fallback": "magenta-checkerboard-200px.png",
   "textures": {
-    "magenta-checkerboard-200px.png": "magenta-checkerboard-200px.png",
-    "background.png": "background.png",
-    "r-typesheet1.gif": "r-typesheet1.gif",
-    "r-typesheet5.gif": "r-typesheet5.gif",
-    "r-typesheet7.gif": "r-typesheet7.gif",
-    "r-typesheet8.gif": "r-typesheet8.gif",
-    "r-typesheet9.gif": "r-typesheet9.gif",
-    "r-typesheet42.gif": "r-typesheet42.gif",
-    "r-typesheet43.gif": "r-typesheet43.gif",
-    "r-typesheet44.gif": "r-typesheet44.gif",
+    "checkerboard": "magenta-checkerboard-200px.png",
+    "background": "background.png",
     "player_sheet": "r-typesheet42.gif",
     "enemy_sheet": "r-typesheet5.gif",
     "bink_sheet": "r-typesheet7.gif",
@@ -20,348 +12,189 @@
     "enemy_shot_sheet": "r-typesheet43.gif",
     "explosion_sheet": "r-typesheet44.gif"
   },
+  "tags": {
+    "screen_flash": [
+      "explosion_sheet"
+    ]
+  },
   "sprites": {
     "player_ship_0": {
-      "texture": "r-typesheet42.gif",
+      "texture": "player_sheet",
       "rect": { "x": 1, "y": 69, "width": 32, "height": 16 },
       "originX": 16.0,
       "originY": 8.0
     },
     "player_ship_1": {
-      "texture": "r-typesheet42.gif",
+      "texture": "player_sheet",
       "rect": { "x": 1, "y": 52, "width": 32, "height": 16 },
       "originX": 16.0,
       "originY": 8.0
     },
     "player_ship_2": {
-      "texture": "r-typesheet42.gif",
+      "texture": "player_sheet",
       "rect": { "x": 1, "y": 35, "width": 32, "height": 16 },
       "originX": 16.0,
       "originY": 8.0
     },
     "player_ship_3": {
-      "texture": "r-typesheet42.gif",
-      "rect": { "x": 1, "y": 18, "width": 32, "height": 16 },
-      "originX": 16.0,
-      "originY": 8.0
-    },
-    "player_blue": {
-      "texture": "r-typesheet42.gif",
-      "rect": { "x": 1, "y": 69, "width": 32, "height": 16 },
-      "originX": 16.0,
-      "originY": 8.0
-    },
-    "player_red": {
-      "texture": "r-typesheet42.gif",
-      "rect": { "x": 1, "y": 52, "width": 32, "height": 16 },
-      "originX": 16.0,
-      "originY": 8.0
-    },
-    "player_green": {
-      "texture": "r-typesheet42.gif",
-      "rect": { "x": 1, "y": 35, "width": 32, "height": 16 },
-      "originX": 16.0,
-      "originY": 8.0
-    },
-    "player_magenta": {
-      "texture": "r-typesheet42.gif",
+      "texture": "player_sheet",
       "rect": { "x": 1, "y": 18, "width": 32, "height": 16 },
       "originX": 16.0,
       "originY": 8.0
     },
     "enemy_patapata": {
-      "texture": "r-typesheet5.gif",
+      "texture": "enemy_sheet",
       "rect": { "x": 0, "y": 0, "width": 33, "height": 36 },
       "originX": 16.5,
       "originY": 18.0
     },
     "enemy_bug": {
-      "texture": "r-typesheet8.gif",
+      "texture": "bug_sheet",
       "rect": { "x": 0, "y": 0, "width": 33, "height": 34 },
       "originX": 16.5,
       "originY": 17.0
     },
     "enemy_scant": {
-      "texture": "r-typesheet9.gif",
+      "texture": "scant_sheet",
       "rect": { "x": 52, "y": 3, "width": 56, "height": 54 },
       "originX": 28.0,
       "originY": 27.0
     },
     "scant_beam": {
-      "texture": "r-typesheet9.gif",
+      "texture": "scant_sheet",
       "rect": { "x": 36, "y": 59, "width": 54, "height": 16 },
       "originX": 27.0,
       "originY": 8.0
     },
     "enemy_bink": {
-      "texture": "r-typesheet7.gif",
+      "texture": "bink_sheet",
       "rect": { "x": 1, "y": 4, "width": 32, "height": 29 },
       "originX": 16.0,
       "originY": 14.5
     },
     "enemy_shot": {
-      "texture": "r-typesheet43.gif",
+      "texture": "enemy_shot_sheet",
       "rect": { "x": 136, "y": 6, "width": 7, "height": 6 },
       "originX": 3.5,
       "originY": 3.0
     },
-    "player_shot_0": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 232, "y": 103, "width": 16, "height": 12 },
-      "originX": 8.0,
-      "originY": 6.0
-    },
-    "player_shot_1": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 249, "y": 103, "width": 16, "height": 12 },
-      "originX": 8.0,
-      "originY": 6.0
-    },
-    "player_shot_2": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 267, "y": 103, "width": 16, "height": 12 },
-      "originX": 8.0,
-      "originY": 6.0
-    },
-    "player_shot_3": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 284, "y": 103, "width": 16, "height": 12 },
-      "originX": 8.0,
-      "originY": 6.0
-    },
     "player_shot": {
-      "texture": "r-typesheet1.gif",
+      "texture": "shot_sheet",
       "rect": { "x": 232, "y": 103, "width": 16, "height": 12 },
       "originX": 8.0,
       "originY": 6.0
+    }
+  },
+  "animations": {
+    "player_shot": {
+      "texture": "shot_sheet",
+      "frameSeconds": 0.08,
+      "loop": true,
+      "frames": [
+        { "x": 232, "y": 103, "width": 16, "height": 12 },
+        { "x": 249, "y": 103, "width": 16, "height": 12 },
+        { "x": 267, "y": 103, "width": 16, "height": 12 },
+        { "x": 284, "y": 103, "width": 16, "height": 12 }
+      ]
     },
-    "shot_burst_0": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 199, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
+    "shot_burst": {
+      "texture": "shot_sheet",
+      "frameSeconds": 0.055,
+      "loop": false,
+      "frames": [
+        { "x": 199, "y": 83, "width": 16, "height": 16 },
+        { "x": 215, "y": 83, "width": 16, "height": 16 },
+        { "x": 231, "y": 83, "width": 16, "height": 16 },
+        { "x": 247, "y": 83, "width": 16, "height": 16 },
+        { "x": 263, "y": 83, "width": 16, "height": 16 },
+        { "x": 279, "y": 83, "width": 16, "height": 16 },
+        { "x": 295, "y": 83, "width": 16, "height": 16 },
+        { "x": 311, "y": 83, "width": 16, "height": 16 },
+        { "x": 327, "y": 83, "width": 16, "height": 16 }
+      ]
     },
-    "shot_burst_1": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 215, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
+    "hit_spark": {
+      "texture": "shot_sheet",
+      "frameSeconds": 0.04,
+      "loop": false,
+      "frames": [
+        { "x": 215, "y": 83, "width": 16, "height": 16 },
+        { "x": 231, "y": 83, "width": 16, "height": 16 },
+        { "x": 247, "y": 83, "width": 16, "height": 16 },
+        { "x": 263, "y": 83, "width": 16, "height": 16 },
+        { "x": 279, "y": 83, "width": 16, "height": 16 },
+        { "x": 295, "y": 83, "width": 16, "height": 16 },
+        { "x": 311, "y": 83, "width": 16, "height": 16 }
+      ]
     },
-    "shot_burst_2": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 231, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
+    "mob_explosion": {
+      "texture": "explosion_sheet",
+      "frameSeconds": 0.025,
+      "loop": false,
+      "frames": [
+        { "x": 129, "y": 0, "width": 33, "height": 33 },
+        { "x": 162, "y": 0, "width": 33, "height": 33 },
+        { "x": 195, "y": 0, "width": 33, "height": 33 },
+        { "x": 228, "y": 0, "width": 33, "height": 33 },
+        { "x": 261, "y": 0, "width": 33, "height": 33 },
+        { "x": 294, "y": 0, "width": 33, "height": 33 },
+        { "x": 327, "y": 0, "width": 33, "height": 33 },
+        { "x": 360, "y": 0, "width": 33, "height": 33 },
+        { "x": 393, "y": 0, "width": 33, "height": 33 },
+        { "x": 426, "y": 0, "width": 33, "height": 33 },
+        { "x": 459, "y": 0, "width": 33, "height": 33 },
+        { "x": 492, "y": 0, "width": 33, "height": 33 }
+      ]
     },
-    "shot_burst_3": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 247, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
-    },
-    "shot_burst_4": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 263, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
-    },
-    "shot_burst_5": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 279, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
-    },
-    "shot_burst_6": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 295, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
-    },
-    "shot_burst_7": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 311, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
-    },
-    "shot_burst_8": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 327, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
-    },
-    "hit_spark_0": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 215, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
-    },
-    "hit_spark_1": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 231, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
-    },
-    "hit_spark_2": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 247, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
-    },
-    "hit_spark_3": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 263, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
-    },
-    "hit_spark_4": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 279, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
-    },
-    "hit_spark_5": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 295, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
-    },
-    "hit_spark_6": {
-      "texture": "r-typesheet1.gif",
-      "rect": { "x": 311, "y": 83, "width": 16, "height": 16 },
-      "originX": 8.0,
-      "originY": 8.0
-    },
-    "mob_explosion_0": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 129, "y": 0, "width": 33, "height": 33 },
-      "originX": 16.5,
-      "originY": 16.5
-    },
-    "mob_explosion_1": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 162, "y": 0, "width": 33, "height": 33 },
-      "originX": 16.5,
-      "originY": 16.5
-    },
-    "mob_explosion_2": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 195, "y": 0, "width": 33, "height": 33 },
-      "originX": 16.5,
-      "originY": 16.5
-    },
-    "mob_explosion_3": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 228, "y": 0, "width": 33, "height": 33 },
-      "originX": 16.5,
-      "originY": 16.5
-    },
-    "mob_explosion_4": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 261, "y": 0, "width": 33, "height": 33 },
-      "originX": 16.5,
-      "originY": 16.5
-    },
-    "mob_explosion_5": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 294, "y": 0, "width": 33, "height": 33 },
-      "originX": 16.5,
-      "originY": 16.5
-    },
-    "mob_explosion_6": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 327, "y": 0, "width": 33, "height": 33 },
-      "originX": 16.5,
-      "originY": 16.5
-    },
-    "mob_explosion_7": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 360, "y": 0, "width": 33, "height": 33 },
-      "originX": 16.5,
-      "originY": 16.5
-    },
-    "mob_explosion_8": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 393, "y": 0, "width": 33, "height": 33 },
-      "originX": 16.5,
-      "originY": 16.5
-    },
-    "mob_explosion_9": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 426, "y": 0, "width": 33, "height": 33 },
-      "originX": 16.5,
-      "originY": 16.5
-    },
-    "mob_explosion_10": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 459, "y": 0, "width": 33, "height": 33 },
-      "originX": 16.5,
-      "originY": 16.5
-    },
-    "mob_explosion_11": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 492, "y": 0, "width": 33, "height": 33 },
-      "originX": 16.5,
-      "originY": 16.5
-    },
-    "player_explosion_0": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 1, "y": 35, "width": 64, "height": 64 },
-      "originX": 32.0,
-      "originY": 32.0
-    },
-    "player_explosion_1": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 66, "y": 35, "width": 64, "height": 64 },
-      "originX": 32.0,
-      "originY": 32.0
-    },
-    "player_explosion_2": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 131, "y": 35, "width": 64, "height": 64 },
-      "originX": 32.0,
-      "originY": 32.0
-    },
-    "player_explosion_3": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 196, "y": 35, "width": 64, "height": 64 },
-      "originX": 32.0,
-      "originY": 32.0
-    },
-    "player_explosion_4": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 261, "y": 35, "width": 64, "height": 64 },
-      "originX": 32.0,
-      "originY": 32.0
-    },
-    "player_explosion_5": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 327, "y": 35, "width": 64, "height": 64 },
-      "originX": 32.0,
-      "originY": 32.0
-    },
-    "player_explosion_6": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 392, "y": 35, "width": 64, "height": 64 },
-      "originX": 32.0,
-      "originY": 32.0
-    },
-    "player_explosion_7": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 457, "y": 35, "width": 64, "height": 64 },
-      "originX": 32.0,
-      "originY": 32.0
-    },
-    "player_explosion_8": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 522, "y": 35, "width": 64, "height": 64 },
-      "originX": 32.0,
-      "originY": 32.0
-    },
-    "player_explosion_9": {
-      "texture": "r-typesheet44.gif",
-      "rect": { "x": 587, "y": 35, "width": 64, "height": 64 },
-      "originX": 32.0,
-      "originY": 32.0
+    "player_explosion": {
+      "texture": "explosion_sheet",
+      "frameSeconds": 0.07,
+      "loop": false,
+      "frames": [
+        { "x": 1, "y": 35, "width": 64, "height": 64 },
+        { "x": 66, "y": 35, "width": 64, "height": 64 },
+        { "x": 131, "y": 35, "width": 64, "height": 64 },
+        { "x": 196, "y": 35, "width": 64, "height": 64 },
+        { "x": 261, "y": 35, "width": 64, "height": 64 },
+        { "x": 327, "y": 35, "width": 64, "height": 64 },
+        { "x": 392, "y": 35, "width": 64, "height": 64 },
+        { "x": 457, "y": 35, "width": 64, "height": 64 },
+        { "x": 522, "y": 35, "width": 64, "height": 64 },
+        { "x": 587, "y": 35, "width": 64, "height": 64 }
+      ]
+    }
+  },
+  "sounds": {
+    "music": "sounds/music.ogg",
+    "ShootPlayer": "sounds/ShootPlayer.ogg",
+    "Shootenemy": "sounds/Shootenemy.ogg",
+    "EnemyDeath": "sounds/EnemyDeath.ogg",
+    "Ohnan": "sounds/Ohnan.ogg",
+    "PlayerJoin": "sounds/PlayerJoin.ogg",
+    "Tuvasou": "sounds/Tuvasou.ogg"
+  },
+  "groups": {
+    "level1": {
+      "textures": [
+        "background",
+        "player_sheet",
+        "enemy_sheet",
+        "bink_sheet",
+        "bug_sheet",
+        "scant_sheet",
+        "shot_sheet",
+        "enemy_shot_sheet",
+        "explosion_sheet"
+      ],
+      "sounds": [
+        "music",
+        "ShootPlayer",
+        "Shootenemy",
+        "EnemyDeath",
+        "Ohnan",
+        "PlayerJoin",
+        "Tuvasou"
+      ]
     }
   }
 }

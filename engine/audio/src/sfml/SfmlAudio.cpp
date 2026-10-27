@@ -7,26 +7,13 @@
 
 #include "engine/audio/SfmlAudio.hpp"
 
-#include <SFML/Audio.hpp>
-#include <list>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 
+#include "SfmlAudioImplementation.hpp"
 #include "engine/audio/AudioError.hpp"
 
 namespace engine::audio {
-
-struct SfmlAudio::Implementation {
-	std::filesystem::path root;
-	sf::Music music;
-	std::unordered_map<std::string, sf::SoundBuffer> buffers;
-	std::unordered_set<std::string> missing;
-	std::list<sf::Sound> playing;
-
-	sf::SoundBuffer& loadBuffer(const std::string& name);
-};
 
 /// Music and sound names given to this backend are file paths relative to root.
 SfmlAudio::SfmlAudio(std::filesystem::path root) : _implementation(std::make_unique<Implementation>())

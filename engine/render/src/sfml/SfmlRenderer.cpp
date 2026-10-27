@@ -7,23 +7,17 @@
 
 #include "engine/render/SfmlRenderer.hpp"
 
-#include <SFML/Graphics.hpp>
 #include <cmath>
 
-#include "AssetManager.hpp"
+#include "SfmlRendererImplementation.hpp"
 
 namespace engine::render {
 
-struct SfmlRenderer::Implementation {
-	AssetManager assets;
-	sf::RenderWindow window;
-
-	explicit Implementation(const WindowConfig& config)
-		: assets(config.assetRoot, config.fallbackTexture),
-		  window(sf::VideoMode({config.width, config.height}), config.title)
-	{
-	}
-};
+SfmlRenderer::Implementation::Implementation(const WindowConfig& config)
+	: assets(config.assetRoot, config.fallbackTexture),
+	  window(sf::VideoMode({config.width, config.height}), config.title)
+{
+}
 
 /// Opens the window.
 SfmlRenderer::SfmlRenderer(const WindowConfig& config) : _implementation(std::make_unique<Implementation>(config))

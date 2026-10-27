@@ -1,5 +1,6 @@
 add_library(engine_input
     src/InputMap.cpp
+    src/sfml/KeyNames.cpp
     src/sfml/SfmlInput.cpp
 )
 add_library(engine::input ALIAS engine_input)

@@ -14,8 +14,6 @@
 
 namespace engine::input {
 
-static constexpr std::string_view JOYSTICK_PREFIX = "joystick_";
-
 InputMap::InputMap() : _bindings{}, _deadzone(DEFAULT_JOYSTICK_DEADZONE)
 {
 }

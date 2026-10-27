@@ -15,7 +15,7 @@
 
 namespace engine::core {
 
-static std::string_view trim(std::string_view value)
+std::string_view ConfigParser::trim(std::string_view value)
 {
 	const std::size_t first = value.find_first_not_of(" \t\r\n");
 	if (first == std::string_view::npos)

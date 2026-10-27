@@ -42,8 +42,14 @@ static EffectArt artFor(EffectKind kind)
 	return {};
 }
 
-EffectSystem::EffectSystem() : _firePredictor{}
+EffectSystem::EffectSystem() : _firePredictor{}, _screenFlash(true)
 {
+}
+
+/// Enables or disables explosion effects, which flash the screen (accessibility setting).
+void EffectSystem::setScreenFlash(bool enabled)
+{
+	_screenFlash = enabled;
 }
 
 engine::core::Signature EffectSystem::signature(engine::core::Coordinator& coordinator)
@@ -65,6 +71,9 @@ void EffectSystem::add(engine::core::Coordinator& coordinator, EffectKind kind, 
 				return;
 			}
 		}
+	}
+	if (!_screenFlash && (kind == EffectKind::MobExplosion || kind == EffectKind::PlayerExplosion)) {
+		return;
 	}
 	if (entities.size() >= MAX_EFFECTS) {
 		coordinator.destroyEntity(*entities.begin());

@@ -27,18 +27,4 @@ public:
 	}
 };
 
-class GraphicsError : public RTypeError {
-public:
-	explicit GraphicsError(const std::string& message) : RTypeError(message)
-	{
-	}
-};
-
-class AudioError : public RTypeError {
-public:
-	explicit AudioError(const std::string& message) : RTypeError(message)
-	{
-	}
-};
-
 }

@@ -23,6 +23,7 @@ namespace rtype::client {
 class EffectSystem : public engine::core::System {
 public:
 	EffectSystem();
+	void setScreenFlash(bool enabled);
 	engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	void consume(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network,
 		const std::vector<ViewEvent>& events, std::optional<std::uint8_t> localPlayerId);
@@ -45,6 +46,7 @@ private:
 	void handle(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network, const DeathEvent& event);
 
 	LocalFirePredictor _firePredictor;
+	bool _screenFlash;
 };
 
 }

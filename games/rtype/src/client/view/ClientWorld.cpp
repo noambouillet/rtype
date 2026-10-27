@@ -23,7 +23,8 @@
 
 namespace rtype::client {
 
-ClientWorld::ClientWorld()
+/// Builds the view world. With screenFlash off, explosions are never shown (accessibility setting).
+ClientWorld::ClientWorld(bool screenFlash)
 {
 	_coordinator.registerComponent<engine::core::Position>();
 	_coordinator.registerComponent<engine::render::Sprite>();
@@ -35,6 +36,7 @@ ClientWorld::ClientWorld()
 	_coordinator.setSystemSignature<ClientNetworkSystem>(network.signature(_coordinator));
 	auto& effects = _coordinator.registerSystem<EffectSystem>();
 	_coordinator.setSystemSignature<EffectSystem>(effects.signature(_coordinator));
+	effects.setScreenFlash(screenFlash);
 	auto& render = _coordinator.registerSystem<engine::render::RenderSystem>();
 	_coordinator.setSystemSignature<engine::render::RenderSystem>(render.signature(_coordinator));
 	render.setBackground("background.png", 40.0F);

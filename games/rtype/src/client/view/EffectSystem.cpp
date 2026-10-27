@@ -31,13 +31,13 @@ static EffectArt artFor(EffectKind kind)
 {
 	switch (kind) {
 		case EffectKind::ShotBurst:
-			return {sprites::SHOT_SHEET, sprites::SHOT_BURST_FRAMES, 0.055F};
+			return {.texture = sprites::SHOT_SHEET, .frames = sprites::SHOT_BURST_FRAMES, .frameSeconds = 0.055F};
 		case EffectKind::HitSpark:
-			return {sprites::SHOT_SHEET, sprites::HIT_SPARK_FRAMES, 0.04F};
+			return {.texture = sprites::SHOT_SHEET, .frames = sprites::HIT_SPARK_FRAMES, .frameSeconds = 0.04F};
 		case EffectKind::MobExplosion:
-			return {sprites::EXPLOSION_SHEET, sprites::MOB_EXPLOSION_FRAMES, 0.025F};
+			return {.texture = sprites::EXPLOSION_SHEET, .frames = sprites::MOB_EXPLOSION_FRAMES, .frameSeconds = 0.025F};
 		case EffectKind::PlayerExplosion:
-			return {sprites::EXPLOSION_SHEET, sprites::PLAYER_EXPLOSION_FRAMES, 0.07F};
+			return {.texture = sprites::EXPLOSION_SHEET, .frames = sprites::PLAYER_EXPLOSION_FRAMES, .frameSeconds = 0.07F};
 	}
 	return {};
 }
@@ -85,10 +85,9 @@ void EffectSystem::add(engine::core::Coordinator& coordinator, EffectKind kind, 
 	const engine::render::Rect first = art.frames.front();
 	const engine::core::Entity entity = coordinator.createEntity();
 	coordinator.addComponent(entity, position);
-	coordinator.addComponent(entity, engine::render::Sprite{std::string(art.texture), first,
-										 static_cast<float>(first.size.x) / 2.0F, static_cast<float>(first.size.y) / 2.0F, 2.0F, 0.0F, 10});
-	coordinator.addComponent(entity, engine::render::Animation{{art.frames.begin(), art.frames.end()}, art.frameSeconds, 0.0F, false});
-	coordinator.addComponent(entity, Effect{kind, art.frameSeconds * static_cast<float>(art.frames.size()), targetId, followPlayer});
+	coordinator.addComponent(entity, engine::render::Sprite{.textureName = std::string(art.texture), .region = first, .originX = static_cast<float>(first.size.x) / 2.0F, .originY = static_cast<float>(first.size.y) / 2.0F, .scale = 2.0F, .rotation = 0.0F, .layer = 10});
+	coordinator.addComponent(entity, engine::render::Animation{.frames = {art.frames.begin(), art.frames.end()}, .frameSeconds = art.frameSeconds, .elapsed = 0.0F, .loop = false});
+	coordinator.addComponent(entity, Effect{.kind = kind, .remaining = art.frameSeconds * static_cast<float>(art.frames.size()), .targetId = targetId, .followPlayer = followPlayer});
 }
 
 /// Removes a surviving-hit cue when that entity is destroyed.
@@ -110,7 +109,7 @@ void EffectSystem::handle(engine::core::Coordinator& coordinator, [[maybe_unused
 	const SpawnEvent& event, std::optional<std::uint8_t> localPlayerId)
 {
 	if (event.kind == game::EntityType::PlayerProjectile && (!localPlayerId || event.owner != *localPlayerId)) {
-		add(coordinator, EffectKind::ShotBurst, {event.x, event.y}, event.id, event.owner);
+		add(coordinator, EffectKind::ShotBurst, {.x = event.x, .y = event.y}, event.id, event.owner);
 	}
 }
 
@@ -119,7 +118,7 @@ void EffectSystem::handle(engine::core::Coordinator& coordinator, [[maybe_unused
 {
 	removeHitSpark(coordinator, event.id);
 	if (event.kind == game::EntityType::Enemy && destroyedOnscreen(event)) {
-		add(coordinator, EffectKind::MobExplosion, {event.x, event.y}, event.id);
+		add(coordinator, EffectKind::MobExplosion, {.x = event.x, .y = event.y}, event.id);
 	}
 }
 
@@ -134,7 +133,7 @@ void EffectSystem::handle(engine::core::Coordinator& coordinator, [[maybe_unused
 	const DeathEvent& event)
 {
 	removeHitSpark(coordinator, event.id);
-	add(coordinator, EffectKind::PlayerExplosion, {event.x, event.y}, event.id);
+	add(coordinator, EffectKind::PlayerExplosion, {.x = event.x, .y = event.y}, event.id);
 }
 
 /// Converts game notices into effect entities before rendering the frame.
@@ -176,7 +175,7 @@ void EffectSystem::update(engine::core::Coordinator& coordinator, const ClientNe
 {
 	std::vector<engine::core::Entity> expired;
 	for (engine::core::Entity entity : entities) {
-		Effect& effect = coordinator.getComponent<Effect>(entity);
+		auto& effect = coordinator.getComponent<Effect>(entity);
 		effect.remaining -= std::max(0.0F, deltaTime);
 		if (effect.remaining <= 0.0F) {
 			expired.push_back(entity);

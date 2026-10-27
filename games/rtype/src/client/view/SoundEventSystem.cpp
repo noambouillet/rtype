@@ -32,7 +32,7 @@ engine::core::Signature SoundEventSystem::signature(engine::core::Coordinator& c
 void SoundEventSystem::emit(engine::core::Coordinator& coordinator, std::string_view name, float volume)
 {
 	const engine::core::Entity entity = coordinator.createEntity();
-	coordinator.addComponent(entity, engine::audio::Sound{std::string(name), volume});
+	coordinator.addComponent(entity, engine::audio::Sound{.name = std::string(name), .volume = volume});
 }
 
 void SoundEventSystem::handle(engine::core::Coordinator& coordinator, const SpawnEvent& event, std::optional<std::uint8_t> localPlayerId)

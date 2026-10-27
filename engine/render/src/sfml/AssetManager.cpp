@@ -10,14 +10,13 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
-#include <utility>
 
 #include "engine/render/GraphicsError.hpp"
 
 namespace engine::render {
 
-AssetManager::AssetManager(std::filesystem::path root, const std::filesystem::path& fallbackFile)
-	: _root(std::move(root)), _fallbackFile(fallbackFile.lexically_normal())
+AssetManager::AssetManager(const AssetPaths& paths)
+	: _root(paths.root), _fallbackFile(paths.fallbackFile.lexically_normal())
 {
 	const std::filesystem::path fallbackPath = _root / _fallbackFile;
 	if (!_fallbackTexture.loadFromFile(fallbackPath)) {

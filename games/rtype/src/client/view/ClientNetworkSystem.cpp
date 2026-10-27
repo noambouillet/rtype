@@ -34,16 +34,16 @@ static ViewEvent toViewEvent(const network::WorldEventNotice& notice)
 {
 	if (const auto* spawn = std::get_if<network::EntitySpawnEvent>(&notice.data)) {
 		const network::WorldEntity& entity = spawn->entity;
-		return SpawnEvent{entity.entityId, entity.entityType, entity.ownerPlayerId, entity.x, entity.y};
+		return SpawnEvent{.id = entity.entityId, .kind = entity.entityType, .owner = entity.ownerPlayerId, .x = entity.x, .y = entity.y};
 	}
 	if (const auto* destroy = std::get_if<network::EntityDestroyEvent>(&notice.data)) {
-		return DestroyEvent{destroy->entityId, destroy->kind, destroy->x, destroy->y};
+		return DestroyEvent{.id = destroy->entityId, .kind = destroy->kind, .x = destroy->x, .y = destroy->y};
 	}
 	if (const auto* damage = std::get_if<network::EntityDamageEvent>(&notice.data)) {
 		return DamageEvent{damage->entityId};
 	}
 	const auto& death = std::get<network::PlayerDeathEvent>(notice.data);
-	return DeathEvent{death.entityId, death.x, death.y};
+	return DeathEvent{.id = death.entityId, .x = death.x, .y = death.y};
 }
 
 /// Polls the session, reconciles a new authoritative snapshot, and transfers notices.
@@ -96,13 +96,12 @@ void ClientNetworkSystem::applySnapshot(engine::core::Coordinator& coordinator, 
 engine::core::Entity ClientNetworkSystem::createVisualEntity(engine::core::Coordinator& coordinator, const network::WorldEntity& serverEntity)
 {
 	const engine::core::Entity visualEntity = coordinator.createEntity();
-	coordinator.addComponent(visualEntity, engine::core::Position{serverEntity.x, serverEntity.y});
+	coordinator.addComponent(visualEntity, engine::core::Position{.x = serverEntity.x, .y = serverEntity.y});
 	coordinator.addComponent(visualEntity, spriteFor(serverEntity.entityType, serverEntity.spriteId));
 	if (auto animation = animationFor(serverEntity.entityType)) {
 		coordinator.addComponent(visualEntity, std::move(*animation));
 	}
-	const NetworkIdentity identity{serverEntity.entityId, serverEntity.entityType,
-		serverEntity.ownerPlayerId, serverEntity.spriteId};
+	const NetworkIdentity identity{.serverId = serverEntity.entityId, .kind = serverEntity.entityType, .owner = serverEntity.ownerPlayerId, .variant = serverEntity.spriteId};
 	coordinator.addComponent(visualEntity, identity);
 	return visualEntity;
 }
@@ -110,8 +109,8 @@ engine::core::Entity ClientNetworkSystem::createVisualEntity(engine::core::Coord
 /// Refreshes an existing presentation entity from authoritative state.
 void ClientNetworkSystem::updateVisualEntity(engine::core::Coordinator& coordinator, engine::core::Entity visualEntity, const network::WorldEntity& serverEntity)
 {
-	coordinator.getComponent<engine::core::Position>(visualEntity) = {serverEntity.x, serverEntity.y};
-	NetworkIdentity& identity = coordinator.getComponent<NetworkIdentity>(visualEntity);
+	coordinator.getComponent<engine::core::Position>(visualEntity) = {.x = serverEntity.x, .y = serverEntity.y};
+	auto& identity = coordinator.getComponent<NetworkIdentity>(visualEntity);
 	if (identity.kind != serverEntity.entityType || identity.variant != serverEntity.spriteId) {
 		coordinator.getComponent<engine::render::Sprite>(visualEntity) = spriteFor(serverEntity.entityType, serverEntity.spriteId);
 		const auto animation = animationFor(serverEntity.entityType);
@@ -121,7 +120,7 @@ void ClientNetworkSystem::updateVisualEntity(engine::core::Coordinator& coordina
 			coordinator.removeComponent<engine::render::Animation>(visualEntity);
 		}
 	}
-	identity = {serverEntity.entityId, serverEntity.entityType, serverEntity.ownerPlayerId, serverEntity.spriteId};
+	identity = {.serverId = serverEntity.entityId, .kind = serverEntity.entityType, .owner = serverEntity.ownerPlayerId, .variant = serverEntity.spriteId};
 }
 
 std::optional<engine::core::Entity> ClientNetworkSystem::find(std::uint32_t serverId) const

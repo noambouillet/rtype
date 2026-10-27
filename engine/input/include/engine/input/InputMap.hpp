@@ -58,8 +58,8 @@ private:
 	static constexpr std::string_view JOYSTICK_PREFIX = "joystick_";
 
 	ActionBinding& findOrAdd(std::string_view action);
-	void parseKeyboardBinding(std::string_view actionKey, const std::string& keyName, std::vector<ActionBinding>& bindings);
-	void parseJoystickSetting(std::string_view key, const std::string& value, std::uint32_t& deadzone, std::vector<ActionBinding>& bindings);
+	static void parseKeyboardBinding(std::string_view actionKey, const std::string& keyName, std::vector<ActionBinding>& bindings);
+	static void parseJoystickSetting(std::string_view key, const std::string& value, std::uint32_t& deadzone, std::vector<ActionBinding>& bindings);
 
 	std::vector<ActionBinding> _bindings;
 	std::uint32_t _deadzone;

@@ -19,7 +19,7 @@ namespace rtype::prefabs {
 /// Builds a box collider centred on the entity's position.
 static engine::physics::Collider centredCollider(float width, float height, std::uint32_t tag, std::uint32_t mask)
 {
-	return engine::physics::Collider{width, height, -width / 2.0F, -height / 2.0F, tag, mask};
+	return engine::physics::Collider{.width = width, .height = height, .offsetX = -width / 2.0F, .offsetY = -height / 2.0F, .tag = tag, .mask = mask};
 }
 
 /// Tells whether one more replicated entity still fits in a snapshot; the RFC delays spawns past 64.
@@ -32,17 +32,17 @@ bool canSpawnReplicated(engine::core::Coordinator& coordinator)
 engine::core::Entity createPlayer(engine::core::Coordinator& coordinator, std::uint8_t playerId)
 {
 	const engine::core::Entity entity = coordinator.createEntity();
-	const float startY = config::PLAYER_START_Y + static_cast<float>(playerId) * config::PLAYER_START_SPACING;
+	const float startY = config::PLAYER_START_Y + (static_cast<float>(playerId) * config::PLAYER_START_SPACING);
 
-	coordinator.addComponent(entity, engine::core::Position{config::PLAYER_START_X, startY});
+	coordinator.addComponent(entity, engine::core::Position{.x = config::PLAYER_START_X, .y = startY});
 	coordinator.addComponent(entity, engine::core::Velocity{});
-	coordinator.addComponent(entity, ecs::Health{config::PLAYER_HEALTH, config::PLAYER_HEALTH});
-	coordinator.addComponent(entity, ecs::PlayerControl{playerId, config::PLAYER_SPEED});
-	coordinator.addComponent(entity, ecs::Weapon{config::FIRE_COOLDOWN, 0.0F, false});
+	coordinator.addComponent(entity, ecs::Health{.maxHP = config::PLAYER_HEALTH, .hp = config::PLAYER_HEALTH});
+	coordinator.addComponent(entity, ecs::PlayerControl{.playerId = playerId, .speed = config::PLAYER_SPEED});
+	coordinator.addComponent(entity, ecs::Weapon{.cooldown = config::FIRE_COOLDOWN, .remaining = 0.0F, .firing = false});
 	coordinator.addComponent(entity, centredCollider(config::PLAYER_WIDTH, config::PLAYER_HEIGHT,
 										 ecs::layer::PLAYER, ecs::layer::ENEMY | ecs::layer::ENEMY_PROJECTILE));
 	coordinator.addComponent(entity, ecs::Offscreen{ecs::OffscreenAction::Block});
-	coordinator.addComponent(entity, ecs::Replicated{game::EntityType::Player, playerId, playerId});
+	coordinator.addComponent(entity, ecs::Replicated{.type = game::EntityType::Player, .owner = playerId, .variant = playerId});
 	return entity;
 }
 
@@ -52,14 +52,14 @@ engine::core::Entity createPlayerProjectile(engine::core::Coordinator& coordinat
 {
 	const engine::core::Entity entity = coordinator.createEntity();
 
-	coordinator.addComponent(entity, engine::core::Position{origin.x + config::PLAYER_WIDTH / 2.0F, origin.y});
-	coordinator.addComponent(entity, engine::core::Velocity{config::PROJECTILE_SPEED, 0.0F});
+	coordinator.addComponent(entity, engine::core::Position{.x = origin.x + (config::PLAYER_WIDTH / 2.0F), .y = origin.y});
+	coordinator.addComponent(entity, engine::core::Velocity{.x = config::PROJECTILE_SPEED, .y = 0.0F});
 	coordinator.addComponent(entity, ecs::Damage{config::PROJECTILE_DAMAGE});
 	coordinator.addComponent(entity, centredCollider(config::PROJECTILE_WIDTH, config::PROJECTILE_HEIGHT,
 										 ecs::layer::PLAYER_PROJECTILE, ecs::layer::ENEMY));
 	coordinator.addComponent(entity, ecs::DestroyOnHit{});
 	coordinator.addComponent(entity, ecs::Offscreen{ecs::OffscreenAction::Destroy});
-	coordinator.addComponent(entity, ecs::Replicated{game::EntityType::PlayerProjectile, playerId, 0});
+	coordinator.addComponent(entity, ecs::Replicated{.type = game::EntityType::PlayerProjectile, .owner = playerId, .variant = 0});
 	return entity;
 }
 
@@ -76,7 +76,7 @@ engine::core::Entity createEnemyProjectile(engine::core::Coordinator& coordinato
 										 ecs::layer::ENEMY_PROJECTILE, ecs::layer::PLAYER));
 	coordinator.addComponent(entity, ecs::DestroyOnHit{});
 	coordinator.addComponent(entity, ecs::Offscreen{ecs::OffscreenAction::Destroy});
-	coordinator.addComponent(entity, ecs::Replicated{game::EntityType::EnemyProjectile, game::NO_OWNER, 0});
+	coordinator.addComponent(entity, ecs::Replicated{.type = game::EntityType::EnemyProjectile, .owner = game::NO_OWNER, .variant = 0});
 	return entity;
 }
 
@@ -86,58 +86,55 @@ engine::core::Entity createScantBeam(engine::core::Coordinator& coordinator, eng
 {
 	const engine::core::Entity entity = coordinator.createEntity();
 
-	coordinator.addComponent(entity, engine::core::Position{origin.x - (config::SCANT_WIDTH + config::SCANT_BEAM_WIDTH) / 2.0F,
-										 origin.y + config::SCANT_CANNON_Y});
-	coordinator.addComponent(entity, engine::core::Velocity{-config::SCANT_BEAM_SPEED, 0.0F});
+	coordinator.addComponent(entity, engine::core::Position{.x = origin.x - ((config::SCANT_WIDTH + config::SCANT_BEAM_WIDTH) / 2.0F),
+										 .y = origin.y + config::SCANT_CANNON_Y});
+	coordinator.addComponent(entity, engine::core::Velocity{.x = -config::SCANT_BEAM_SPEED, .y = 0.0F});
 	coordinator.addComponent(entity, ecs::Damage{config::SCANT_BEAM_DAMAGE});
 	coordinator.addComponent(entity, centredCollider(config::SCANT_BEAM_WIDTH, config::SCANT_BEAM_HEIGHT,
 										 ecs::layer::ENEMY_PROJECTILE, ecs::layer::PLAYER));
 	coordinator.addComponent(entity, ecs::DestroyOnHit{});
 	coordinator.addComponent(entity, ecs::Offscreen{ecs::OffscreenAction::Destroy});
-	coordinator.addComponent(entity, ecs::Replicated{game::EntityType::EnemyProjectile, game::NO_OWNER,
-										 static_cast<std::uint8_t>(game::ShotKind::Beam)});
+	coordinator.addComponent(entity, ecs::Replicated{.type = game::EntityType::EnemyProjectile, .owner = game::NO_OWNER, .variant = static_cast<std::uint8_t>(game::ShotKind::Beam)});
 	return entity;
 }
 
-/// Creates a Patapata just past the right edge, weaving around `baseY`; `phase` sets where on its wave it starts,
+/// Creates a Patapata just past the right edge, weaving around `spawn.y`; `phase` sets where on its wave it starts,
 /// so the members of a group do not rise and fall together. SineMotionSystem makes it weave left.
-/// It fires at the players `firstShot` seconds after spawning, then every PATAPATA_FIRE_COOLDOWN seconds.
-engine::core::Entity createPatapata(engine::core::Coordinator& coordinator, float baseY, float phase, float firstShot)
+/// It fires at the players `spawn.firstShot` seconds after spawning, then every PATAPATA_FIRE_COOLDOWN seconds.
+engine::core::Entity createPatapata(engine::core::Coordinator& coordinator, EnemySpawn spawn, float phase)
 {
 	const engine::core::Entity entity = coordinator.createEntity();
-	const float startY = baseY + config::PATAPATA_AMPLITUDE * std::sin(phase);
+	const float startY = spawn.y + (config::PATAPATA_AMPLITUDE * std::sin(phase));
 
-	coordinator.addComponent(entity, engine::core::Position{config::WORLD_WIDTH + config::PATAPATA_WIDTH / 2.0F, startY});
+	coordinator.addComponent(entity, engine::core::Position{.x = config::WORLD_WIDTH + (config::PATAPATA_WIDTH / 2.0F), .y = startY});
 	coordinator.addComponent(entity, engine::core::Velocity{});
-	coordinator.addComponent(entity, ecs::SineMotion{config::PATAPATA_SPEED, config::PATAPATA_AMPLITUDE, config::PATAPATA_FREQUENCY, phase, 0.0F});
-	coordinator.addComponent(entity, ecs::Weapon{config::PATAPATA_FIRE_COOLDOWN, firstShot, true, game::ShotKind::Aimed});
-	coordinator.addComponent(entity, ecs::Health{config::PATAPATA_HEALTH, config::PATAPATA_HEALTH});
+	coordinator.addComponent(entity, ecs::SineMotion{.speed = config::PATAPATA_SPEED, .amplitude = config::PATAPATA_AMPLITUDE, .frequency = config::PATAPATA_FREQUENCY, .phase = phase, .elapsed = 0.0F});
+	coordinator.addComponent(entity, ecs::Weapon{.cooldown = config::PATAPATA_FIRE_COOLDOWN, .remaining = spawn.firstShot, .firing = true, .shot = game::ShotKind::Aimed});
+	coordinator.addComponent(entity, ecs::Health{.maxHP = config::PATAPATA_HEALTH, .hp = config::PATAPATA_HEALTH});
 	coordinator.addComponent(entity, ecs::Damage{config::ENEMY_CONTACT_DAMAGE});
 	coordinator.addComponent(entity, centredCollider(config::PATAPATA_WIDTH, config::PATAPATA_HEIGHT,
 										 ecs::layer::ENEMY, ecs::layer::PLAYER | ecs::layer::PLAYER_PROJECTILE));
 	coordinator.addComponent(entity, ecs::Offscreen{ecs::OffscreenAction::Destroy});
-	coordinator.addComponent(entity, ecs::Replicated{game::EntityType::Enemy, game::NO_OWNER,
-										 static_cast<std::uint8_t>(game::EnemyKind::Patapata)});
+	coordinator.addComponent(entity, ecs::Replicated{.type = game::EntityType::Enemy, .owner = game::NO_OWNER, .variant = static_cast<std::uint8_t>(game::EnemyKind::Patapata)});
 	return entity;
 }
 
-/// Creates a Bug just past the right edge at height `y`; SineMotionSystem flies it along the arch.
-/// It fires at the players `firstShot` seconds after spawning, then every BUG_FIRE_COOLDOWN seconds.
-engine::core::Entity createBug(engine::core::Coordinator& coordinator, float y, float firstShot)
+/// Creates a Bug just past the right edge at height `spawn.y`; SineMotionSystem flies it along the arch.
+/// It fires at the players `spawn.firstShot` seconds after spawning, then every BUG_FIRE_COOLDOWN seconds.
+engine::core::Entity createBug(engine::core::Coordinator& coordinator, EnemySpawn spawn)
 {
 	const engine::core::Entity entity = coordinator.createEntity();
 
-	coordinator.addComponent(entity, engine::core::Position{config::WORLD_WIDTH + config::BUG_WIDTH / 2.0F, y});
+	coordinator.addComponent(entity, engine::core::Position{.x = config::WORLD_WIDTH + (config::BUG_WIDTH / 2.0F), .y = spawn.y});
 	coordinator.addComponent(entity, engine::core::Velocity{});
-	coordinator.addComponent(entity, ecs::SineMotion{config::BUG_SPEED, -config::BUG_ARC_HEIGHT, config::BUG_FREQUENCY, 0.0F, 0.0F});
-	coordinator.addComponent(entity, ecs::Weapon{config::BUG_FIRE_COOLDOWN, firstShot, true, game::ShotKind::Aimed});
-	coordinator.addComponent(entity, ecs::Health{config::BUG_HEALTH, config::BUG_HEALTH});
+	coordinator.addComponent(entity, ecs::SineMotion{.speed = config::BUG_SPEED, .amplitude = -config::BUG_ARC_HEIGHT, .frequency = config::BUG_FREQUENCY, .phase = 0.0F, .elapsed = 0.0F});
+	coordinator.addComponent(entity, ecs::Weapon{.cooldown = config::BUG_FIRE_COOLDOWN, .remaining = spawn.firstShot, .firing = true, .shot = game::ShotKind::Aimed});
+	coordinator.addComponent(entity, ecs::Health{.maxHP = config::BUG_HEALTH, .hp = config::BUG_HEALTH});
 	coordinator.addComponent(entity, ecs::Damage{config::ENEMY_CONTACT_DAMAGE});
 	coordinator.addComponent(entity, centredCollider(config::BUG_WIDTH, config::BUG_HEIGHT,
 										 ecs::layer::ENEMY, ecs::layer::PLAYER | ecs::layer::PLAYER_PROJECTILE));
 	coordinator.addComponent(entity, ecs::Offscreen{ecs::OffscreenAction::Destroy});
-	coordinator.addComponent(entity, ecs::Replicated{game::EntityType::Enemy, game::NO_OWNER,
-										 static_cast<std::uint8_t>(game::EnemyKind::Bug)});
+	coordinator.addComponent(entity, ecs::Replicated{.type = game::EntityType::Enemy, .owner = game::NO_OWNER, .variant = static_cast<std::uint8_t>(game::EnemyKind::Bug)});
 	return entity;
 }
 
@@ -145,38 +142,35 @@ engine::core::Entity createBug(engine::core::Coordinator& coordinator, float y, 
 engine::core::Entity createBink(engine::core::Coordinator& coordinator, float firstShot)
 {
 	const engine::core::Entity entity = coordinator.createEntity();
-	coordinator.addComponent(entity, engine::core::Position{config::WORLD_WIDTH + config::BINK_WIDTH / 2.0F,
-										 config::GROUND_Y - config::BINK_HEIGHT / 2.0F});
-	coordinator.addComponent(entity, engine::core::Velocity{-config::BINK_SPEED, 0.0F});
-	coordinator.addComponent(entity, ecs::Weapon{config::BINK_FIRE_COOLDOWN, firstShot, true, game::ShotKind::Aimed});
-	coordinator.addComponent(entity, ecs::Health{config::BINK_HEALTH, config::BINK_HEALTH});
+	coordinator.addComponent(entity, engine::core::Position{.x = config::WORLD_WIDTH + (config::BINK_WIDTH / 2.0F),
+										 .y = config::GROUND_Y - (config::BINK_HEIGHT / 2.0F)});
+	coordinator.addComponent(entity, engine::core::Velocity{.x = -config::BINK_SPEED, .y = 0.0F});
+	coordinator.addComponent(entity, ecs::Weapon{.cooldown = config::BINK_FIRE_COOLDOWN, .remaining = firstShot, .firing = true, .shot = game::ShotKind::Aimed});
+	coordinator.addComponent(entity, ecs::Health{.maxHP = config::BINK_HEALTH, .hp = config::BINK_HEALTH});
 	coordinator.addComponent(entity, ecs::Damage{config::ENEMY_CONTACT_DAMAGE});
 	coordinator.addComponent(entity, centredCollider(config::BINK_WIDTH, config::BINK_HEIGHT,
 										 ecs::layer::ENEMY, ecs::layer::PLAYER | ecs::layer::PLAYER_PROJECTILE));
 	coordinator.addComponent(entity, ecs::Offscreen{ecs::OffscreenAction::Destroy});
-	coordinator.addComponent(entity, ecs::Replicated{game::EntityType::Enemy, game::NO_OWNER,
-										 static_cast<std::uint8_t>(game::EnemyKind::Bink)});
+	coordinator.addComponent(entity, ecs::Replicated{.type = game::EntityType::Enemy, .owner = game::NO_OWNER, .variant = static_cast<std::uint8_t>(game::EnemyKind::Bink)});
 	return entity;
 }
 
-/// Creates a Scant just past the right edge at height `y`; HoverMotionSystem flies it in, keeps it level with the
+/// Creates a Scant just past the right edge at height `spawn.y`; HoverMotionSystem flies it in, keeps it level with the
 /// closest player, then sends it off.
-engine::core::Entity createScant(engine::core::Coordinator& coordinator, float y, float firstShot)
+engine::core::Entity createScant(engine::core::Coordinator& coordinator, EnemySpawn spawn)
 {
 	const engine::core::Entity entity = coordinator.createEntity();
 
-	coordinator.addComponent(entity, engine::core::Position{config::WORLD_WIDTH + config::SCANT_WIDTH / 2.0F, y});
+	coordinator.addComponent(entity, engine::core::Position{.x = config::WORLD_WIDTH + (config::SCANT_WIDTH / 2.0F), .y = spawn.y});
 	coordinator.addComponent(entity, engine::core::Velocity{});
-	coordinator.addComponent(entity, ecs::HoverMotion{config::SCANT_SPEED, config::SCANT_HOLD_X, config::SCANT_TRACK_SPEED,
-										 config::SCANT_STAY_TIME, config::SCANT_CHARGE_TIME, 0.0F});
-	coordinator.addComponent(entity, ecs::Weapon{config::SCANT_FIRE_COOLDOWN, firstShot, true, game::ShotKind::Beam});
-	coordinator.addComponent(entity, ecs::Health{config::SCANT_HEALTH, config::SCANT_HEALTH});
+	coordinator.addComponent(entity, ecs::HoverMotion{.speed = config::SCANT_SPEED, .holdX = config::SCANT_HOLD_X, .trackSpeed = config::SCANT_TRACK_SPEED, .stayTime = config::SCANT_STAY_TIME, .chargeTime = config::SCANT_CHARGE_TIME, .elapsed = 0.0F});
+	coordinator.addComponent(entity, ecs::Weapon{.cooldown = config::SCANT_FIRE_COOLDOWN, .remaining = spawn.firstShot, .firing = true, .shot = game::ShotKind::Beam});
+	coordinator.addComponent(entity, ecs::Health{.maxHP = config::SCANT_HEALTH, .hp = config::SCANT_HEALTH});
 	coordinator.addComponent(entity, ecs::Damage{config::ENEMY_CONTACT_DAMAGE});
 	coordinator.addComponent(entity, centredCollider(config::SCANT_WIDTH, config::SCANT_HEIGHT,
 										 ecs::layer::ENEMY, ecs::layer::PLAYER | ecs::layer::PLAYER_PROJECTILE));
 	coordinator.addComponent(entity, ecs::Offscreen{ecs::OffscreenAction::Destroy});
-	coordinator.addComponent(entity, ecs::Replicated{game::EntityType::Enemy, game::NO_OWNER,
-										 static_cast<std::uint8_t>(game::EnemyKind::Scant)});
+	coordinator.addComponent(entity, ecs::Replicated{.type = game::EntityType::Enemy, .owner = game::NO_OWNER, .variant = static_cast<std::uint8_t>(game::EnemyKind::Scant)});
 	return entity;
 }
 
@@ -189,7 +183,7 @@ engine::core::Entity createFormation(engine::core::Coordinator& coordinator, gam
 	const float delay = kind == game::EnemyKind::Bug ? config::BUG_DELAY : config::PATAPATA_DELAY;
 	const float spread = kind == game::EnemyKind::Patapata ? config::PATAPATA_SPREAD : 0.0F;
 
-	coordinator.addComponent(entity, ecs::FormationSpawner{kind, count, delay, 0.0F, y, spread});
+	coordinator.addComponent(entity, ecs::FormationSpawner{.kind = kind, .remaining = count, .delay = delay, .timer = 0.0F, .y = y, .spread = spread});
 	return entity;
 }
 
@@ -198,7 +192,7 @@ engine::core::Entity createWaveSpawner(engine::core::Coordinator& coordinator)
 {
 	const engine::core::Entity entity = coordinator.createEntity();
 
-	coordinator.addComponent(entity, ecs::WaveSpawner{config::WAVE_INTERVAL, config::WAVE_INTERVAL});
+	coordinator.addComponent(entity, ecs::WaveSpawner{.interval = config::WAVE_INTERVAL, .timer = config::WAVE_INTERVAL});
 	return entity;
 }
 

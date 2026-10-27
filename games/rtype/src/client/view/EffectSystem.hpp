@@ -24,7 +24,7 @@ class EffectSystem : public engine::core::System {
 public:
 	EffectSystem();
 	void setScreenFlash(bool enabled);
-	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	void consume(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network,
 		const std::vector<ViewEvent>& events, std::optional<std::uint8_t> localPlayerId);
 	bool predictLocalFire(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network,

@@ -116,7 +116,7 @@ static bool updateFrame(engine::render::SfmlRenderer& window, engine::input::Sfm
 	const float deltaTime = std::clamp(std::chrono::duration<float>(now - lastFrame).count(), 0.0F, 0.1F);
 	lastFrame = now;
 	const std::uint8_t buttons = controls.buttons(input);
-	view.update(client, buttons, deltaTime);
+	view.update(deltaTime, client, buttons);
 	reportNotices(client, logger);
 	if (client.status() != previous) {
 		previous = client.status();
@@ -139,7 +139,7 @@ int runClient(const ClientOptions& options)
 	engine::core::EngineSettings engineSettings;
 	engine::input::InputMap bindings = client::ClientControls::defaultBindings();
 	loadSettings(engineSettings, bindings);
-	engine::net::UdpClient transport(options.host, options.port, network::MAX_DATAGRAM_SIZE);
+	engine::net::UdpClient transport({.host = options.host, .port = options.port, .maxDatagramSize = network::MAX_DATAGRAM_SIZE});
 	network::GameClient client(transport);
 	engine::render::SfmlRenderer window({.width = client_config::WINDOW_WIDTH, .height = client_config::WINDOW_HEIGHT, .title = "R-Type"});
 	window.preload(sprites::PLAYER_SHEET);

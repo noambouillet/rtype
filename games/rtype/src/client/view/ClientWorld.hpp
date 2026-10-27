@@ -19,7 +19,7 @@ namespace rtype::client {
 class ClientWorld {
 public:
 	explicit ClientWorld(bool screenFlash);
-	void update(network::GameClient& client, std::uint8_t buttons, float deltaTime);
+	void update(float deltaTime, network::GameClient& client, std::uint8_t buttons);
 	void render(engine::render::IGraphicsBackend& backend, float deltaTime);
 	void playAudio(engine::audio::IAudioBackend& backend);
 

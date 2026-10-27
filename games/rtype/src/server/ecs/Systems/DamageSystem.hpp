@@ -25,7 +25,7 @@ struct HealthChange {
 
 class DamageSystem : public engine::core::System {
 public:
-	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	std::vector<HealthChange> update(engine::core::Coordinator& coordinator, const std::vector<engine::physics::CollisionPair>& collisions);
 
 private:

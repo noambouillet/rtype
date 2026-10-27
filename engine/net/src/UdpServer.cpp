@@ -12,8 +12,8 @@
 
 namespace engine::net {
 
-UdpServer::UdpServer(std::uint16_t port, std::size_t maxDatagramSize)
-	: _socket(_context, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)), _receiveBuffer{}, _queuedSends(0), _maxDatagramSize(maxDatagramSize)
+UdpServer::UdpServer(const UdpServerConfig& config)
+	: _socket(_context, asio::ip::udp::endpoint(asio::ip::udp::v4(), config.port)), _receiveBuffer{}, _queuedSends(0), _maxDatagramSize(config.maxDatagramSize)
 {
 	receiveNext();
 	_thread = std::thread([this] { _context.run(); });
@@ -36,7 +36,7 @@ void UdpServer::receiveNext()
 			if (_pending.size() < MAX_PENDING) {
 				// Keep one extra byte so the parser can reject oversized datagrams.
 				const auto storedSize = std::min(size, _maxDatagramSize + 1);
-				_pending.push_back({{_sender.address().to_string(), _sender.port()},
+				_pending.push_back({{.address = _sender.address().to_string(), .port = _sender.port()},
 					{_receiveBuffer.begin(), _receiveBuffer.begin() + storedSize}});
 			}
 		}

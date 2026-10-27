@@ -36,7 +36,7 @@ std::optional<Entity> EntityManager::create()
 		index = static_cast<Entity::Index>(_generations.size());
 		_generations.push_back(0);
 		_alive.push_back(false);
-		_signatures.push_back(Signature{});
+		_signatures.emplace_back();
 	} else {
 		return std::nullopt;
 	}

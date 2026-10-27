@@ -15,6 +15,12 @@
 
 namespace engine::render {
 
+struct AssetPaths {
+	std::filesystem::path root;
+	// Drawn in place of textures that cannot be loaded. It must exist under root.
+	std::filesystem::path fallbackFile;
+};
+
 class AssetManager {
 private:
 	using TextureMap = std::unordered_map<std::filesystem::path, sf::Texture>;
@@ -28,7 +34,7 @@ private:
 	std::unordered_set<std::filesystem::path> _missing;
 
 public:
-	AssetManager(std::filesystem::path root, const std::filesystem::path& fallbackFile);
+	explicit AssetManager(const AssetPaths& paths);
 	void preload(std::string_view name);
 	const sf::Texture& texture(std::string_view name);
 	void setRepeated(std::string_view name, bool repeated);

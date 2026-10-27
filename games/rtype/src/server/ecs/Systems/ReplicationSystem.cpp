@@ -37,7 +37,7 @@ std::optional<ReplicatedState> ReplicationSystem::capture(engine::core::Coordina
 	if (coordinator.hasComponent<Health>(entity)) {
 		health = std::clamp(coordinator.getComponent<Health>(entity).hp, 0, 255);
 	}
-	return ReplicatedState{entity.id(), info.type, info.owner, info.variant, static_cast<std::uint8_t>(health), position.x, position.y};
+	return ReplicatedState{.id = entity.id(), .type = info.type, .owner = info.owner, .variant = info.variant, .health = static_cast<std::uint8_t>(health), .x = position.x, .y = position.y};
 }
 
 /// Lists what clients must see of every replicated entity (at most 64).

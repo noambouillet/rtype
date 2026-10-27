@@ -17,7 +17,7 @@ namespace rtype::ecs {
 
 class HitSystem : public engine::core::System {
 public:
-	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	std::vector<engine::physics::CollisionPair> update(engine::core::Coordinator& coordinator, const std::vector<engine::physics::CollisionPair>& collisions);
 
 private:

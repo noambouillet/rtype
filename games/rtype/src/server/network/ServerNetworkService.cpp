@@ -99,11 +99,11 @@ static void appendEntityRecord(std::vector<std::uint8_t>& payload, const GameWor
 
 /// Builds the documented full snapshot payload from the world's replicated entities.
 std::vector<std::uint8_t> ServerNetworkService::buildSnapshot(const std::vector<GameWorld::EntityState>& entities,
-	std::uint8_t connectedMask, std::uint8_t aliveMask)
+	std::uint8_t connectedMask, std::uint8_t aliveMask) const
 {
 	const std::size_t count = std::min(entities.size(), network::MAX_SNAPSHOT_ENTITIES);
 	std::vector<std::uint8_t> payload;
-	payload.reserve(SNAPSHOT_HEADER_SIZE + count * ENTITY_RECORD_SIZE);
+	payload.reserve(SNAPSHOT_HEADER_SIZE + (count * ENTITY_RECORD_SIZE));
 	network::appendU64(payload, _tick);
 	payload.push_back(connectedMask);
 	payload.push_back(aliveMask);
@@ -182,7 +182,7 @@ void ServerNetworkService::handleSessionDatagram(const engine::net::Datagram& da
 		if (header.type == network::PacketType::Disconnect) {
 			removeSession(static_cast<std::uint8_t>(index), 1);
 		} else {
-			session->acceptInput({header.sequence, datagram.bytes[network::HEADER_SIZE]}, now);
+			session->acceptInput({.sequence = header.sequence, .buttons = datagram.bytes[network::HEADER_SIZE]}, now);
 		}
 		return;
 	}
@@ -343,7 +343,7 @@ void ServerNetworkService::broadcastEvents(const std::vector<WorldEvent>& events
 /// Expires silent sessions and returns fresh button states for this tick.
 GameWorld::Input ServerNetworkService::collectInput(Clock::time_point now)
 {
-	GameWorld::Input input{{}, 0};
+	GameWorld::Input input{.buttons = {}, .connectedMask = 0};
 	for (std::size_t index = 0; index < _sessions.size(); index++) {
 		auto& session = _sessions[index];
 		if (!session) {

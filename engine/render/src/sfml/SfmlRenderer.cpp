@@ -14,7 +14,7 @@
 namespace engine::render {
 
 SfmlRenderer::Implementation::Implementation(const WindowConfig& config)
-	: assets(config.assetRoot, config.fallbackTexture),
+	: assets({.root = config.assetRoot, .fallbackFile = config.fallbackTexture}),
 	  window(sf::VideoMode({config.width, config.height}), config.title)
 {
 }

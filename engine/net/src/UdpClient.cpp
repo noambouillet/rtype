@@ -12,10 +12,10 @@
 namespace engine::net {
 
 /// Resolves the server and connects a UDP socket so only its packets are read.
-UdpClient::UdpClient(const std::string& host, std::uint16_t port, std::size_t maxDatagramSize)
-	: _socket(_context), _maxDatagramSize(maxDatagramSize), _receiveBuffer(maxDatagramSize + 1)
+UdpClient::UdpClient(const UdpClientConfig& config)
+	: _socket(_context), _maxDatagramSize(config.maxDatagramSize), _receiveBuffer(config.maxDatagramSize + 1)
 {
-	connect(resolveServer(host, port));
+	connect(resolveServer(config.host, config.port));
 }
 
 /// Resolves the server name, preferring IPv4 for local servers.
@@ -81,7 +81,7 @@ std::vector<std::vector<std::uint8_t>> UdpClient::receivePending()
 		if (error) {
 			throw NetworkError("UDP receive failed: " + error.message());
 		}
-		result.emplace_back(_receiveBuffer.begin(), _receiveBuffer.begin() + size);
+		result.emplace_back(_receiveBuffer.begin(), _receiveBuffer.begin() + static_cast<std::ptrdiff_t>(size));
 	}
 	return result;
 }

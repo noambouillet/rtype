@@ -78,7 +78,7 @@ bool SfmlInput::joystickDown(const ActionBinding& binding) const
 	}
 	const sf::Joystick::Axis axis = binding.axis->axis == JoystickAxis::X ? sf::Joystick::Axis::X : sf::Joystick::Axis::Y;
 	const float position = sf::Joystick::getAxisPosition(_joystickId, axis);
-	const float threshold = static_cast<float>(_map.deadzone());
+	const auto threshold = static_cast<float>(_map.deadzone());
 	return binding.axis->direction == AxisDirection::Negative ? position < -threshold : position > threshold;
 }
 

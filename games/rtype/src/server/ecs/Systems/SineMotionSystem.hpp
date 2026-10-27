@@ -14,7 +14,7 @@ namespace rtype::ecs {
 
 class SineMotionSystem : public engine::core::System {
 public:
-	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	void update(engine::core::Coordinator& coordinator, float elapsedTime);
 };
 

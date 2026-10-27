@@ -38,8 +38,9 @@ std::vector<engine::core::Entity> WeaponSystem::update(engine::core::Coordinator
 		auto& weapon = coordinator.getComponent<Weapon>(e);
 
 		weapon.remaining = std::max(0.0F, weapon.remaining - elapsedTime);
-		if (!weapon.firing || weapon.remaining > 0.0F || !prefabs::canSpawnReplicated(coordinator))
+		if (!weapon.firing || weapon.remaining > 0.0F || !prefabs::canSpawnReplicated(coordinator)) {
 			continue;
+		}
 		if (const auto projectile = fire(coordinator, e)) {
 			weapon.remaining = weapon.cooldown;
 			spawned.push_back(*projectile);
@@ -56,8 +57,9 @@ std::optional<engine::core::Entity> WeaponSystem::fire(engine::core::Coordinator
 	if (coordinator.hasComponent<PlayerControl>(shooter)) {
 		return prefabs::createPlayerProjectile(coordinator, coordinator.getComponent<PlayerControl>(shooter).playerId, origin);
 	}
-	if (origin.x > config::WORLD_WIDTH)
+	if (origin.x > config::WORLD_WIDTH) {
 		return std::nullopt;
+	}
 	if (coordinator.getComponent<Weapon>(shooter).shot == game::ShotKind::Beam) {
 		return prefabs::createScantBeam(coordinator, origin);
 	}
@@ -74,15 +76,17 @@ std::optional<engine::core::Entity> WeaponSystem::fireAtPlayer(engine::core::Coo
 		const auto& target = coordinator.getComponent<engine::core::Position>(player);
 		const float dx = target.x - origin.x;
 		const float dy = target.y - origin.y;
-		const float distance = std::sqrt(dx * dx + dy * dy);
+		const float distance = std::sqrt((dx * dx) + (dy * dy));
 
-		if (dx >= 0.0F || distance < config::ENEMY_MIN_FIRE_DISTANCE || (aim && distance >= closest))
+		if (dx >= 0.0F || distance < config::ENEMY_MIN_FIRE_DISTANCE || (aim && distance >= closest)) {
 			continue;
+		}
 		closest = distance;
-		aim = engine::core::Velocity{config::ENEMY_PROJECTILE_SPEED * dx / distance, config::ENEMY_PROJECTILE_SPEED * dy / distance};
+		aim = engine::core::Velocity{.x = config::ENEMY_PROJECTILE_SPEED * dx / distance, .y = config::ENEMY_PROJECTILE_SPEED * dy / distance};
 	}
-	if (!aim)
+	if (!aim) {
 		return std::nullopt;
+	}
 	return prefabs::createEnemyProjectile(coordinator, origin, *aim);
 }
 

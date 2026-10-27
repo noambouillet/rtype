@@ -22,10 +22,11 @@ InputMap::InputMap() : _bindings{}, _deadzone(DEFAULT_JOYSTICK_DEADZONE)
 ActionBinding& InputMap::findOrAdd(std::string_view action)
 {
 	for (ActionBinding& binding : _bindings) {
-		if (binding.name == action)
+		if (binding.name == action) {
 			return binding;
+		}
 	}
-	return _bindings.emplace_back(ActionBinding{std::string(action), "", std::nullopt, std::nullopt});
+	return _bindings.emplace_back(ActionBinding{.name = std::string(action), .key = "", .button = std::nullopt, .axis = std::nullopt});
 }
 
 /// Binds the action to a key name such as "Space", replacing its previous key.
@@ -43,7 +44,7 @@ void InputMap::bindButton(std::string_view action, std::uint32_t button)
 /// Binds the action to one direction of a joystick axis, replacing its previous axis.
 void InputMap::bindAxis(std::string_view action, JoystickAxis axis, AxisDirection direction)
 {
-	findOrAdd(action).axis = AxisBinding{axis, direction};
+	findOrAdd(action).axis = AxisBinding{.axis = axis, .direction = direction};
 }
 
 /// Matches an action name and key name to update the corresponding keyboard binding.
@@ -67,25 +68,29 @@ void InputMap::parseJoystickSetting(
 	std::uint32_t& deadzone,
 	std::vector<ActionBinding>& bindings)
 {
-	if (value.empty() || value.front() == '-')
+	if (value.empty() || value.front() == '-') {
 		return;
+	}
 	unsigned long parsedValue = 0;
 	try {
 		std::size_t parsedLength = 0;
 		parsedValue = std::stoul(value, &parsedLength);
-		if (parsedLength != value.size())
+		if (parsedLength != value.size()) {
 			return;
+		}
 	} catch (const std::invalid_argument&) {
 		return;
 	} catch (const std::out_of_range&) {
 		return;
 	}
-	if (parsedValue > std::numeric_limits<std::uint32_t>::max())
+	if (parsedValue > std::numeric_limits<std::uint32_t>::max()) {
 		return;
-	const std::uint32_t number = static_cast<std::uint32_t>(parsedValue);
+	}
+	const auto number = static_cast<std::uint32_t>(parsedValue);
 	if (key == "joystick_deadzone") {
-		if (number <= 100)
+		if (number <= 100) {
 			deadzone = number;
+		}
 		return;
 	}
 	const std::string_view action = key.substr(JOYSTICK_PREFIX.size());
@@ -118,10 +123,12 @@ void InputMap::loadFromMap(const std::map<std::string, std::string>& data)
 void InputMap::saveToMap(std::map<std::string, std::string>& data) const
 {
 	for (const ActionBinding& binding : _bindings) {
-		if (!binding.key.empty())
+		if (!binding.key.empty()) {
 			data[binding.name] = binding.key;
-		if (binding.button)
+		}
+		if (binding.button) {
 			data[std::string(JOYSTICK_PREFIX) + binding.name] = std::to_string(*binding.button);
+		}
 	}
 	data["joystick_deadzone"] = std::to_string(_deadzone);
 }

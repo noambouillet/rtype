@@ -34,13 +34,13 @@ void PlayerControlSystem::update(engine::core::Coordinator& coordinator, const B
 		const std::uint8_t pressed = control.playerId < buttons.size() ? buttons[control.playerId] : 0;
 		const float horizontal = static_cast<float>((pressed & game::BUTTON_RIGHT) != 0) - static_cast<float>((pressed & game::BUTTON_LEFT) != 0);
 		const float vertical = static_cast<float>((pressed & game::BUTTON_DOWN) != 0) - static_cast<float>((pressed & game::BUTTON_UP) != 0);
-		const float length = std::sqrt(horizontal * horizontal + vertical * vertical);
+		const float length = std::sqrt((horizontal * horizontal) + (vertical * vertical));
 
 		auto& velocity = coordinator.getComponent<engine::core::Velocity>(e);
 		if (length == 0.0F) {
-			velocity = {0.0F, 0.0F};
+			velocity = {.x = 0.0F, .y = 0.0F};
 		} else {
-			velocity = {control.speed * horizontal / length, control.speed * vertical / length};
+			velocity = {.x = control.speed * horizontal / length, .y = control.speed * vertical / length};
 		}
 		coordinator.getComponent<Weapon>(e).firing = (pressed & game::BUTTON_FIRE) != 0;
 	}

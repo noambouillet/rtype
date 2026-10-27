@@ -22,8 +22,9 @@ Entity Coordinator::createEntity()
 {
 	std::optional<Entity> newEntity = _entitiesManager.create();
 
-	if (!newEntity)
+	if (!newEntity) {
 		throw CoordinatorError("max entities reached");
+	}
 	return *newEntity;
 }
 
@@ -31,8 +32,9 @@ Entity Coordinator::createEntity()
 /// Does nothing if the handle is stale or already dead.
 void Coordinator::destroyEntity(Entity e)
 {
-	if (!_entitiesManager.destroy(e))
+	if (!_entitiesManager.destroy(e)) {
 		return;
+	}
 	_componentsManager.entityDestroyed(e);
 	_systemsManager.entityDestroyed(e);
 }

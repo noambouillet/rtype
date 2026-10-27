@@ -18,7 +18,7 @@ namespace engine::render {
 class RenderSystem : public core::System {
 public:
 	RenderSystem();
-	core::Signature signature(core::Coordinator& coordinator);
+	static core::Signature signature(core::Coordinator& coordinator);
 	void setBackground(std::string texture, float speed);
 	void render(core::Coordinator& coordinator, IGraphicsBackend& backend, float deltaTime);
 

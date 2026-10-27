@@ -45,9 +45,10 @@ std::optional<HealthChange> DamageSystem::applyDamage(engine::core::Coordinator&
 	const auto& damage = coordinator.getComponent<Damage>(attacker);
 
 	health.hp -= damage.amount;
-	if (health.hp <= 0 && !coordinator.hasComponent<engine::core::Destroy>(target))
+	if (health.hp <= 0 && !coordinator.hasComponent<engine::core::Destroy>(target)) {
 		coordinator.addComponent(target, engine::core::Destroy{});
-	return HealthChange{target, health.hp};
+	}
+	return HealthChange{.entity = target, .remainingHealth = health.hp};
 }
 
 }

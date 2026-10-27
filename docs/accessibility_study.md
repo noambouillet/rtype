@@ -123,7 +123,7 @@ Visual configuration is managed through the engine settings subsystem:
 - **Render Interception in SFML Backend** (`games/rtype/src/client/SFML/Sfml.cpp`):
   Inside `Sfml::drawSprite()`, the renderer verifies the flash setting before rasterizing explosive spritesheets:
   ```cpp
-  if (!_engineSettings.screenFlashEnabled() && command.texture == sprites::EXPLOSION_SHEET) {
+  if (!_engineSettings.screenFlashEnabled() && _assets.hasTag(command.textureId, "screen_flash")) {
       return;
   }
   ```
@@ -131,7 +131,7 @@ Visual configuration is managed through the engine settings subsystem:
 
 ```mermaid
 flowchart TD
-    RenderCmd[RenderSystem Issues drawSprite Command] --> CheckTexture{Is Texture Explosion Sheet?}
+    RenderCmd[RenderSystem Issues drawSprite Command] --> CheckTexture{Has screen_flash Tag?}
     CheckTexture -- No --> Draw[Execute SFML Draw Call]
     CheckTexture -- Yes --> CheckSetting{screen_flash enabled in settings.cfg?}
     CheckSetting -- True --> Draw

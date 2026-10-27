@@ -1,6 +1,36 @@
 {
   "name": "engine",
   "version-string": "0.1.0",
-  "dependencies": ["nlohmann-json"],
-  "builtin-baseline": "07f4812200df3d3c931c0c8a6081d3b21fe2bf9f"
+  "builtin-baseline": "07f4812200df3d3c931c0c8a6081d3b21fe2bf9f",
+  "dependencies": [],
+  "default-features": ["render", "audio", "input", "net"],
+  "features": {
+    "render": {
+      "description": "engine::render, SFML renderer backend",
+      "dependencies": [
+        {"name": "sfml", "default-features": false, "features": ["graphics"]},
+        "nlohmann-json"
+      ]
+    },
+    "audio": {
+      "description": "engine::audio, SFML audio backend",
+      "dependencies": [{"name": "sfml", "default-features": false, "features": ["audio"]}]
+    },
+    "input": {
+      "description": "engine::input, SFML window input backend",
+      "dependencies": [{"name": "sfml", "default-features": false, "features": ["window"]}]
+    },
+    "net": {
+      "description": "engine::net, asio UDP transport",
+      "dependencies": ["asio"]
+    },
+    "script": {
+      "description": "engine::script, Lua bindings",
+      "dependencies": ["lua", "sol2"]
+    },
+    "tools": {
+      "description": "engine::tools, console, profiler overlay and editor",
+      "dependencies": [{"name": "engine", "default-features": false, "features": ["render", "input"]}]
+    }
+  }
 }

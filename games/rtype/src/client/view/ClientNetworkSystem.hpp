@@ -25,7 +25,7 @@ class ClientNetworkSystem : public engine::core::System {
 public:
 	ClientNetworkSystem();
 	void setAssetManager(const engine::render::AssetManager& assets);
-	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	std::vector<ViewEvent> update(engine::core::Coordinator& coordinator, network::GameClient& client, std::uint8_t buttons);
 	void applySnapshot(engine::core::Coordinator& coordinator, const network::WorldSnapshot& snapshot);
 	[[nodiscard]] std::optional<engine::core::Entity> find(std::uint32_t serverId) const;

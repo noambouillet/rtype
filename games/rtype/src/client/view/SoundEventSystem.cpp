@@ -11,6 +11,7 @@
 #include <string>
 #include <variant>
 
+#include "engine/audio/Components.hpp"
 #include "engine/core/ecs/Components.hpp"
 #include "game/GameTypes.hpp"
 
@@ -23,7 +24,7 @@ SoundEventSystem::SoundEventSystem() : _connectedMask(0)
 engine::core::Signature SoundEventSystem::signature(engine::core::Coordinator& coordinator)
 {
 	engine::core::Signature signature;
-	signature.set(coordinator.getComponentType<engine::core::Sound>());
+	signature.set(coordinator.getComponentType<engine::audio::Sound>());
 	return signature;
 }
 
@@ -31,7 +32,7 @@ engine::core::Signature SoundEventSystem::signature(engine::core::Coordinator& c
 void SoundEventSystem::emit(engine::core::Coordinator& coordinator, std::string_view name, float volume)
 {
 	const engine::core::Entity entity = coordinator.createEntity();
-	coordinator.addComponent(entity, engine::core::Sound{std::string(name), volume});
+	coordinator.addComponent(entity, engine::audio::Sound{.name = std::string(name), .volume = volume});
 }
 
 void SoundEventSystem::handle(engine::core::Coordinator& coordinator, const SpawnEvent& event, std::optional<std::uint8_t> localPlayerId)

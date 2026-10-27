@@ -2,7 +2,7 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** Client effect system
+** Effect presentation system
 */
 
 #include "EffectSystem.hpp"
@@ -13,6 +13,7 @@
 
 #include "engine/core/ecs/Components.hpp"
 #include "engine/render/AssetManager.hpp"
+#include "engine/render/Components.hpp"
 #include "game/GameTypes.hpp"
 
 namespace rtype::client {
@@ -32,13 +33,19 @@ static const char* animationNameFor(EffectKind kind)
 	return "";
 }
 
-EffectSystem::EffectSystem() : _firePredictor{}
+EffectSystem::EffectSystem() : _firePredictor{}, _screenFlash(true), _assets(nullptr)
 {
 }
 
 void EffectSystem::setAssetManager(const engine::render::AssetManager& assets)
 {
 	_assets = &assets;
+}
+
+/// Enables or disables explosion effects, which flash the screen (accessibility setting).
+void EffectSystem::setScreenFlash(bool enabled)
+{
+	_screenFlash = enabled;
 }
 
 engine::core::Signature EffectSystem::signature(engine::core::Coordinator& coordinator)
@@ -61,6 +68,9 @@ void EffectSystem::add(engine::core::Coordinator& coordinator, EffectKind kind, 
 			}
 		}
 	}
+	if (!_screenFlash && (kind == EffectKind::MobExplosion || kind == EffectKind::PlayerExplosion)) {
+		return;
+	}
 	if (entities.size() >= MAX_EFFECTS) {
 		coordinator.destroyEntity(*entities.begin());
 	}
@@ -74,10 +84,9 @@ void EffectSystem::add(engine::core::Coordinator& coordinator, EffectKind kind, 
 	const engine::render::Rect first = animDesc.frames.front();
 	const engine::core::Entity entity = coordinator.createEntity();
 	coordinator.addComponent(entity, position);
-	coordinator.addComponent(entity, engine::core::Sprite{animDesc.texture, first,
-										 static_cast<float>(first.size.x) / 2.0F, static_cast<float>(first.size.y) / 2.0F, 2.0F, 0.0F, 10});
-	coordinator.addComponent(entity, engine::core::Animation{animDesc.texture, animDesc.frames, animDesc.frameSeconds, 0.0F, animDesc.loop});
-	coordinator.addComponent(entity, Effect{kind, animDesc.frameSeconds * static_cast<float>(animDesc.frames.size()), targetId, followPlayer});
+	coordinator.addComponent(entity, engine::render::Sprite{.texture = animDesc.texture, .region = first, .originX = static_cast<float>(first.size.x) / 2.0F, .originY = static_cast<float>(first.size.y) / 2.0F, .scale = 2.0F, .rotation = 0.0F, .layer = 10});
+	coordinator.addComponent(entity, engine::render::Animation{.texture = animDesc.texture, .frames = animDesc.frames, .frameSeconds = animDesc.frameSeconds, .elapsed = 0.0F, .loop = animDesc.loop});
+	coordinator.addComponent(entity, Effect{.kind = kind, .remaining = animDesc.frameSeconds * static_cast<float>(animDesc.frames.size()), .targetId = targetId, .followPlayer = followPlayer});
 }
 
 /// Removes a surviving-hit cue when that entity is destroyed.
@@ -99,7 +108,7 @@ void EffectSystem::handle(engine::core::Coordinator& coordinator, [[maybe_unused
 	const SpawnEvent& event, std::optional<std::uint8_t> localPlayerId)
 {
 	if (event.kind == game::EntityType::PlayerProjectile && (!localPlayerId || event.owner != *localPlayerId)) {
-		add(coordinator, EffectKind::ShotBurst, {event.x, event.y}, event.id, event.owner);
+		add(coordinator, EffectKind::ShotBurst, {.x = event.x, .y = event.y}, event.id, event.owner);
 	}
 }
 
@@ -108,7 +117,7 @@ void EffectSystem::handle(engine::core::Coordinator& coordinator, [[maybe_unused
 {
 	removeHitSpark(coordinator, event.id);
 	if (event.kind == game::EntityType::Enemy && destroyedOnscreen(event)) {
-		add(coordinator, EffectKind::MobExplosion, {event.x, event.y}, event.id);
+		add(coordinator, EffectKind::MobExplosion, {.x = event.x, .y = event.y}, event.id);
 	}
 }
 
@@ -123,7 +132,7 @@ void EffectSystem::handle(engine::core::Coordinator& coordinator, [[maybe_unused
 	const DeathEvent& event)
 {
 	removeHitSpark(coordinator, event.id);
-	add(coordinator, EffectKind::PlayerExplosion, {event.x, event.y}, event.id);
+	add(coordinator, EffectKind::PlayerExplosion, {.x = event.x, .y = event.y}, event.id);
 }
 
 /// Converts game notices into effect entities before rendering the frame.
@@ -165,7 +174,7 @@ void EffectSystem::update(engine::core::Coordinator& coordinator, const ClientNe
 {
 	std::vector<engine::core::Entity> expired;
 	for (engine::core::Entity entity : entities) {
-		Effect& effect = coordinator.getComponent<Effect>(entity);
+		auto& effect = coordinator.getComponent<Effect>(entity);
 		effect.remaining -= std::max(0.0F, deltaTime);
 		if (effect.remaining <= 0.0F) {
 			expired.push_back(entity);

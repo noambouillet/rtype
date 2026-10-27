@@ -213,18 +213,18 @@ r-type/
 │   └── run_instructions.md     # Server/client execution and CLI arguments
 ├── engine/                     # Standalone engine project (find_package(Engine))
 │   ├── cmake/                  # EngineConfig.cmake.in package template
-│   ├── include/engine/         # Public headers
-│   │   ├── audio/              # Abstract audio backend interface
-│   │   ├── core/               # Errors, logger, config parser, engine settings
-│   │   │   ├── ecs/            # Entities, sparse set components, systems, Coordinator
-│   │   │   └── systems/        # Generic systems (movement, collision, render...)
-│   │   ├── net/                # Abstract client/server transport interfaces
-│   │   └── render/             # Abstract graphics backend interface
-│   ├── src/                    # Private engine implementation
-│   ├── CMakeLists.txt          # Engine build, install, and export rules (engine::core)
-│   └── vcpkg.json              # Engine-only dependencies
+│   ├── core/                   # engine::core: ECS, config, logger, errors, movement
+│   ├── render/                 # engine::render: graphics backend, Sprite, RenderSystem
+│   ├── audio/                  # engine::audio: audio backend, Sound, AudioSystem
+│   ├── input/                  # engine::input: devices and action mapping
+│   ├── physics/                # engine::physics: Collider, CollisionSystem
+│   ├── net/                    # engine::net: transport interfaces, UDP, packets
+│   ├── script/                 # engine::script: Lua bindings
+│   ├── tools/                  # engine::tools: console, profiler, editor
+│   ├── CMakeLists.txt          # Module options, dependencies, install and export rules
+│   └── vcpkg.json              # Engine dependencies, one feature per module
 ├── games/
-│   └── rtype/                  # R-Type game, links engine::core like a third-party lib
+│   └── rtype/                  # R-Type game, links engine modules like a third-party lib
 │       ├── src/client/         # SFML graphical client and presentation systems
 │       ├── src/game/           # Shared game types, button bitmasks, and constants
 │       ├── src/server/         # Authoritative headless game server (r-type_server)
@@ -248,6 +248,7 @@ r-type/
 For in-depth architectural and technical documentation:
 
 - [**Build Instructions**](docs/build_instructions.md): Automated one-step setup and build (`build.sh` / `build.ps1`), toolchains, and CMake manual compilation steps.
+- [**Engine Modules**](docs/engine_modules.md): Module list, build options, vcpkg features, and how to add a module.
 - [**Run Instructions**](docs/run_instructions.md): Server and client CLI flags, `settings.cfg`, and multi-client testing.
 - [**Architecture & Systems Overview**](docs/architecture.md): Subsystems breakdown (Engine vs Client vs Server), Render, Physics, and Network systems.
 - [**Entity Component System (ECS) Guide**](docs/ecs_guide.md): In-depth look at our ECS paradigm, generational IDs, and sparse sets.

@@ -14,7 +14,7 @@ namespace rtype::ecs {
 
 class OffscreenSystem : public engine::core::System {
 public:
-	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	void update(engine::core::Coordinator& coordinator, float worldWidth, float worldHeight, float margin);
 };
 

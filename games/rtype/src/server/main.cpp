@@ -19,7 +19,8 @@
 
 #include "GameServer.hpp"
 #include "engine/core/Logger.hpp"
-#include "network/UdpServer.hpp"
+#include "engine/net/UdpServer.hpp"
+#include "utils/network/Protocol.hpp"
 
 namespace rtype {
 
@@ -88,7 +89,7 @@ static int runServer(const ServerOptions& options)
 			logger = std::make_unique<engine::core::Logger>(std::filesystem::path(options.logFile));
 		}
 		logger->setVerbose(true);
-		network::UdpServer transport(options.port);
+		engine::net::UdpServer transport({.port = options.port, .maxDatagramSize = network::MAX_DATAGRAM_SIZE});
 		GameServer server(transport);
 		logger->info("R-Type server listening on UDP port " + std::to_string(options.port));
 		server.run(running);

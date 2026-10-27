@@ -45,9 +45,9 @@ using ViewEvent = std::variant<SpawnEvent, DestroyEvent, DamageEvent, DeathEvent
 /// Tells a kill inside the world apart from an entity that left it.
 inline bool destroyedOnscreen(const DestroyEvent& event)
 {
-	constexpr float margin = client_config::OFFSCREEN_MARGIN;
-	return event.x >= -margin && event.x <= static_cast<float>(client_config::WINDOW_WIDTH) + margin &&
-		   event.y >= -margin && event.y <= static_cast<float>(client_config::WINDOW_HEIGHT) + margin;
+	constexpr float MARGIN = client_config::OFFSCREEN_MARGIN;
+	return event.x >= -MARGIN && event.x <= static_cast<float>(client_config::WINDOW_WIDTH) + MARGIN &&
+		   event.y >= -MARGIN && event.y <= static_cast<float>(client_config::WINDOW_HEIGHT) + MARGIN;
 }
 
 }

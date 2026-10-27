@@ -18,12 +18,12 @@ namespace rtype::ecs {
 
 class WeaponSystem : public engine::core::System {
 public:
-	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	std::vector<engine::core::Entity> update(engine::core::Coordinator& coordinator, float elapsedTime);
 
 private:
-	std::optional<engine::core::Entity> fire(engine::core::Coordinator& coordinator, engine::core::Entity shooter);
-	std::optional<engine::core::Entity> fireAtPlayer(engine::core::Coordinator& coordinator, engine::core::Position origin);
+	static std::optional<engine::core::Entity> fire(engine::core::Coordinator& coordinator, engine::core::Entity shooter);
+	static std::optional<engine::core::Entity> fireAtPlayer(engine::core::Coordinator& coordinator, engine::core::Position origin);
 };
 
 }

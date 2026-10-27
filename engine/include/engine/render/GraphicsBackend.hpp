@@ -26,14 +26,14 @@ struct Rect {
 };
 
 struct SpriteDraw {
-	std::string_view texture;
-	Rect region;
-	float x;
-	float y;
-	float originX;
-	float originY;
-	float scale;
-	float rotation;
+	TextureId textureId = 0;
+	Rect region{};
+	float x = 0.0F;
+	float y = 0.0F;
+	float originX = 0.0F;
+	float originY = 0.0F;
+	float scale = 1.0F;
+	float rotation = 0.0F;
 };
 
 class IGraphicsBackend {

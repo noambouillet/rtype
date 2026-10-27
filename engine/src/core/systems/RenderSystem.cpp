@@ -52,15 +52,19 @@ void RenderSystem::render(Coordinator& coordinator, render::IGraphicsBackend& ba
 		const Position& position = coordinator.getComponent<Position>(entity);
 		const Sprite& sprite = coordinator.getComponent<Sprite>(entity);
 		render::Rect region = sprite.region;
+		render::TextureId textureId = sprite.texture;
 		if (coordinator.hasComponent<Animation>(entity)) {
 			Animation& animation = coordinator.getComponent<Animation>(entity);
+			if (animation.texture != 0) {
+				textureId = animation.texture;
+			}
 			if (!animation.frames.empty() && animation.frameSeconds > 0.0F) {
 				const std::size_t frame = static_cast<std::size_t>(animation.elapsed / animation.frameSeconds);
 				region = animation.frames[animation.loop ? frame % animation.frames.size() : std::min(frame, animation.frames.size() - 1)];
 				animation.elapsed += std::max(0.0F, deltaTime);
 			}
 		}
-		backend.drawSprite({sprite.textureName, region, position.x, position.y, sprite.originX, sprite.originY,
+		backend.drawSprite({textureId, region, position.x, position.y, sprite.originX, sprite.originY,
 			sprite.scale, sprite.rotation});
 	}
 	backend.endFrame();

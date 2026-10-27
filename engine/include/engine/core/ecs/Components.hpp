@@ -25,7 +25,7 @@ struct Velocity {
 };
 
 struct Sprite {
-	std::string textureName;
+	render::TextureId texture = 0;
 	render::Rect region{};
 	float originX = 0.0F;
 	float originY = 0.0F;
@@ -35,6 +35,7 @@ struct Sprite {
 };
 
 struct Animation {
+	render::TextureId texture = 0;
 	std::vector<render::Rect> frames;
 	float frameSeconds = 0.0F;
 	float elapsed = 0.0F;

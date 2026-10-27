@@ -15,7 +15,6 @@
 #include <tuple>
 
 #include "client/GameConfig.hpp"
-#include "client/view/SpriteRegions.hpp"
 #include "engine/core/ConfigParser.hpp"
 #include "engine/core/Error.hpp"
 #include "engine/render/AssetManager.hpp"
@@ -243,11 +242,10 @@ void Sfml::drawBackground(std::string_view texture, float offset)
 /// Translates a library independent sprite command into an SFML draw call.
 void Sfml::drawSprite(const engine::render::SpriteDraw& command)
 {
-	if (!_engineSettings.screenFlashEnabled() && command.texture == sprites::EXPLOSION_SHEET) {
+	if (!_engineSettings.screenFlashEnabled() && _assets.hasTag(command.textureId, "screen_flash")) {
 		return;
 	}
-	const engine::render::TextureId textureId = _assets.getTexture(std::string(command.texture));
-	const auto textureIterator = resolveTexture(textureId);
+	const auto textureIterator = resolveTexture(command.textureId);
 	if (textureIterator == _loadedTextures.end()) {
 		return;
 	}

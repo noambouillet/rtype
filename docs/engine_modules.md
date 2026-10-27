@@ -14,15 +14,25 @@ Modularity works at two levels:
 | Module            | Option                 | Default | Depends on            | Third-party            | vcpkg feature | Content                                   |
 | ----------------- | ---------------------- | ------- | --------------------- | ---------------------- | ------------- | ----------------------------------------- |
 | `engine::core`    | always built           | ON      | none                  | none                   | none          | ECS, config, logger, errors, movement     |
-| `engine::render`  | `ENGINE_BUILD_RENDER`  | ON      | core                  | SFML Graphics          | `render`      | Graphics backend, `Sprite`, `RenderSystem` |
-| `engine::audio`   | `ENGINE_BUILD_AUDIO`   | ON      | core                  | SFML Audio             | `audio`       | Audio backend, `Sound`, `AudioSystem`     |
-| `engine::input`   | `ENGINE_BUILD_INPUT`   | ON      | core                  | SFML Window            | `input`       | Input devices, action mapping             |
+| `engine::render`  | `ENGINE_BUILD_RENDER`  | ON      | core                  | SFML Graphics          | `render`      | Graphics backend, `SfmlRenderer` (window, textures), `Sprite`, `RenderSystem` |
+| `engine::audio`   | `ENGINE_BUILD_AUDIO`   | ON      | core                  | SFML Audio             | `audio`       | Audio backend, `SfmlAudio`, `Sound`, `AudioSystem` |
+| `engine::input`   | `ENGINE_BUILD_INPUT`   | ON      | core                  | SFML Window            | `input`       | `InputMap` (actions), `SfmlInput` (keyboard, joystick) |
 | `engine::physics` | `ENGINE_BUILD_PHYSICS` | ON      | core                  | none                   | none          | `Collider`, `CollisionSystem`             |
 | `engine::net`     | `ENGINE_BUILD_NET`     | ON      | core                  | asio                   | `net`         | Transport interfaces, UDP, packets        |
-| `engine::script`  | `ENGINE_BUILD_SCRIPT`  | OFF     | core                  | Lua, sol2              | `script`      | Lua bindings                              |
-| `engine::tools`   | `ENGINE_BUILD_TOOLS`   | OFF     | core, render, input   | (from render, input)   | `tools`       | Console, profiler overlay, editor         |
+| `engine::script`  | `ENGINE_BUILD_SCRIPT`  | OFF     | core                  | Lua, sol2              | `script`      | Lua bindings (not implemented yet)        |
+| `engine::tools`   | `ENGINE_BUILD_TOOLS`   | OFF     | core, render, input   | (from render, input)   | `tools`       | Console, profiler overlay, editor (not implemented yet) |
 
-Configure stops with an error if `ENGINE_BUILD_TOOLS` is ON without `ENGINE_BUILD_RENDER` and `ENGINE_BUILD_INPUT`.
+`script` and `tools` have no sources yet: configure stops with an error if `ENGINE_BUILD_SCRIPT` or `ENGINE_BUILD_TOOLS` is ON.
+
+Input does not depend on render. `SfmlInput` reads the keyboard and joysticks directly; the game passes it the window focus each frame:
+
+```cpp
+window.handleEvent();                             // engine::render
+input.update(window.hasFocus());                  // engine::input
+if (input.isDown("fire")) { ... }
+```
+
+SFML backends hide SFML behind a private implementation, so a game includes `engine/render/SfmlRenderer.hpp` without seeing any SFML header and does not link SFML itself.
 
 ```mermaid
 graph BT
@@ -83,8 +93,7 @@ Every `ENGINE_BUILD_*` option can be set:
 ```bash
 cmake -S engine -B build-engine -G Ninja \
   -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake \
-  -DENGINE_BUILD_AUDIO=OFF \
-  -DENGINE_BUILD_SCRIPT=ON
+  -DENGINE_BUILD_AUDIO=OFF
 cmake --build build-engine
 cmake --install build-engine --prefix install
 ```
@@ -92,7 +101,7 @@ cmake --install build-engine --prefix install
 The enabled modules are listed during configure:
 
 ```
--- Engine modules: core;render;input;physics;net;script
+-- Engine modules: core;render;input;physics;net
 ```
 
 The install step only copies the libraries and headers of enabled modules. With only `core` enabled, `install/` contains `libengine_core.a` and `include/engine/core/`, nothing else.
@@ -105,8 +114,6 @@ The root picks engine modules from the game targets:
 | -------------------- | ------- | --------------------------------------------------------- |
 | `RTYPE_BUILD_SERVER` | ON      | Builds `r-type_server`, enables `physics` and `net`       |
 | `RTYPE_BUILD_CLIENT` | ON      | Builds `r-type_client`, enables `render`, `audio`, `input`, `net` |
-| `ENGINE_BUILD_SCRIPT`| OFF     | Enables `engine::script`                                  |
-| `ENGINE_BUILD_TOOLS` | OFF     | Enables `engine::tools` (and `render`, `input`)           |
 
 Server-only build:
 

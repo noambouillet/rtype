@@ -16,6 +16,7 @@ include(CMakePackageConfigHelpers)
 add_library(engine_core
     src/core/ConfigParser.cpp
     src/core/EngineSettings.cpp
+    src/core/EventBus.cpp
     src/core/Logger.cpp
     src/core/ecs/ComponentManager.cpp
     src/core/ecs/Coordinator.cpp

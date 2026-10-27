@@ -12,8 +12,9 @@ namespace engine::core {
 void EngineSettings::loadFromMap(const std::map<std::string, std::string>& data)
 {
 	const auto screenFlash = data.find("screen_flash");
-	if (screenFlash == data.end())
+	if (screenFlash == data.end()) {
 		return;
+	}
 	if (screenFlash->second == "true") {
 		_screenFlashEnabled = true;
 	} else if (screenFlash->second == "false") {

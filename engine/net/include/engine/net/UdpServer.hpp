@@ -20,6 +20,11 @@
 
 namespace engine::net {
 
+struct UdpServerConfig {
+	std::uint16_t port;
+	std::size_t maxDatagramSize;
+};
+
 class UdpServer : public IServerTransport {
 private:
 	static constexpr std::size_t MAX_PENDING = 256;
@@ -39,8 +44,8 @@ private:
 	std::thread _thread;
 
 public:
-	UdpServer(std::uint16_t port, std::size_t maxDatagramSize);
-	~UdpServer();
+	explicit UdpServer(const UdpServerConfig& config);
+	~UdpServer() override;
 	UdpServer(const UdpServer&) = delete;
 	UdpServer& operator=(const UdpServer&) = delete;
 

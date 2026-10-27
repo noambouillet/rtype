@@ -25,10 +25,10 @@ public:
 	static constexpr float MUSIC_VOLUME = 20.0F;
 
 	SoundEventSystem();
-	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	void consume(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network,
 		const std::vector<ViewEvent>& events, std::optional<std::uint8_t> localPlayerId);
-	void localFire(engine::core::Coordinator& coordinator);
+	static void localFire(engine::core::Coordinator& coordinator);
 
 private:
 	static constexpr std::string_view PLAYER_SHOT_SOUND = "ShootPlayer.ogg";
@@ -43,10 +43,10 @@ private:
 	static constexpr float PLAYER_DEATH_VOLUME = 150.0F;
 	static constexpr float CONNECTION_VOLUME = 150.0F;
 
-	void emit(engine::core::Coordinator& coordinator, std::string_view name, float volume);
-	void handle(engine::core::Coordinator& coordinator, const SpawnEvent& event, std::optional<std::uint8_t> localPlayerId);
-	void handle(engine::core::Coordinator& coordinator, const DestroyEvent& event);
-	void handle(engine::core::Coordinator& coordinator, const DeathEvent& event);
+	static void emit(engine::core::Coordinator& coordinator, std::string_view name, float volume);
+	static void handle(engine::core::Coordinator& coordinator, const SpawnEvent& event, std::optional<std::uint8_t> localPlayerId);
+	static void handle(engine::core::Coordinator& coordinator, const DestroyEvent& event);
+	static void handle(engine::core::Coordinator& coordinator, const DeathEvent& event);
 	void updateConnections(engine::core::Coordinator& coordinator, std::uint8_t connected);
 
 	std::uint8_t _connectedMask;

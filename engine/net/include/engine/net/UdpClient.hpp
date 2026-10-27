@@ -17,6 +17,12 @@
 
 namespace engine::net {
 
+struct UdpClientConfig {
+	std::string host;
+	std::uint16_t port;
+	std::size_t maxDatagramSize;
+};
+
 class UdpClient : public IClientTransport {
 private:
 	static constexpr std::size_t MAX_PENDING = 256;
@@ -29,7 +35,7 @@ private:
 	std::vector<std::uint8_t> _receiveBuffer;
 
 public:
-	UdpClient(const std::string& host, std::uint16_t port, std::size_t maxDatagramSize);
+	explicit UdpClient(const UdpClientConfig& config);
 	void send(const std::vector<std::uint8_t>& bytes) override;
 	std::vector<std::vector<std::uint8_t>> receivePending() override;
 };

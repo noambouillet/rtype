@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** R-Type
+** Engine
 ** File description:
 ** SFML texture cache and spritesheet access
 */
@@ -13,22 +13,28 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace rtype {
+namespace engine::render {
+
+struct AssetPaths {
+	std::filesystem::path root;
+	// Drawn in place of textures that cannot be loaded. It must exist under root.
+	std::filesystem::path fallbackFile;
+};
 
 class AssetManager {
 private:
-	static constexpr std::string_view FALLBACK_FILE = "magenta-checkerboard-200px.png";
 	using TextureMap = std::unordered_map<std::filesystem::path, sf::Texture>;
 
 	sf::Texture& loadTexture(const std::filesystem::path& name);
 
 	std::filesystem::path _root;
+	std::filesystem::path _fallbackFile;
 	sf::Texture _fallbackTexture;
 	TextureMap _textures;
 	std::unordered_set<std::filesystem::path> _missing;
 
 public:
-	AssetManager();
+	explicit AssetManager(const AssetPaths& paths);
 	void preload(std::string_view name);
 	const sf::Texture& texture(std::string_view name);
 	void setRepeated(std::string_view name, bool repeated);

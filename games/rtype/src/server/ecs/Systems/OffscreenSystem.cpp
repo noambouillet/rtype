@@ -33,16 +33,18 @@ void OffscreenSystem::update(engine::core::Coordinator& coordinator, float world
 
 		if (coordinator.getComponent<Offscreen>(e).action == OffscreenAction::Block) {
 			engine::physics::Collider box{};
-			if (coordinator.hasComponent<engine::physics::Collider>(e))
+			if (coordinator.hasComponent<engine::physics::Collider>(e)) {
 				box = coordinator.getComponent<engine::physics::Collider>(e);
+			}
 			pos.x = std::clamp(pos.x, -box.offsetX, worldWidth - box.offsetX - box.width);
 			pos.y = std::clamp(pos.y, -box.offsetY, worldHeight - box.offsetY - box.height);
 			continue;
 		}
 		const bool outside = pos.x < -margin || pos.x > worldWidth + margin || pos.y < -margin || pos.y > worldHeight + margin;
 
-		if (outside && !coordinator.hasComponent<engine::core::Destroy>(e))
+		if (outside && !coordinator.hasComponent<engine::core::Destroy>(e)) {
 			coordinator.addComponent(e, engine::core::Destroy{});
+		}
 	}
 }
 

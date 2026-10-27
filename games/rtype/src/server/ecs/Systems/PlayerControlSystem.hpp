@@ -20,7 +20,7 @@ class PlayerControlSystem : public engine::core::System {
 public:
 	using Buttons = std::array<std::uint8_t, config::MAX_PLAYERS>;
 
-	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	void update(engine::core::Coordinator& coordinator, const Buttons& buttons);
 };
 

@@ -35,14 +35,16 @@ engine::core::Signature EnemySpawnSystem::signature(engine::core::Coordinator& c
 /// `active` is true when at least one player is connected
 void EnemySpawnSystem::update(engine::core::Coordinator& coordinator, float elapsedTime, bool active)
 {
-	if (!active)
+	if (!active) {
 		return;
+	}
 	for (const engine::core::Entity& e : entities) {
 		auto& spawner = coordinator.getComponent<WaveSpawner>(e);
 
 		spawner.timer -= elapsedTime;
-		if (spawner.timer > 0.0F)
+		if (spawner.timer > 0.0F) {
 			continue;
+		}
 		spawner.timer += spawner.interval;
 		spawnWave(coordinator);
 	}
@@ -71,7 +73,7 @@ void EnemySpawnSystem::spawnWave(engine::core::Coordinator& coordinator)
 		prefabs::createFormation(coordinator, game::EnemyKind::Bug, height(_rng), size(_rng));
 		return;
 	}
-	const float margin = config::PATAPATA_SPREAD + config::PATAPATA_AMPLITUDE + config::PATAPATA_HEIGHT / 2.0F;
+	const float margin = config::PATAPATA_SPREAD + config::PATAPATA_AMPLITUDE + (config::PATAPATA_HEIGHT / 2.0F);
 	std::uniform_int_distribution<int> size(config::PATAPATA_MIN_COUNT, config::PATAPATA_MAX_COUNT);
 	std::uniform_real_distribution<float> height(margin, config::WORLD_HEIGHT - margin);
 

@@ -46,7 +46,7 @@ void RenderSystem::render(core::Coordinator& coordinator, IGraphicsBackend& back
 		backend.drawBackground(_backgroundTexture, _backgroundOffset);
 	}
 	std::vector<core::Entity> ordered(entities.begin(), entities.end());
-	std::stable_sort(ordered.begin(), ordered.end(), [&coordinator](core::Entity left, core::Entity right) {
+	std::ranges::stable_sort(ordered, [&coordinator](core::Entity left, core::Entity right) {
 		return coordinator.getComponent<Sprite>(left).layer < coordinator.getComponent<Sprite>(right).layer;
 	});
 	for (core::Entity entity : ordered) {
@@ -54,15 +54,14 @@ void RenderSystem::render(core::Coordinator& coordinator, IGraphicsBackend& back
 		const Sprite& sprite = coordinator.getComponent<Sprite>(entity);
 		Rect region = sprite.region;
 		if (coordinator.hasComponent<Animation>(entity)) {
-			Animation& animation = coordinator.getComponent<Animation>(entity);
+			auto& animation = coordinator.getComponent<Animation>(entity);
 			if (!animation.frames.empty() && animation.frameSeconds > 0.0F) {
-				const std::size_t frame = static_cast<std::size_t>(animation.elapsed / animation.frameSeconds);
+				const auto frame = static_cast<std::size_t>(animation.elapsed / animation.frameSeconds);
 				region = animation.frames[animation.loop ? frame % animation.frames.size() : std::min(frame, animation.frames.size() - 1)];
 				animation.elapsed += std::max(0.0F, deltaTime);
 			}
 		}
-		backend.drawSprite({sprite.textureName, region, position.x, position.y, sprite.originX, sprite.originY,
-			sprite.scale, sprite.rotation});
+		backend.drawSprite({.texture = sprite.textureName, .region = region, .x = position.x, .y = position.y, .originX = sprite.originX, .originY = sprite.originY, .scale = sprite.scale, .rotation = sprite.rotation});
 	}
 	backend.endFrame();
 }

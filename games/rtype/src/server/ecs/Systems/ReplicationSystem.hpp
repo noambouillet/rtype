@@ -29,7 +29,7 @@ struct ReplicatedState {
 
 class ReplicationSystem : public engine::core::System {
 public:
-	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	std::optional<ReplicatedState> capture(engine::core::Coordinator& coordinator, engine::core::Entity entity) const;
 	std::vector<ReplicatedState> collect(engine::core::Coordinator& coordinator);
 };

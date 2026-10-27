@@ -25,8 +25,9 @@ void DestroySystem::update(Coordinator& coordinator)
 {
 	const std::vector<Entity> toDestroy(entities.begin(), entities.end());
 
-	for (const Entity& e : toDestroy)
+	for (const Entity& e : toDestroy) {
 		coordinator.destroyEntity(e);
+	}
 }
 
 }

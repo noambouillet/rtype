@@ -12,14 +12,14 @@ else()
 endif()
 
 option(RTYPE_BUILD_SERVER "Build r-type_server (engine core, physics, net)" ON)
-option(RTYPE_BUILD_CLIENT "Build r-type_client (engine render, audio, net)" ON)
+option(RTYPE_BUILD_CLIENT "Build r-type_client (engine render, audio, input, net)" ON)
 
 set(RTYPE_ENGINE_MODULES core net)
 if(RTYPE_BUILD_SERVER)
     list(APPEND RTYPE_ENGINE_MODULES physics)
 endif()
 if(RTYPE_BUILD_CLIENT)
-    list(APPEND RTYPE_ENGINE_MODULES render audio)
+    list(APPEND RTYPE_ENGINE_MODULES render audio input)
 endif()
 
 if(NOT TARGET engine::core)
@@ -32,9 +32,6 @@ foreach(RTYPE_ENGINE_MODULE IN LISTS RTYPE_ENGINE_MODULES)
 endforeach()
 
 find_package(Threads REQUIRED)
-if(RTYPE_BUILD_CLIENT)
-    find_package(SFML 3.0.2 EXACT COMPONENTS Graphics Window System Audio CONFIG REQUIRED)
-endif()
 
 set(RTYPE_ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../assets" CACHE PATH "R-Type assets directory")
 
@@ -84,19 +81,15 @@ if(RTYPE_BUILD_CLIENT)
         src/client/view/ClientWorld.cpp
         src/client/view/LocalFirePredictor.cpp
     )
-    target_link_libraries(rtype_client_core PUBLIC engine::core engine::render engine::audio engine::net rtype_protocol)
+    target_link_libraries(rtype_client_core PUBLIC engine::core engine::render engine::audio engine::input engine::net rtype_protocol)
 
     add_executable(r-type_client
         src/client/main.cpp
         src/client/app/ClientApp.cpp
+        src/client/app/ClientControls.cpp
         src/client/app/ClientOptions.cpp
-        src/client/SFML/AssetManager.cpp
-        src/client/SFML/KeyBindings.cpp
-        src/client/SFML/Sfml.cpp
-        src/client/SFML/SoundPlayer.cpp
     )
-    target_link_libraries(r-type_client PRIVATE rtype_client_core
-        Threads::Threads SFML::Graphics SFML::Window SFML::System SFML::Audio)
+    target_link_libraries(r-type_client PRIVATE rtype_client_core Threads::Threads)
 
     add_custom_target(rtype_assets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory

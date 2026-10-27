@@ -18,7 +18,7 @@ namespace engine::audio {
 class AudioSystem : public core::System {
 public:
 	AudioSystem();
-	core::Signature signature(core::Coordinator& coordinator);
+	static core::Signature signature(core::Coordinator& coordinator);
 	void setMusic(std::string name, float volume);
 	void play(core::Coordinator& coordinator, IAudioBackend& backend);
 

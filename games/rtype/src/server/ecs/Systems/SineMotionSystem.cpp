@@ -31,8 +31,8 @@ void SineMotionSystem::update(engine::core::Coordinator& coordinator, float elap
 		auto& motion = coordinator.getComponent<SineMotion>(e);
 
 		motion.elapsed += elapsedTime;
-		coordinator.getComponent<engine::core::Velocity>(e) = {-motion.speed,
-			motion.amplitude * motion.frequency * std::cos(motion.frequency * motion.elapsed + motion.phase)};
+		coordinator.getComponent<engine::core::Velocity>(e) = {.x = -motion.speed,
+			.y = motion.amplitude * motion.frequency * std::cos((motion.frequency * motion.elapsed) + motion.phase)};
 	}
 }
 

@@ -35,7 +35,7 @@ flowchart TD
         UdpClient["Network Transport (UdpClient / ASIO)"]
         GameClient["GameClient Controller"]
         ClientWorld["Client View World (60 FPS)<br/>- ClientNetworkSystem<br/>- EffectSystem and LocalFirePredictor<br/>- RenderSystem and AudioSystem"]
-        SFMLBackend["SFML Concrete Backends<br/>- Sfml (IGraphicsBackend)<br/>- SoundPlayer (IAudioBackend)<br/>- AssetManager and KeyBindings"]
+        SFMLBackend["Engine SFML Backends<br/>- SfmlRenderer (IGraphicsBackend)<br/>- SfmlAudio (IAudioBackend)<br/>- SfmlInput (IInputBackend)"]
     end
 
     ServerMain --> ServerNetwork
@@ -114,11 +114,11 @@ classDiagram
         +endFrame()*
     }
 
-    class Sfml {
-        -sf::RenderWindow _window
-        -AssetManager& _assets
-        -EngineSettings _engineSettings
-        -KeyBindings _bindings
+    class SfmlRenderer {
+        -sf::RenderWindow window
+        -AssetManager assets
+        +handleEvent()
+        +preload(string_view texture)
         +beginFrame()
         +drawBackground(string_view texture, float offset)
         +drawSprite(SpriteDraw command)
@@ -133,7 +133,7 @@ classDiagram
         +render(Coordinator coordinator, IGraphicsBackend backend, float dt)
     }
 
-    IGraphicsBackend <|.. Sfml : implements
+    IGraphicsBackend <|.. SfmlRenderer : implements
     RenderSystem ..> IGraphicsBackend : consumes
 ```
 
@@ -141,7 +141,7 @@ classDiagram
 
 - **Graphics Backend Interface:** Defines `IGraphicsBackend`, decoupling the engine from graphics libraries (`engine/render/include/engine/render/GraphicsBackend.hpp`).
 - **Engine Render System:** Processes entities with `Position` and `Sprite`, updates animations, sorts by layer, and updates background offsets (`engine/render/src/RenderSystem.cpp`).
-- **SFML Backend Implementation:** Concrete `IGraphicsBackend` using SFML windowing and sprites with asset caching and accessibility filters (`games/rtype/src/client/SFML/Sfml.cpp`).
+- **SFML Backend Implementation:** Concrete `IGraphicsBackend` using SFML windowing and sprites with texture caching (`engine/render/src/sfml/SfmlRenderer.cpp`).
 
 ---
 

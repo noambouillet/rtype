@@ -89,7 +89,7 @@ static int runServer(const ServerOptions& options)
 			logger = std::make_unique<engine::core::Logger>(std::filesystem::path(options.logFile));
 		}
 		logger->setVerbose(true);
-		engine::net::UdpServer transport(options.port, network::MAX_DATAGRAM_SIZE);
+		engine::net::UdpServer transport({.port = options.port, .maxDatagramSize = network::MAX_DATAGRAM_SIZE});
 		GameServer server(transport);
 		logger->info("R-Type server listening on UDP port " + std::to_string(options.port));
 		server.run(running);

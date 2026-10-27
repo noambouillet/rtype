@@ -15,7 +15,7 @@ namespace engine::core {
 
 class MovementSystem : public System {
 public:
-	Signature signature(Coordinator& coordinator);
+	static Signature signature(Coordinator& coordinator);
 	void update(Coordinator& coordinator, float elapsedTime);
 };
 

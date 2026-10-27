@@ -18,7 +18,7 @@ namespace rtype::ecs {
 class FormationSystem : public engine::core::System {
 public:
 	FormationSystem();
-	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	std::vector<engine::core::Entity> update(engine::core::Coordinator& coordinator, float elapsedTime);
 
 private:

@@ -23,7 +23,8 @@
 
 namespace rtype::client {
 
-ClientWorld::ClientWorld()
+/// Builds the view world. With screenFlash off, explosions are never shown (accessibility setting).
+ClientWorld::ClientWorld(bool screenFlash)
 {
 	_coordinator.registerComponent<engine::core::Position>();
 	_coordinator.registerComponent<engine::render::Sprite>();
@@ -31,22 +32,23 @@ ClientWorld::ClientWorld()
 	_coordinator.registerComponent<NetworkIdentity>();
 	_coordinator.registerComponent<Effect>();
 	_coordinator.registerComponent<engine::audio::Sound>();
-	auto& network = _coordinator.registerSystem<ClientNetworkSystem>();
-	_coordinator.setSystemSignature<ClientNetworkSystem>(network.signature(_coordinator));
+	_coordinator.registerSystem<ClientNetworkSystem>();
+	_coordinator.setSystemSignature<ClientNetworkSystem>(ClientNetworkSystem::signature(_coordinator));
 	auto& effects = _coordinator.registerSystem<EffectSystem>();
-	_coordinator.setSystemSignature<EffectSystem>(effects.signature(_coordinator));
+	_coordinator.setSystemSignature<EffectSystem>(EffectSystem::signature(_coordinator));
+	effects.setScreenFlash(screenFlash);
 	auto& render = _coordinator.registerSystem<engine::render::RenderSystem>();
-	_coordinator.setSystemSignature<engine::render::RenderSystem>(render.signature(_coordinator));
+	_coordinator.setSystemSignature<engine::render::RenderSystem>(engine::render::RenderSystem::signature(_coordinator));
 	render.setBackground("background.png", 40.0F);
-	auto& sounds = _coordinator.registerSystem<SoundEventSystem>();
-	_coordinator.setSystemSignature<SoundEventSystem>(sounds.signature(_coordinator));
+	_coordinator.registerSystem<SoundEventSystem>();
+	_coordinator.setSystemSignature<SoundEventSystem>(SoundEventSystem::signature(_coordinator));
 	auto& audio = _coordinator.registerSystem<engine::audio::AudioSystem>();
-	_coordinator.setSystemSignature<engine::audio::AudioSystem>(audio.signature(_coordinator));
+	_coordinator.setSystemSignature<engine::audio::AudioSystem>(engine::audio::AudioSystem::signature(_coordinator));
 	audio.setMusic(std::string(SoundEventSystem::MUSIC), SoundEventSystem::MUSIC_VOLUME);
 }
 
 /// Updates the network copy and temporary presentation state for one client frame.
-void ClientWorld::update(network::GameClient& client, std::uint8_t buttons, float deltaTime)
+void ClientWorld::update(float deltaTime, network::GameClient& client, std::uint8_t buttons)
 {
 	auto& network = _coordinator.getSystem<ClientNetworkSystem>();
 	auto& effects = _coordinator.getSystem<EffectSystem>();
@@ -56,7 +58,7 @@ void ClientWorld::update(network::GameClient& client, std::uint8_t buttons, floa
 	effects.consume(_coordinator, network, events, playerId);
 	sounds.consume(_coordinator, network, events, playerId);
 	if (effects.predictLocalFire(_coordinator, network, buttons, playerId)) {
-		sounds.localFire(_coordinator);
+		rtype::client::SoundEventSystem::localFire(_coordinator);
 	}
 	effects.update(_coordinator, network, deltaTime);
 }

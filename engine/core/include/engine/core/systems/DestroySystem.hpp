@@ -15,7 +15,7 @@ namespace engine::core {
 
 class DestroySystem : public System {
 public:
-	Signature signature(Coordinator& coordinator);
+	static Signature signature(Coordinator& coordinator);
 	void update(Coordinator& coordinator);
 };
 

@@ -23,7 +23,7 @@ namespace rtype::client {
 class ClientNetworkSystem : public engine::core::System {
 public:
 	ClientNetworkSystem();
-	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	std::vector<ViewEvent> update(engine::core::Coordinator& coordinator, network::GameClient& client, std::uint8_t buttons);
 	void applySnapshot(engine::core::Coordinator& coordinator, const network::WorldSnapshot& snapshot);
 	[[nodiscard]] std::optional<engine::core::Entity> find(std::uint32_t serverId) const;
@@ -32,8 +32,8 @@ public:
 	[[nodiscard]] std::uint8_t connectedMask() const;
 
 private:
-	engine::core::Entity createVisualEntity(engine::core::Coordinator& coordinator, const network::WorldEntity& serverEntity);
-	void updateVisualEntity(engine::core::Coordinator& coordinator, engine::core::Entity visualEntity, const network::WorldEntity& serverEntity);
+	static engine::core::Entity createVisualEntity(engine::core::Coordinator& coordinator, const network::WorldEntity& serverEntity);
+	static void updateVisualEntity(engine::core::Coordinator& coordinator, engine::core::Entity visualEntity, const network::WorldEntity& serverEntity);
 
 	std::unordered_map<std::uint32_t, engine::core::Entity> _entitiesByServerId;
 	std::optional<std::uint64_t> _lastAppliedTick;

@@ -17,12 +17,14 @@
 #include "client/view/ViewEvent.hpp"
 #include "engine/core/ecs/Coordinator.hpp"
 #include "engine/core/ecs/System.hpp"
+#include "engine/render/AssetManager.hpp"
 
 namespace rtype::client {
 
 class EffectSystem : public engine::core::System {
 public:
 	EffectSystem();
+	void setAssetManager(const engine::render::AssetManager& assets);
 	engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	void consume(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network,
 		const std::vector<ViewEvent>& events, std::optional<std::uint8_t> localPlayerId);
@@ -44,6 +46,7 @@ private:
 	void handle(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network, const DamageEvent& event);
 	void handle(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network, const DeathEvent& event);
 
+	const engine::render::AssetManager* _assets = nullptr;
 	LocalFirePredictor _firePredictor;
 };
 

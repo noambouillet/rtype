@@ -14,11 +14,17 @@
 #include "client/view/ClientComponents.hpp"
 #include "client/view/SpriteCatalog.hpp"
 #include "engine/core/ecs/Components.hpp"
+#include "engine/render/AssetManager.hpp"
 
 namespace rtype::client {
 
 ClientNetworkSystem::ClientNetworkSystem() : _entitiesByServerId{}, _lastAppliedTick{}, _aliveMask(0), _connectedMask(0)
 {
+}
+
+void ClientNetworkSystem::setAssetManager(const engine::render::AssetManager& assets)
+{
+	_assets = &assets;
 }
 
 engine::core::Signature ClientNetworkSystem::signature(engine::core::Coordinator& coordinator)
@@ -96,9 +102,11 @@ engine::core::Entity ClientNetworkSystem::createVisualEntity(engine::core::Coord
 {
 	const engine::core::Entity visualEntity = coordinator.createEntity();
 	coordinator.addComponent(visualEntity, engine::core::Position{serverEntity.x, serverEntity.y});
-	coordinator.addComponent(visualEntity, spriteFor(serverEntity.entityType, serverEntity.spriteId));
-	if (auto animation = animationFor(serverEntity.entityType)) {
-		coordinator.addComponent(visualEntity, std::move(*animation));
+	if (_assets) {
+		coordinator.addComponent(visualEntity, spriteFor(*_assets, serverEntity.entityType, serverEntity.spriteId));
+		if (auto animation = animationFor(*_assets, serverEntity.entityType)) {
+			coordinator.addComponent(visualEntity, std::move(*animation));
+		}
 	}
 	const NetworkIdentity identity{serverEntity.entityId, serverEntity.entityType,
 		serverEntity.ownerPlayerId, serverEntity.spriteId};
@@ -112,12 +120,18 @@ void ClientNetworkSystem::updateVisualEntity(engine::core::Coordinator& coordina
 	coordinator.getComponent<engine::core::Position>(visualEntity) = {serverEntity.x, serverEntity.y};
 	NetworkIdentity& identity = coordinator.getComponent<NetworkIdentity>(visualEntity);
 	if (identity.kind != serverEntity.entityType || identity.variant != serverEntity.spriteId) {
-		coordinator.getComponent<engine::core::Sprite>(visualEntity) = spriteFor(serverEntity.entityType, serverEntity.spriteId);
-		const auto animation = animationFor(serverEntity.entityType);
-		if (animation && !coordinator.hasComponent<engine::core::Animation>(visualEntity)) {
-			coordinator.addComponent(visualEntity, *animation);
-		} else if (!animation && coordinator.hasComponent<engine::core::Animation>(visualEntity)) {
-			coordinator.removeComponent<engine::core::Animation>(visualEntity);
+		if (_assets) {
+			if (coordinator.hasComponent<engine::core::Sprite>(visualEntity)) {
+				coordinator.getComponent<engine::core::Sprite>(visualEntity) = spriteFor(*_assets, serverEntity.entityType, serverEntity.spriteId);
+			} else {
+				coordinator.addComponent(visualEntity, spriteFor(*_assets, serverEntity.entityType, serverEntity.spriteId));
+			}
+			const auto animation = animationFor(*_assets, serverEntity.entityType);
+			if (animation && !coordinator.hasComponent<engine::core::Animation>(visualEntity)) {
+				coordinator.addComponent(visualEntity, *animation);
+			} else if (!animation && coordinator.hasComponent<engine::core::Animation>(visualEntity)) {
+				coordinator.removeComponent<engine::core::Animation>(visualEntity);
+			}
 		}
 	}
 	identity = {serverEntity.entityId, serverEntity.entityType, serverEntity.ownerPlayerId, serverEntity.spriteId};

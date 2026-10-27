@@ -8,41 +8,37 @@
 #include "EffectSystem.hpp"
 
 #include <algorithm>
-#include <span>
 #include <string>
-#include <string_view>
 #include <variant>
 
-#include "client/view/SpriteRegions.hpp"
 #include "engine/core/ecs/Components.hpp"
+#include "engine/render/AssetManager.hpp"
 #include "game/GameTypes.hpp"
 
 namespace rtype::client {
 
-struct EffectArt {
-	std::string_view texture;
-	std::span<const engine::render::Rect> frames;
-	float frameSeconds;
-};
-
-/// Chooses asset frames for a temporary presentation effect.
-static EffectArt artFor(EffectKind kind)
+static const char* animationNameFor(EffectKind kind)
 {
 	switch (kind) {
 		case EffectKind::ShotBurst:
-			return {sprites::SHOT_SHEET, sprites::SHOT_BURST_FRAMES, 0.055F};
+			return "shot_burst";
 		case EffectKind::HitSpark:
-			return {sprites::SHOT_SHEET, sprites::HIT_SPARK_FRAMES, 0.04F};
+			return "hit_spark";
 		case EffectKind::MobExplosion:
-			return {sprites::EXPLOSION_SHEET, sprites::MOB_EXPLOSION_FRAMES, 0.025F};
+			return "mob_explosion";
 		case EffectKind::PlayerExplosion:
-			return {sprites::EXPLOSION_SHEET, sprites::PLAYER_EXPLOSION_FRAMES, 0.07F};
+			return "player_explosion";
 	}
-	return {};
+	return "";
 }
 
 EffectSystem::EffectSystem() : _firePredictor{}
 {
+}
+
+void EffectSystem::setAssetManager(const engine::render::AssetManager& assets)
+{
+	_assets = &assets;
 }
 
 engine::core::Signature EffectSystem::signature(engine::core::Coordinator& coordinator)
@@ -68,17 +64,20 @@ void EffectSystem::add(engine::core::Coordinator& coordinator, EffectKind kind, 
 	if (entities.size() >= MAX_EFFECTS) {
 		coordinator.destroyEntity(*entities.begin());
 	}
-	const EffectArt art = artFor(kind);
-	if (art.frames.empty()) {
+	if (!_assets) {
 		return;
 	}
-	const engine::render::Rect first = art.frames.front();
+	const auto& animDesc = _assets->getAnimation(animationNameFor(kind));
+	if (animDesc.frames.empty()) {
+		return;
+	}
+	const engine::render::Rect first = animDesc.frames.front();
 	const engine::core::Entity entity = coordinator.createEntity();
 	coordinator.addComponent(entity, position);
-	coordinator.addComponent(entity, engine::core::Sprite{std::string(art.texture), first,
+	coordinator.addComponent(entity, engine::core::Sprite{animDesc.texture, first,
 										 static_cast<float>(first.size.x) / 2.0F, static_cast<float>(first.size.y) / 2.0F, 2.0F, 0.0F, 10});
-	coordinator.addComponent(entity, engine::core::Animation{{art.frames.begin(), art.frames.end()}, art.frameSeconds, 0.0F, false});
-	coordinator.addComponent(entity, Effect{kind, art.frameSeconds * static_cast<float>(art.frames.size()), targetId, followPlayer});
+	coordinator.addComponent(entity, engine::core::Animation{animDesc.texture, animDesc.frames, animDesc.frameSeconds, 0.0F, animDesc.loop});
+	coordinator.addComponent(entity, Effect{kind, animDesc.frameSeconds * static_cast<float>(animDesc.frames.size()), targetId, followPlayer});
 }
 
 /// Removes a surviving-hit cue when that entity is destroyed.

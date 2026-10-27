@@ -18,10 +18,11 @@
 #include "engine/core/ecs/Components.hpp"
 #include "engine/core/systems/AudioSystem.hpp"
 #include "engine/core/systems/RenderSystem.hpp"
+#include "engine/render/AssetManager.hpp"
 
 namespace rtype::client {
 
-ClientWorld::ClientWorld()
+ClientWorld::ClientWorld(const engine::render::AssetManager& assets)
 {
 	_coordinator.registerComponent<engine::core::Position>();
 	_coordinator.registerComponent<engine::core::Sprite>();
@@ -30,8 +31,10 @@ ClientWorld::ClientWorld()
 	_coordinator.registerComponent<Effect>();
 	_coordinator.registerComponent<engine::core::Sound>();
 	auto& network = _coordinator.registerSystem<ClientNetworkSystem>();
+	network.setAssetManager(assets);
 	_coordinator.setSystemSignature<ClientNetworkSystem>(network.signature(_coordinator));
 	auto& effects = _coordinator.registerSystem<EffectSystem>();
+	effects.setAssetManager(assets);
 	_coordinator.setSystemSignature<EffectSystem>(effects.signature(_coordinator));
 	auto& render = _coordinator.registerSystem<engine::core::RenderSystem>();
 	_coordinator.setSystemSignature<engine::core::RenderSystem>(render.signature(_coordinator));

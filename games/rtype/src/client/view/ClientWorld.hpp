@@ -12,13 +12,14 @@
 #include "client/network/GameClient.hpp"
 #include "engine/audio/AudioBackend.hpp"
 #include "engine/core/ecs/Coordinator.hpp"
+#include "engine/render/AssetManager.hpp"
 #include "engine/render/GraphicsBackend.hpp"
 
 namespace rtype::client {
 
 class ClientWorld {
 public:
-	ClientWorld();
+	explicit ClientWorld(const engine::render::AssetManager& assets);
 	void update(network::GameClient& client, std::uint8_t buttons, float deltaTime);
 	void render(engine::render::IGraphicsBackend& backend, float deltaTime);
 	void playAudio(engine::audio::IAudioBackend& backend);

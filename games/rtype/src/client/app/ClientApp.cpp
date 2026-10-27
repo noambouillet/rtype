@@ -24,7 +24,6 @@
 #include "client/network/GameClient.hpp"
 #include "client/network/UdpClient.hpp"
 #include "client/view/ClientWorld.hpp"
-#include "client/view/SpriteRegions.hpp"
 #include "engine/core/Logger.hpp"
 #include "engine/render/AssetManager.hpp"
 
@@ -147,7 +146,7 @@ int runClient(const ClientOptions& options)
 	Sfml window(assets);
 	assets.loadManifest(resolveClientManifestPath(), window);
 	SoundPlayer audio;
-	rtype::client::ClientWorld view;
+	rtype::client::ClientWorld view(assets);
 	logger->info("Connecting to " + options.host + ':' + std::to_string(options.port));
 	const bool success = runClientLoop(window, audio, client, view, *logger, assets);
 	client.disconnect();

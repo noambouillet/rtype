@@ -27,7 +27,7 @@ public:
 	void playSound(std::string_view name, float volume) override;
 
 private:
-	// SFML types stay in the .cpp, so games never include SFML headers.
+	// Holds the SFML objects, so code including this header does not depend on SFML.
 	struct Implementation;
 	std::unique_ptr<Implementation> _implementation;
 };

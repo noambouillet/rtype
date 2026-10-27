@@ -28,7 +28,7 @@ struct SfmlAudio::Implementation {
 	sf::SoundBuffer& loadBuffer(const std::string& name);
 };
 
-/// Creates a backend that loads music and sounds from files under `root`.
+/// Music and sound names given to this backend are file paths relative to root.
 SfmlAudio::SfmlAudio(std::filesystem::path root) : _implementation(std::make_unique<Implementation>())
 {
 	_implementation->root = std::move(root);

@@ -23,7 +23,7 @@ struct WindowConfig {
 	std::string title = "Engine";
 	std::uint32_t frameRateLimit = 60;
 	std::filesystem::path assetRoot = "assets";
-	// Drawn in place of any texture that cannot be loaded; must exist under assetRoot.
+	// Drawn in place of textures that cannot be loaded. It must exist under assetRoot.
 	std::filesystem::path fallbackTexture = "magenta-checkerboard-200px.png";
 };
 
@@ -46,7 +46,7 @@ public:
 	void endFrame() override;
 
 private:
-	// SFML types stay in the .cpp, so games never include SFML headers.
+	// Holds the SFML objects, so code including this header does not depend on SFML.
 	struct Implementation;
 	std::unique_ptr<Implementation> _implementation;
 };

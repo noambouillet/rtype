@@ -25,7 +25,7 @@ struct SfmlRenderer::Implementation {
 	}
 };
 
-/// Opens the window and loads the fallback texture.
+/// Opens the window.
 SfmlRenderer::SfmlRenderer(const WindowConfig& config) : _implementation(std::make_unique<Implementation>(config))
 {
 	_implementation->window.setFramerateLimit(config.frameRateLimit);
@@ -48,7 +48,7 @@ void SfmlRenderer::close()
 	_implementation->window.close();
 }
 
-/// Closes the window when its close button is pressed.
+/// The window closes itself when its close button is pressed.
 void SfmlRenderer::handleEvent()
 {
 	while (const auto event = _implementation->window.pollEvent()) {
@@ -58,7 +58,8 @@ void SfmlRenderer::handleEvent()
 	}
 }
 
-/// Loads a required texture before rendering starts.
+/// Loads a texture before the first frame, so a missing required file fails at startup
+/// instead of being drawn as the fallback texture.
 void SfmlRenderer::preload(std::string_view texture)
 {
 	_implementation->assets.preload(texture);

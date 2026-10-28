@@ -35,7 +35,7 @@ flowchart TD
         UdpClient["Network Transport (UdpClient / ASIO)"]
         GameClient["GameClient Controller"]
         ClientWorld["Client View World (60 FPS)<br/>- ClientNetworkSystem<br/>- EffectSystem and LocalFirePredictor<br/>- RenderSystem and AudioSystem"]
-        SFMLBackend["SFML Concrete Backends<br/>- Sfml (IGraphicsBackend)<br/>- SoundPlayer (IAudioBackend)<br/>- AssetManager and KeyBindings"]
+        SFMLBackend["Engine SFML Backends<br/>- SfmlRenderer (IGraphicsBackend)<br/>- SfmlAudio (IAudioBackend)<br/>- SfmlInput (IInputBackend)"]
     end
 
     ServerMain --> ServerNetwork
@@ -114,11 +114,11 @@ classDiagram
         +endFrame()*
     }
 
-    class Sfml {
-        -sf::RenderWindow _window
-        -AssetManager& _assets
-        -EngineSettings _engineSettings
-        -KeyBindings _bindings
+    class SfmlRenderer {
+        -sf::RenderWindow window
+        -AssetManager assets
+        +handleEvent()
+        +preload(string_view texture)
         +beginFrame()
         +drawBackground(string_view texture, float offset)
         +drawSprite(SpriteDraw command)
@@ -133,15 +133,15 @@ classDiagram
         +render(Coordinator coordinator, IGraphicsBackend backend, float dt)
     }
 
-    IGraphicsBackend <|.. Sfml : implements
+    IGraphicsBackend <|.. SfmlRenderer : implements
     RenderSystem ..> IGraphicsBackend : consumes
 ```
 
 #### Materialization in Code
 
-- **Graphics Backend Interface:** Defines `IGraphicsBackend`, decoupling the engine from graphics libraries (`engine/include/engine/render/GraphicsBackend.hpp`).
-- **Engine Render System:** Processes entities with `Position` and `Sprite`, updates animations, sorts by layer, and updates background offsets (`engine/src/core/systems/RenderSystem.cpp`).
-- **SFML Backend Implementation:** Concrete `IGraphicsBackend` using SFML windowing and sprites with asset caching and accessibility filters (`games/rtype/src/client/SFML/Sfml.cpp`).
+- **Graphics Backend Interface:** Defines `IGraphicsBackend`, decoupling the engine from graphics libraries (`engine/render/include/engine/render/GraphicsBackend.hpp`).
+- **Engine Render System:** Processes entities with `Position` and `Sprite`, updates animations, sorts by layer, and updates background offsets (`engine/render/src/RenderSystem.cpp`).
+- **SFML Backend Implementation:** Concrete `IGraphicsBackend` using SFML windowing and sprites with texture caching (`engine/render/src/sfml/SfmlRenderer.cpp`).
 
 ---
 
@@ -173,10 +173,10 @@ flowchart LR
      ```
      to specific enemy archetypes.
    - `HoverMotionSystem.cpp`: Applies smooth hovering and drifting behavior.
-4. **Linear Motion Integration** (`engine/src/core/systems/MovementSystem.cpp`):
+4. **Linear Motion Integration** (`engine/core/src/systems/MovementSystem.cpp`):
    - Signature: `ecs::Position` and `ecs::Velocity`.
    - Formula:PositionincrementsbyVelocitymultipliedbydelta time.
-5. **Collision Detection** (`engine/src/core/systems/CollisionSystem.cpp`):
+5. **Collision Detection** (`engine/physics/src/CollisionSystem.cpp`):
    - Signature: `ecs::Position` and `ecs::Collider`.
    - Executes 2D Axis-Aligned Bounding Box (AABB) intersection tests and emits a list of `CollisionPair` structs.
 6. **Hit Resolution** (`games/rtype/src/server/ecs/Systems/HitSystem.cpp`):
@@ -185,5 +185,5 @@ flowchart LR
    - Subtracts the attacker's `Damage` from the victim's `Health`, attaching `Destroy` if health reaches zero.
 8. **Boundary Checking** (`games/rtype/src/server/ecs/Systems/OffscreenSystem.cpp`):
    - Flags entities traveling beyond field boundaries plus `OFFSCREEN_MARGIN` with `Destroy`.
-9. **Entity Clean-Up** (`engine/src/core/systems/DestroySystem.cpp`):
+9. **Entity Clean-Up** (`engine/core/src/systems/DestroySystem.cpp`):
    - Iterates through all entities tagged with `Destroy` and invokes `Coordinator::destroyEntity()` to recycle IDs and unregister components in O(1) time.

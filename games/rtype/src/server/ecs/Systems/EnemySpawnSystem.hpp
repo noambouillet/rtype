@@ -17,7 +17,7 @@ namespace rtype::ecs {
 class EnemySpawnSystem : public engine::core::System {
 public:
 	EnemySpawnSystem();
-	engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	void update(engine::core::Coordinator& coordinator, float elapsedTime, bool active);
 
 private:

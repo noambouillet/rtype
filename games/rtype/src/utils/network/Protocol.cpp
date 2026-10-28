@@ -173,13 +173,13 @@ static bool validWorldSnapshot(const Header& header, const std::vector<std::uint
 	const std::uint8_t aliveMask = bytes[HEADER_SIZE + 9];
 	const std::size_t entityCount = bytes[HEADER_SIZE + 10];
 	if ((connectedMask & 0xF0) != 0 || (aliveMask & 0xF0) != 0 || (aliveMask & connectedMask) != aliveMask ||
-		entityCount > 64 || header.payloadSize != 11 + entityCount * 16) {
+		entityCount > 64 || header.payloadSize != 11 + (entityCount * 16)) {
 		return false;
 	}
 
 	std::array<std::uint32_t, 64> entityIds{};
 	for (std::size_t index = 0; index < entityCount; index++) {
-		const std::size_t recordOffset = HEADER_SIZE + 11 + index * 16;
+		const std::size_t recordOffset = HEADER_SIZE + 11 + (index * 16);
 		if (!validEntityRecord(bytes, recordOffset)) {
 			return false;
 		}

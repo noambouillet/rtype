@@ -13,7 +13,7 @@
 #include "engine/core/ecs/Components.hpp"
 #include "engine/core/ecs/Coordinator.hpp"
 #include "engine/core/ecs/System.hpp"
-#include "engine/core/systems/CollisionSystem.hpp"
+#include "engine/physics/CollisionSystem.hpp"
 #include "server/ecs/GameComponents.hpp"
 
 namespace rtype::ecs {
@@ -25,8 +25,8 @@ struct HealthChange {
 
 class DamageSystem : public engine::core::System {
 public:
-	engine::core::Signature signature(engine::core::Coordinator& coordinator);
-	std::vector<HealthChange> update(engine::core::Coordinator& coordinator, const std::vector<engine::core::CollisionPair>& collisions);
+	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
+	std::vector<HealthChange> update(engine::core::Coordinator& coordinator, const std::vector<engine::physics::CollisionPair>& collisions);
 
 private:
 	std::optional<HealthChange> applyDamage(engine::core::Coordinator& coordinator, engine::core::Entity attacker, engine::core::Entity target);

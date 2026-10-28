@@ -27,8 +27,9 @@ static std::optional<float> closestPlayerY(engine::core::Coordinator& coordinato
 		const auto& target = coordinator.getComponent<engine::core::Position>(player);
 		const float distance = std::hypot(target.x - origin.x, target.y - origin.y);
 
-		if (y && distance >= closest)
+		if (y && distance >= closest) {
 			continue;
+		}
 		closest = distance;
 		y = target.y;
 	}
@@ -52,7 +53,7 @@ void HoverMotionSystem::update(engine::core::Coordinator& coordinator, float ela
 	for (const engine::core::Entity& e : entities) {
 		auto& motion = coordinator.getComponent<HoverMotion>(e);
 		const engine::core::Position position = coordinator.getComponent<engine::core::Position>(e);
-		engine::core::Velocity velocity{0.0F, 0.0F};
+		engine::core::Velocity velocity{.x = 0.0F, .y = 0.0F};
 
 		motion.elapsed += elapsedTime;
 		if (motion.elapsed >= motion.stayTime) {
@@ -63,8 +64,9 @@ void HoverMotionSystem::update(engine::core::Coordinator& coordinator, float ela
 			const bool charging = coordinator.hasComponent<Weapon>(e) && coordinator.getComponent<Weapon>(e).firing && coordinator.getComponent<Weapon>(e).remaining <= motion.chargeTime;
 			const std::optional<float> targetY = closestPlayerY(coordinator, position);
 
-			if (targetY && !charging)
+			if (targetY && !charging) {
 				velocity.y = std::clamp((*targetY - position.y) / elapsedTime, -motion.trackSpeed, motion.trackSpeed);
+			}
 		}
 		coordinator.getComponent<engine::core::Velocity>(e) = velocity;
 	}

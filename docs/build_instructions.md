@@ -172,3 +172,50 @@ cmake -S . -B build-windows -G Ninja \
 
 cmake --build build-windows --parallel
 ```
+
+### Asset Synchronization Target
+
+The build system defines a custom CMake target called `rtype_assets`. Every time the client binary is compiled, CMake automatically synchronizes the root `assets/` directory (containing spritesheets, music, sound effects, and fonts) into the executable's output directory (`$<TARGET_FILE_DIR:r-type_client>/assets`). This ensures the client can locate media assets regardless of the current working directory.
+
+### Building the Engine Alone
+
+The engine in `engine/` is a standalone CMake project with no dependency on the game. It can be built and installed on its own:
+
+```bash
+cmake -S engine -B build-engine -G Ninja
+cmake --build build-engine
+cmake --install build-engine --prefix install
+```
+  
+A game can then consume it like any third-party package:
+
+```cmake
+find_package(Engine 0.1 CONFIG REQUIRED COMPONENTS core physics net)
+target_link_libraries(my_game PRIVATE engine::core engine::physics engine::net)
+```
+
+`games/rtype/CMakeLists.txt` follows this pattern: built from the repository root it uses the `engine::*` targets from `add_subdirectory(engine)`, and built alone it calls `find_package(Engine)` (pass the install prefix in `CMAKE_PREFIX_PATH`).
+
+The engine is split into modules selected with `ENGINE_BUILD_*` options, and the root build selects them with `RTYPE_BUILD_SERVER` / `RTYPE_BUILD_CLIENT`. See [Engine Modules](engine_modules.md).
+
+---
+
+## 6. Build Artifacts
+
+After a successful build, the binaries are located in:
+
+| Platform / Toolchain | Server Executable | Client Executable |
+|---|---|---|
+| **Linux (Native)** | `build/r-type_server` | `build/r-type_client` |
+| **Windows (MSVC)** | `build/Release/r-type_server.exe` | `build/Release/r-type_client.exe` |
+| **Windows (MinGW)** | `build-windows/r-type_server.exe` | `build-windows/r-type_client.exe` |
+
+For instructions on executing and configuring both server and client, refer to [run_instructions.md](run_instructions.md).
+
+---
+
+## 7. Troubleshooting
+
+- **Missing Submodules:** If CMake fails with `vcpkg.cmake does not exist`, ensure the submodule is populated by running `git submodule update --init --recursive`.
+- **Missing Linux X11/GL headers:** If SFML compilation fails during vcpkg installation, ensure `libx11-dev`, `libgl1-mesa-dev`, and `libudev-dev` are installed.
+- **Cache Invalidation:** To perform a clean rebuild, delete the `build/` directory and re-run the CMake configure step.

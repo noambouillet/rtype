@@ -53,7 +53,7 @@ private:
 	void broadcast(network::PacketType type, const std::vector<std::uint8_t>& payload);
 	GameWorld::Input collectInput(Clock::time_point now);
 	std::vector<std::uint8_t> buildSnapshot(const std::vector<GameWorld::EntityState>& entities,
-		std::uint8_t connectedMask, std::uint8_t aliveMask);
+		std::uint8_t connectedMask, std::uint8_t aliveMask) const;
 
 	engine::net::IServerTransport& _network;
 	std::array<std::optional<Session>, GameWorld::MAX_PLAYERS> _sessions;

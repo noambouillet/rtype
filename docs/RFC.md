@@ -242,8 +242,10 @@ Each event is sent once and starts with `server_tick: u64`, followed by:
 
 `PLAYER_DEATH` removes the ship and clears its alive bit, but can leave the
 session connected. `ENTITY_DESTROY` covers enemies and projectiles. Respawning
-a player uses `ENTITY_SPAWN` with a new entity ID. Ignore events at or before
-the last applied snapshot tick. `ENTITY_DAMAGE` reports surviving health; at
+a player uses `ENTITY_SPAWN` with a new entity ID. An event may arrive after a
+newer snapshot; the client still plays it when its delayed playback reaches the
+event's tick, or at once if playback passed it less than 250 ms ago, and drops
+it otherwise. Repeated packet sequences are ignored. `ENTITY_DAMAGE` reports surviving health; at
 zero, the server sends `ENTITY_DESTROY` or `PLAYER_DEATH` instead. Repeated
 damage in one tick is coalesced to the final surviving health; a terminal event
 supersedes damage for the same entity. Destroy and death positions are the last

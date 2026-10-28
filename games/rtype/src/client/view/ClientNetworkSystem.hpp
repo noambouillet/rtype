@@ -25,6 +25,7 @@ namespace rtype::client {
 class ClientNetworkSystem : public engine::core::System {
 public:
 	static constexpr std::size_t MAX_PENDING_EVENTS = 256;
+	static constexpr double MAX_EVENT_LATENESS = 0.25;
 
 	ClientNetworkSystem();
 	static engine::core::Signature signature(engine::core::Coordinator& coordinator);

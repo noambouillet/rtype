@@ -197,7 +197,8 @@ void ClientNetworkSystem::removeDeparted(engine::core::Coordinator& coordinator)
 /// threshold cannot come from a sane server, so it is dropped instead of waiting forever.
 void ClientNetworkSystem::queueEvent(const network::WorldEventNotice& notice)
 {
-	if (_clock.isStarted() && tickTime(notice.tick) > _clock.sourceTime() + engine::core::InterpolationClock::SNAP_THRESHOLD) {
+	const double time = tickTime(notice.tick);
+	if (_clock.isStarted() && (time > _clock.sourceTime() + engine::core::InterpolationClock::SNAP_THRESHOLD || time < _clock.renderTime() - MAX_EVENT_LATENESS)) {
 		return;
 	}
 	_pendingEvents.push_back(notice);

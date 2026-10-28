@@ -7,6 +7,7 @@
 
 #include "GameClient.hpp"
 
+#include <algorithm>
 #include <random>
 #include <utility>
 
@@ -25,7 +26,7 @@ static std::uint64_t generateNonce()
 
 /// Creates a client with a fresh nonce for this join attempt.
 GameClient::GameClient(engine::net::IClientTransport& transport)
-	: _udp(transport), _nonce(generateNonce()), _sessionId(0), _nextSequence(1), _playerId(0), _lastButtons(0), _joinAttempts(0), _status(ClientStatus::Joining), _worldSnapshot{}, _events{}
+	: _udp(transport), _nonce(generateNonce()), _sessionId(0), _nextSequence(1), _playerId(0), _lastButtons(0), _joinAttempts(0), _status(ClientStatus::Joining), _worldSnapshot{}, _events{}, _recentEventSequences{}
 {
 }
 
@@ -203,13 +204,17 @@ std::optional<WorldEntity> GameClient::parseEntityRecord(const std::vector<std::
 	return WorldEntity{.entityId = readU32(bytes, offset), .entityType = kind, .ownerPlayerId = owner, .spriteId = variant, .health = health, .x = decodePosition(bytes, offset + 8), .y = decodePosition(bytes, offset + 12)};
 }
 
-/// Queues a validated event newer than the last authoritative snapshot.
+/// Queues a validated event once, even if it arrives after a newer snapshot.
 void GameClient::handleWorldEvent(const Header& header, const std::vector<std::uint8_t>& bytes)
 {
-	const std::uint64_t tick = readU64(bytes, HEADER_SIZE);
-	if ((_worldSnapshot && tick <= _worldSnapshot->tick) || _events.size() >= MAX_PENDING_EVENTS) {
+	if (_events.size() >= MAX_PENDING_EVENTS || std::ranges::find(_recentEventSequences, header.sequence) != _recentEventSequences.end()) {
 		return;
 	}
+	_recentEventSequences.push_back(header.sequence);
+	if (_recentEventSequences.size() > MAX_RECENT_EVENT_SEQUENCES) {
+		_recentEventSequences.pop_front();
+	}
+	const std::uint64_t tick = readU64(bytes, HEADER_SIZE);
 	const std::size_t offset = HEADER_SIZE + 8;
 	switch (header.type) {
 		case PacketType::EntitySpawn: {

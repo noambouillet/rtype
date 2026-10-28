@@ -10,6 +10,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <optional>
 #include <string>
 #include <variant>
@@ -84,6 +85,7 @@ private:
 	static constexpr std::size_t SNAPSHOT_HEADER_SIZE = 11;
 	static constexpr std::size_t ENTITY_RECORD_SIZE = 16;
 	static constexpr std::size_t MAX_PENDING_EVENTS = 256;
+	static constexpr std::size_t MAX_RECENT_EVENT_SEQUENCES = 128;
 	using Clock = std::chrono::steady_clock;
 
 	void handlePacket(const std::vector<std::uint8_t>& bytes);
@@ -112,6 +114,7 @@ private:
 	std::optional<ErrorCode> _error;
 	std::optional<WorldSnapshot> _worldSnapshot;
 	std::vector<WorldEventNotice> _events;
+	std::deque<std::uint32_t> _recentEventSequences;
 
 public:
 	explicit GameClient(engine::net::IClientTransport& transport);

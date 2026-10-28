@@ -158,7 +158,7 @@ void GameClient::handleSessionPacket(const Header& header, const std::vector<std
 /// Decodes a signed 1/16-pixel network coordinate into logical pixels.
 float GameClient::decodePosition(const std::vector<std::uint8_t>& bytes, std::size_t offset)
 {
-	const std::int32_t fixedPosition = static_cast<std::int32_t>(readU32(bytes, offset));
+	const auto fixedPosition = static_cast<std::int32_t>(readU32(bytes, offset));
 	return static_cast<float>(fixedPosition) / 16.0F;
 }
 
@@ -167,14 +167,14 @@ std::optional<std::vector<WorldEntity>> GameClient::parseEntities(const std::vec
 	std::uint8_t entityCount)
 {
 	if (entityCount > MAX_SNAPSHOT_ENTITIES ||
-		bytes.size() != HEADER_SIZE + SNAPSHOT_HEADER_SIZE + entityCount * ENTITY_RECORD_SIZE) {
+		bytes.size() != HEADER_SIZE + SNAPSHOT_HEADER_SIZE + (entityCount * ENTITY_RECORD_SIZE)) {
 		return std::nullopt;
 	}
 
 	std::vector<WorldEntity> entities;
 	entities.reserve(entityCount);
 	for (std::size_t index = 0; index < entityCount; index++) {
-		const std::size_t recordOffset = HEADER_SIZE + SNAPSHOT_HEADER_SIZE + index * ENTITY_RECORD_SIZE;
+		const std::size_t recordOffset = HEADER_SIZE + SNAPSHOT_HEADER_SIZE + (index * ENTITY_RECORD_SIZE);
 		const std::optional<WorldEntity> entity = parseEntityRecord(bytes, recordOffset);
 		if (!entity) {
 			return std::nullopt;
@@ -200,7 +200,7 @@ std::optional<WorldEntity> GameClient::parseEntityRecord(const std::vector<std::
 		((kind == game::EntityType::PlayerProjectile || kind == game::EntityType::EnemyProjectile) && health != 0)) {
 		return std::nullopt;
 	}
-	return WorldEntity{readU32(bytes, offset), kind, owner, variant, health, decodePosition(bytes, offset + 8), decodePosition(bytes, offset + 12)};
+	return WorldEntity{.entityId = readU32(bytes, offset), .entityType = kind, .ownerPlayerId = owner, .spriteId = variant, .health = health, .x = decodePosition(bytes, offset + 8), .y = decodePosition(bytes, offset + 12)};
 }
 
 /// Queues a validated event newer than the last authoritative snapshot.
@@ -215,25 +215,23 @@ void GameClient::handleWorldEvent(const Header& header, const std::vector<std::u
 		case PacketType::EntitySpawn: {
 			const std::optional<WorldEntity> entity = parseEntityRecord(bytes, offset);
 			if (entity) {
-				_events.push_back(WorldEventNotice{tick, EntitySpawnEvent{*entity}});
+				_events.push_back(WorldEventNotice{.tick = tick, .data = EntitySpawnEvent{*entity}});
 			}
 			break;
 		}
 		case PacketType::EntityDestroy: {
 			if (const auto kind = decodeEntityType(bytes[offset + 4])) {
-				const EntityDestroyEvent event{readU32(bytes, offset), *kind,
-					decodePosition(bytes, offset + 5), decodePosition(bytes, offset + 9)};
-				_events.push_back(WorldEventNotice{tick, event});
+				const EntityDestroyEvent event{.entityId = readU32(bytes, offset), .kind = *kind, .x = decodePosition(bytes, offset + 5), .y = decodePosition(bytes, offset + 9)};
+				_events.push_back(WorldEventNotice{.tick = tick, .data = event});
 			}
 			break;
 		}
 		case PacketType::EntityDamage:
-			_events.push_back(WorldEventNotice{tick, EntityDamageEvent{readU32(bytes, offset), bytes[offset + 4]}});
+			_events.push_back(WorldEventNotice{.tick = tick, .data = EntityDamageEvent{.entityId = readU32(bytes, offset), .remainingHealth = bytes[offset + 4]}});
 			break;
 		case PacketType::PlayerDeath: {
-			const PlayerDeathEvent event{bytes[offset], readU32(bytes, offset + 1),
-				decodePosition(bytes, offset + 5), decodePosition(bytes, offset + 9)};
-			_events.push_back(WorldEventNotice{tick, event});
+			const PlayerDeathEvent event{.playerId = bytes[offset], .entityId = readU32(bytes, offset + 1), .x = decodePosition(bytes, offset + 5), .y = decodePosition(bytes, offset + 9)};
+			_events.push_back(WorldEventNotice{.tick = tick, .data = event});
 			break;
 		}
 		default:

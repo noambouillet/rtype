@@ -22,9 +22,9 @@ engine::core::Signature HitSystem::signature(engine::core::Coordinator& coordina
 }
 
 /// Keeps only the first collision for each entity destroyed on hit.
-std::vector<engine::core::CollisionPair> HitSystem::update(engine::core::Coordinator& coordinator, const std::vector<engine::core::CollisionPair>& collisions)
+std::vector<engine::physics::CollisionPair> HitSystem::update(engine::core::Coordinator& coordinator, const std::vector<engine::physics::CollisionPair>& collisions)
 {
-	std::vector<engine::core::CollisionPair> accepted;
+	std::vector<engine::physics::CollisionPair> accepted;
 	accepted.reserve(collisions.size());
 	for (const auto& [a, b] : collisions) {
 		if ((entities.contains(a) && coordinator.hasComponent<engine::core::Destroy>(a)) ||

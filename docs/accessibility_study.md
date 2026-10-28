@@ -15,7 +15,7 @@ graph TD
     subgraph Accessibility Architecture in R-Type
         SettingsFile["Configuration Storage (settings.cfg)"]
         Parser["ConfigParser & EngineSettings"]
-        KeyBind["KeyBindings Controller"]
+        KeyBind["InputMap Controller"]
         
         subgraph Motor & Physical Accessibility
             Remap["Full Key Remapping<br/>(Alphanumeric, Arrows, Custom Keys)"]
@@ -48,23 +48,23 @@ Players with motor impairments often experience restricted fine motor control, r
 
 The input subsystem decouples hardware events from game actions:
 
-- **Configurable Key Map** (`games/rtype/src/client/SFML/KeyBindings.cpp`):
-  - Every gameplay action (`Up`, `Down`, `Left`, `Right`, `Fire`, `AutoFire`) can be mapped to any key in the `sf::Keyboard::Key` enum via `settings.cfg`.
+- **Configurable Key Map** (`engine/input/src/InputMap.cpp`, actions declared in `games/rtype/src/client/app/ClientControls.cpp`):
+  - Every gameplay action (`up`, `down`, `left`, `right`, `fire`, `auto_fire`, `quit`) can be mapped to any key name listed in `KEY_NAMES` (`engine/input/src/sfml/SfmlInput.cpp`) via `settings.cfg`.
   - The configuration parser supports natural key names (e.g., `Z`, `Q`, `S`, `D`, `Space`, `Enter`, `Escape`).
-- **Native Gamepad / Joystick Integration** (`games/rtype/src/client/SFML/Sfml.cpp`):
+- **Native Gamepad / Joystick Integration** (`engine/input/src/sfml/SfmlInput.cpp`):
   - Standardized analog axis sampling with configurable deadzone filtering.
   - Configurable button indices for firing (`0`) and auto-fire toggling (`1`).
-- **Unified Hardware Polling** (`Sfml::buttons()`):
-  - Synthesizes input by performing a bitwise OR:
+- **Unified Hardware Polling** (`SfmlInput::update()`):
+  - An action is held when its key or its joystick button or axis is held:
     ```cpp
-    buttons = keyboardButtons() | joystickButtons();
+    state.down = (keyboardFocused && keyDown(action)) || joystickDown(action);
     ```
   - This allows concurrent input from multiple devices simultaneously without mode-switching conflicts.
 
 ```mermaid
 flowchart TD
     subgraph Input Acquisition
-        KB[Keyboard State] --> KBParse[KeyBindings Translation]
+        KB[Keyboard State] --> KBParse[InputMap Translation]
         JS[Gamepad / Joystick] --> DZ{Axis Magnitude > Deadzone?}
         DZ -- Yes --> JSParse[Axis/Button Mapping]
         DZ -- No --> DeadzoneZero[Zero Velocity Vector]
@@ -117,13 +117,13 @@ Horizontal space shooters feature high contrast, dense projectile patterns, and 
 
 Visual configuration is managed through the engine settings subsystem:
 
-- **Engine Configuration** (`engine/src/core/EngineSettings.cpp`):
+- **Engine Configuration** (`engine/core/src/EngineSettings.cpp`):
   - Reads `screen_flash = true|false` from `settings.cfg`.
   - Exposes `EngineSettings::screenFlashEnabled() const`.
-- **Render Interception in SFML Backend** (`games/rtype/src/client/SFML/Sfml.cpp`):
-  Inside `Sfml::drawSprite()`, the renderer verifies the flash setting before rasterizing explosive spritesheets:
+- **Effect Filtering in the Game** (`games/rtype/src/client/view/EffectSystem.cpp`):
+  Inside `EffectSystem::add()`, the client skips explosion effects before they become sprites. The engine renderer knows nothing about this rule:
   ```cpp
-  if (!_engineSettings.screenFlashEnabled() && command.texture == sprites::EXPLOSION_SHEET) {
+  if (!_screenFlash && (kind == EffectKind::MobExplosion || kind == EffectKind::PlayerExplosion)) {
       return;
   }
   ```

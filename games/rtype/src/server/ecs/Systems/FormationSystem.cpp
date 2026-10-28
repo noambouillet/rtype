@@ -55,8 +55,9 @@ std::vector<engine::core::Entity> FormationSystem::update(engine::core::Coordina
 		auto& formation = coordinator.getComponent<FormationSpawner>(e);
 
 		formation.timer -= elapsedTime;
-		if (formation.timer > 0.0F || formation.remaining <= 0)
+		if (formation.timer > 0.0F || formation.remaining <= 0) {
 			continue;
+		}
 		formation.timer += formation.delay;
 		formation.remaining--;
 		const bool done = formation.remaining <= 0;
@@ -67,17 +68,19 @@ std::vector<engine::core::Entity> FormationSystem::update(engine::core::Coordina
 			config::ENEMY_FIRST_SHOT_MIN + fireCooldown(kind));
 		const float y = height(_rng);
 		if (prefabs::canSpawnReplicated(coordinator)) {
-			if (kind == game::EnemyKind::Scant)
-				spawned.push_back(prefabs::createScant(coordinator, y, firstShot(_rng)));
-			else if (kind == game::EnemyKind::Bink)
+			if (kind == game::EnemyKind::Scant) {
+				spawned.push_back(prefabs::createScant(coordinator, {.y = y, .firstShot = firstShot(_rng)}));
+			} else if (kind == game::EnemyKind::Bink) {
 				spawned.push_back(prefabs::createBink(coordinator, firstShot(_rng)));
-			else if (kind == game::EnemyKind::Bug)
-				spawned.push_back(prefabs::createBug(coordinator, y, firstShot(_rng)));
-			else
-				spawned.push_back(prefabs::createPatapata(coordinator, y, phase(_rng), firstShot(_rng)));
+			} else if (kind == game::EnemyKind::Bug) {
+				spawned.push_back(prefabs::createBug(coordinator, {.y = y, .firstShot = firstShot(_rng)}));
+			} else {
+				spawned.push_back(prefabs::createPatapata(coordinator, {.y = y, .firstShot = firstShot(_rng)}, phase(_rng)));
+			}
 		}
-		if (done && !coordinator.hasComponent<engine::core::Destroy>(e))
+		if (done && !coordinator.hasComponent<engine::core::Destroy>(e)) {
 			coordinator.addComponent(e, engine::core::Destroy{});
+		}
 	}
 	return spawned;
 }

@@ -53,9 +53,9 @@ public:
 	template <typename Event>
 	void publish(const Event& event);
 
-	void unsubscribe(std::size_t id);
-
 private:
+	friend class Subscription;
+
 	struct Handler {
 		std::size_t id;
 		std::function<void(const std::any&)> callback;
@@ -79,6 +79,7 @@ private:
 		EventBus& _bus;
 	};
 
+	void unsubscribe(std::size_t id);
 	void flushPending();
 
 	std::unordered_map<std::type_index, std::vector<Handler>> _handlers;

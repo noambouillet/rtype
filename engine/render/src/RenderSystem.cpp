@@ -38,10 +38,10 @@ core::Signature RenderSystem::signature(core::Coordinator& coordinator)
 }
 
 /// Draws the scrolling background and every visual entity in layer order.
+/// The caller opens and presents the frame, so it can draw overlays on top before `endFrame`.
 void RenderSystem::render(core::Coordinator& coordinator, IGraphicsBackend& backend, float deltaTime)
 {
 	_backgroundOffset += _backgroundSpeed * std::max(0.0F, deltaTime);
-	backend.beginFrame();
 	if (!_backgroundTexture.empty()) {
 		backend.drawBackground(_backgroundTexture, _backgroundOffset);
 	}
@@ -63,7 +63,6 @@ void RenderSystem::render(core::Coordinator& coordinator, IGraphicsBackend& back
 		}
 		backend.drawSprite({.texture = sprite.textureName, .region = region, .x = position.x, .y = position.y, .originX = sprite.originX, .originY = sprite.originY, .scale = sprite.scale, .rotation = sprite.rotation});
 	}
-	backend.endFrame();
 }
 
 }

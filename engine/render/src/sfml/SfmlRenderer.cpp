@@ -40,10 +40,10 @@ SfmlRenderer::Implementation::Implementation(const WindowConfig& config)
 		fbPath = assetRoot / fallbackFile;
 	}
 	if (std::filesystem::exists(fbPath)) {
-		sf::Texture fbTex;
-		if (fbTex.loadFromFile(fbPath)) {
+		sf::Texture fbTexture;
+		if (fbTexture.loadFromFile(fbPath)) {
 			fallbackTextureId = nextTextureId++;
-			loadedTextures.emplace(fallbackTextureId, std::move(fbTex));
+			loadedTextures.emplace(fallbackTextureId, std::move(fbTexture));
 			pathToTextureId.emplace(fallbackFile.string(), fallbackTextureId);
 			pathToTextureId.emplace(fallbackFile.filename().string(), fallbackTextureId);
 		}
@@ -88,7 +88,6 @@ TextureId SfmlRenderer::loadTextureFromFile(const std::string& filepath)
 {
 	const auto existingMapping = _implementation->pathToTextureId.find(filepath);
 	if (existingMapping != _implementation->pathToTextureId.end()) {
-		std::ignore = _implementation->loadedTextures[existingMapping->second].loadFromFile(std::filesystem::path(filepath));
 		return existingMapping->second;
 	}
 
@@ -99,7 +98,7 @@ TextureId SfmlRenderer::loadTextureFromFile(const std::string& filepath)
 
 	sf::Texture loadedTexture;
 	if (!loadedTexture.loadFromFile(path)) {
-		std::cerr << "SfmlRenderer error: Failed to load texture: " << filepath << "\n";
+		std::cerr << "SfmlRenderer error: Failed to load texture: " << filepath << " (Returning 0 to trigger fallback)\n";
 		return 0;
 	}
 	const TextureId assignedTextureId = _implementation->nextTextureId++;
@@ -128,13 +127,8 @@ void SfmlRenderer::beginFrame()
 /// Draws the repeated background at the offset selected by the render system.
 void SfmlRenderer::drawBackground(std::string_view texture, float offset)
 {
-	TextureId textureId = 0;
-	const auto it = _implementation->pathToTextureId.find(std::string(texture));
-	if (it != _implementation->pathToTextureId.end()) {
-		textureId = it->second;
-	} else {
-		textureId = loadTextureFromFile(std::string(texture));
-	}
+	TextureId textureId = loadTextureFromFile(std::string(texture));
+
 	const auto textureIterator = _implementation->resolveTexture(textureId);
 	if (textureIterator == _implementation->loadedTextures.end()) {
 		return;

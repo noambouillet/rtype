@@ -325,7 +325,7 @@ void AssetManager::loadManifest(const std::string& path, IGraphicsBackend& graph
 	_baseDirectory = manifestPath.parent_path();
 
 	_fallbackTexture = loadFallbackTexture(manifestJson, _baseDirectory, graphics);
-	_fallbackSprite = SpriteDescriptor{_fallbackTexture, Rect{{0, 0}, {0, 0}}, 0.0F, 0.0F};
+	_fallbackSprite = SpriteDescriptor{_fallbackTexture, Rect{{0, 0}, {200, 200}}, 100.0F, 100.0F};
 	_fallbackAnimation = AnimationDescriptor{"fallback", _fallbackTexture, {}, 0.0F, false};
 
 	_sprites.clear();
@@ -431,7 +431,9 @@ void AssetManager::update(IGraphicsBackend& graphics)
 		try {
 			loadManifest(_manifestPath, graphics);
 		} catch (const engine::core::AssetError& error) {
-			std::cerr << "AssetManager warning: Failed to hot-reload manifest: " << error.what() << "\n";
+			std::cerr << "AssetManager warning: Failed to hot-reload manifest (Asset Error): " << error.what() << "\n";
+		} catch (const nlohmann::json::exception& error) {
+			std::cerr << "AssetManager warning: Failed to hot-reload, JSON is malformed: " << error.what() << "\n";
 		}
 	}
 }

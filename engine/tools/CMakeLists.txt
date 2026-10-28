@@ -1,7 +1,4 @@
 add_library(engine_tools
-    src/Console.cpp
-    src/CVar.cpp
-    src/Profiler.cpp
     src/MetricsOverlay.cpp
 )
 add_library(engine::tools ALIAS engine_tools)

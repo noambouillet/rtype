@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <typeinfo>
 #include <utility>
 
 namespace engine::core {
@@ -17,9 +18,10 @@ template <typename Event>
 Subscription EventBus::subscribe(std::function<void(const Event&)> handler)
 {
 	const std::size_t id = _nextId++;
-	Handler entry{id, [callback = std::move(handler)](const void* event) {
-		callback(*static_cast<const Event*>(event));
-	}, true};
+	auto callback = [eventHandler = std::move(handler)](const std::any& event) {
+		eventHandler(std::any_cast<std::reference_wrapper<const Event>>(event).get());
+	};
+	Handler entry{id, std::move(callback), true};
 
 	if (_dispatchDepth > 0) {
 		_pending.push_back({std::type_index(typeid(Event)), std::move(entry)});
@@ -33,25 +35,14 @@ Subscription EventBus::subscribe(std::function<void(const Event&)> handler)
 template <typename Event>
 void EventBus::publish(const Event& event)
 {
-	const auto it = _handlers.find(std::type_index(typeid(Event)));
-	if (it == _handlers.end()) {
+	const auto typeHandlers = _handlers.find(std::type_index(typeid(Event)));
+	if (typeHandlers == _handlers.end()) {
 		return;
 	}
-	struct DispatchGuard {
-		EventBus& bus;
-		~DispatchGuard()
-		{
-			if (--bus._dispatchDepth == 0) {
-				bus.flushPending();
-			}
-		}
-	};
-
-	++_dispatchDepth;
-	const DispatchGuard guard{*this};
-	for (const Handler& handler : it->second) {
+	const DispatchGuard guard(*this);
+	for (const Handler& handler : typeHandlers->second) {
 		if (handler.active) {
-			handler.callback(&event);
+			handler.callback(std::cref(event));
 		}
 	}
 }

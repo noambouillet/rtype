@@ -12,11 +12,11 @@
 
 namespace engine::core {
 
-Subscription::Subscription() : _bus(nullptr), _id(0)
+Subscription::Subscription() : _bus(std::nullopt), _id(0)
 {
 }
 
-Subscription::Subscription(EventBus& bus, std::size_t id) : _bus(&bus), _id(id)
+Subscription::Subscription(EventBus& bus, std::size_t id) : _bus(bus), _id(id)
 {
 }
 
@@ -25,7 +25,7 @@ Subscription::~Subscription()
 	reset();
 }
 
-Subscription::Subscription(Subscription&& other) noexcept : _bus(std::exchange(other._bus, nullptr)), _id(other._id)
+Subscription::Subscription(Subscription&& other) noexcept : _bus(std::exchange(other._bus, std::nullopt)), _id(other._id)
 {
 }
 
@@ -33,7 +33,7 @@ Subscription& Subscription::operator=(Subscription&& other) noexcept
 {
 	if (this != &other) {
 		reset();
-		_bus = std::exchange(other._bus, nullptr);
+		_bus = std::exchange(other._bus, std::nullopt);
 		_id = other._id;
 	}
 	return *this;
@@ -42,9 +42,9 @@ Subscription& Subscription::operator=(Subscription&& other) noexcept
 /// Removes the handler now instead of waiting for destruction.
 void Subscription::reset()
 {
-	if (_bus != nullptr) {
-		_bus->unsubscribe(_id);
-		_bus = nullptr;
+	if (_bus.has_value()) {
+		_bus->get().unsubscribe(_id);
+		_bus.reset();
 	}
 }
 
@@ -59,17 +59,32 @@ void EventBus::unsubscribe(std::size_t id)
 		return pending.handler.id == id;
 	});
 	for (auto& [type, handlers] : _handlers) {
-		const auto it = std::ranges::find(handlers, id, &Handler::id);
-		if (it == handlers.end()) {
+		const auto target = std::ranges::find(handlers, id, &Handler::id);
+		if (target == handlers.end()) {
 			continue;
 		}
 		if (_dispatchDepth > 0) {
-			it->active = false;
+			target->active = false;
 			_hasInactive = true;
 		} else {
-			handlers.erase(it);
+			handlers.erase(target);
 		}
 		return;
+	}
+}
+
+/// Marks the bus as dispatching for the guard's lifetime, so subscription
+/// changes made by handlers are deferred until the outermost dispatch ends.
+EventBus::DispatchGuard::DispatchGuard(EventBus& bus) : _bus(bus)
+{
+	_bus._dispatchDepth++;
+}
+
+EventBus::DispatchGuard::~DispatchGuard()
+{
+	_bus._dispatchDepth--;
+	if (_bus._dispatchDepth == 0) {
+		_bus.flushPending();
 	}
 }
 

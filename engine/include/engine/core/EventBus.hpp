@@ -7,8 +7,10 @@
 
 #pragma once
 
+#include <any>
 #include <cstddef>
 #include <functional>
+#include <optional>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
@@ -33,7 +35,7 @@ public:
 	void reset();
 
 private:
-	EventBus* _bus;
+	std::optional<std::reference_wrapper<EventBus>> _bus;
 	std::size_t _id;
 };
 
@@ -56,13 +58,25 @@ public:
 private:
 	struct Handler {
 		std::size_t id;
-		std::function<void(const void*)> callback;
+		std::function<void(const std::any&)> callback;
 		bool active;
 	};
 
 	struct PendingHandler {
 		std::type_index type;
 		Handler handler;
+	};
+
+	class DispatchGuard {
+	public:
+		explicit DispatchGuard(EventBus& bus);
+		~DispatchGuard();
+
+		DispatchGuard(const DispatchGuard&) = delete;
+		DispatchGuard& operator=(const DispatchGuard&) = delete;
+
+	private:
+		EventBus& _bus;
 	};
 
 	void flushPending();

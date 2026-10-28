@@ -15,6 +15,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "engine/core/EventBus.hpp"
 #include "engine/net/Transport.hpp"
 #include "server/Session.hpp"
 #include "server/game/GameWorld.hpp"
@@ -24,7 +25,7 @@ namespace rtype {
 
 class ServerNetworkService {
 public:
-	explicit ServerNetworkService(engine::net::IServerTransport& transport);
+	ServerNetworkService(engine::net::IServerTransport& transport, engine::core::EventBus& bus);
 	GameWorld::Input tick();
 	void broadcastEvents(const std::vector<WorldEvent>& events);
 	void broadcastSnapshot(const std::vector<GameWorld::EntityState>& entities,
@@ -49,6 +50,8 @@ private:
 	void sendJoinAccepted(const Session& session, std::uint8_t playerId);
 	void sendJoinRejected(const engine::net::Datagram& datagram, std::uint64_t nonce);
 	void removeSession(std::uint8_t playerId, std::uint8_t reason);
+	void sendPong(Session& session, const std::vector<std::uint8_t>& ping);
+	void send(const engine::net::Endpoint& recipient, std::vector<std::uint8_t> bytes);
 	void sendTo(Session& session, network::PacketType type, const std::vector<std::uint8_t>& payload);
 	void broadcast(network::PacketType type, const std::vector<std::uint8_t>& payload);
 	GameWorld::Input collectInput(Clock::time_point now);
@@ -56,6 +59,7 @@ private:
 		std::uint8_t connectedMask, std::uint8_t aliveMask) const;
 
 	engine::net::IServerTransport& _network;
+	engine::core::EventBus& _bus;
 	std::array<std::optional<Session>, GameWorld::MAX_PLAYERS> _sessions;
 	std::unordered_set<std::uint32_t> _issuedSessionIds;
 	std::uint64_t _tick;

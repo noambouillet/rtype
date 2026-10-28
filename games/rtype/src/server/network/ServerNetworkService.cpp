@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <utility>
 
 #ifdef _WIN32
 
@@ -29,6 +30,7 @@
 
 #endif
 
+#include "engine/core/metrics/MetricsEvents.hpp"
 #include "utils/RTypeError.hpp"
 #include "utils/network/Protocol.hpp"
 
@@ -79,9 +81,9 @@ static std::uint32_t encodePosition(float position)
 	return static_cast<std::uint32_t>(fixed);
 }
 
-/// Creates the game server: binds the UDP port and starts an empty world.
-ServerNetworkService::ServerNetworkService(engine::net::IServerTransport& transport)
-	: _network(transport), _sessions{}, _issuedSessionIds{}, _tick(0)
+/// Creates the network service over `transport`. Every datagram sent or received is published on `bus`.
+ServerNetworkService::ServerNetworkService(engine::net::IServerTransport& transport, engine::core::EventBus& bus)
+	: _network(transport), _bus(bus), _sessions{}, _issuedSessionIds{}, _tick(0)
 {
 }
 
@@ -128,6 +130,7 @@ GameWorld::Input ServerNetworkService::tick()
 	const auto now = Clock::now();
 
 	for (const auto& datagram : _network.receivePending()) {
+		_bus.publish(engine::core::BytesReceived{datagram.bytes.size()});
 		handleDatagram(datagram, now);
 	}
 	return collectInput(now);
@@ -140,7 +143,7 @@ void ServerNetworkService::handleDatagram(const engine::net::Datagram& datagram,
 	const network::ParsedHeader parsed = network::parseClientHeader(bytes);
 
 	if (parsed.error) {
-		_network.send(datagram.sender, network::makeError(*parsed.error, parsed));
+		send(datagram.sender, network::makeError(*parsed.error, parsed));
 		return;
 	}
 	if (!parsed.header) {
@@ -159,7 +162,7 @@ void ServerNetworkService::handleJoinDatagram(const engine::net::Datagram& datag
 	const network::ParsedHeader& parsed, Clock::time_point now)
 {
 	if (const auto error = network::validateClientPayload(header, datagram.bytes)) {
-		_network.send(datagram.sender, network::makeError(*error, parsed));
+		send(datagram.sender, network::makeError(*error, parsed));
 		return;
 	}
 	handleJoin(datagram, network::readU64(datagram.bytes, network::HEADER_SIZE), now);
@@ -175,18 +178,20 @@ void ServerNetworkService::handleSessionDatagram(const engine::net::Datagram& da
 			continue;
 		}
 		if (const auto error = network::validateClientPayload(header, datagram.bytes)) {
-			_network.send(datagram.sender, network::makeError(*error, parsed));
+			send(datagram.sender, network::makeError(*error, parsed));
 			return;
 		}
 		session->refresh(datagram.sender, now);
 		if (header.type == network::PacketType::Disconnect) {
 			removeSession(static_cast<std::uint8_t>(index), 1);
+		} else if (header.type == network::PacketType::Ping) {
+			sendPong(*session, datagram.bytes);
 		} else {
 			session->acceptInput({.sequence = header.sequence, .buttons = datagram.bytes[network::HEADER_SIZE]}, now);
 		}
 		return;
 	}
-	_network.send(
+	send(
 		datagram.sender,
 		network::makeError(network::ErrorCode::InvalidSession, parsed));
 }
@@ -263,7 +268,7 @@ void ServerNetworkService::sendJoinAccepted(const Session& session, std::uint8_t
 	std::vector<std::uint8_t> payload;
 	network::appendU64(payload, session.nonce());
 	payload.push_back(playerId);
-	_network.send(session.address(), network::makePacket(network::PacketType::JoinAccepted, 0, session.id(), payload));
+	send(session.address(), network::makePacket(network::PacketType::JoinAccepted, 0, session.id(), payload));
 }
 
 /// Sends a server-full response for a join request.
@@ -272,7 +277,7 @@ void ServerNetworkService::sendJoinRejected(const engine::net::Datagram& datagra
 	std::vector<std::uint8_t> payload;
 	network::appendU64(payload, nonce);
 	payload.push_back(1);
-	_network.send(datagram.sender, network::makePacket(network::PacketType::JoinRejected, 0, 0, payload));
+	send(datagram.sender, network::makePacket(network::PacketType::JoinRejected, 0, 0, payload));
 }
 
 /// Frees a player slot and announces the departure to the other sessions.
@@ -286,11 +291,26 @@ void ServerNetworkService::removeSession(std::uint8_t playerId, std::uint8_t rea
 	broadcast(network::PacketType::PlayerLeft, payload);
 }
 
+/// Echoes the timestamp of a validated PING so the client can measure its round trip.
+void ServerNetworkService::sendPong(Session& session, const std::vector<std::uint8_t>& ping)
+{
+	const auto payloadStart = ping.begin() + static_cast<std::ptrdiff_t>(network::HEADER_SIZE);
+	sendTo(session, network::PacketType::Pong, std::vector<std::uint8_t>(payloadStart, ping.end()));
+}
+
+/// Sends one datagram and reports its size to the metrics.
+void ServerNetworkService::send(const engine::net::Endpoint& recipient, std::vector<std::uint8_t> bytes)
+{
+	const std::size_t size = bytes.size();
+	_network.send(recipient, std::move(bytes));
+	_bus.publish(engine::core::BytesSent{size});
+}
+
 /// Sends a session packet with the next nonzero outbound sequence.
 void ServerNetworkService::sendTo(Session& session, network::PacketType type, const std::vector<std::uint8_t>& payload)
 {
 	const std::uint32_t sequence = session.takeNextSequence();
-	_network.send(session.address(), network::makePacket(type, sequence, 0, payload));
+	send(session.address(), network::makePacket(type, sequence, 0, payload));
 }
 
 /// Sends the same packet payload to every connected player.

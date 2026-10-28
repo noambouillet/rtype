@@ -13,7 +13,7 @@ Modularity works at two levels:
 
 | Module            | Option                 | Default | Depends on            | Third-party            | vcpkg feature | Content                                   |
 | ----------------- | ---------------------- | ------- | --------------------- | ---------------------- | ------------- | ----------------------------------------- |
-| `engine::core`    | always built           | ON      | none                  | none                   | none          | ECS, config, logger, errors, movement     |
+| `engine::core`    | always built           | ON      | none                  | none                   | none          | ECS, config, logger, errors, movement, interpolation |
 | `engine::render`  | `ENGINE_BUILD_RENDER`  | ON      | core                  | SFML Graphics          | `render`      | Graphics backend, `SfmlRenderer` (window, textures), `Sprite`, `RenderSystem` |
 | `engine::audio`   | `ENGINE_BUILD_AUDIO`   | ON      | core                  | SFML Audio             | `audio`       | Audio backend, `SfmlAudio`, `Sound`, `AudioSystem` |
 | `engine::input`   | `ENGINE_BUILD_INPUT`   | ON      | core                  | SFML Window            | `input`       | `InputMap` (actions), `SfmlInput` (keyboard, joystick) |

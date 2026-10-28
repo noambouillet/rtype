@@ -9,6 +9,8 @@ add_library(engine_core
     src/ecs/EntityManager.cpp
     src/ecs/SystemManager.cpp
     src/systems/DestroySystem.cpp
+    src/systems/InterpolationClock.cpp
+    src/systems/InterpolationSystem.cpp
     src/systems/MovementSystem.cpp
 )
 add_library(engine::core ALIAS engine_core)

@@ -84,7 +84,7 @@ sequenceDiagram
     end
 
     GameWorld->>ServerNet: Replicated State & Discrete Events
-    ServerNet->>GameClient: WORLD_SNAPSHOT (every 50 ms)
+    ServerNet->>GameClient: WORLD_SNAPSHOT (every tick)
     ServerNet->>GameClient: Discrete Events (SPAWN, DAMAGE, DESTROY, DEATH)
     GameClient->>ClientNet: applySnapshot() & applyEvents()
     ClientNet->>ClientNet: Reconcile visual entities in ClientWorld

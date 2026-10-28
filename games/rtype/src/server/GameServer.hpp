@@ -24,7 +24,6 @@ public:
 
 private:
 	static constexpr auto TICK_DURATION = std::chrono::microseconds(16667);
-	static constexpr auto SNAPSHOT_INTERVAL = std::chrono::milliseconds(50);
 	using Clock = std::chrono::steady_clock;
 
 	ServerNetworkService _network;

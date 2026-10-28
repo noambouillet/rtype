@@ -1,6 +1,7 @@
 add_library(engine_core
     src/ConfigParser.cpp
     src/EngineSettings.cpp
+    src/EventBus.cpp
     src/Logger.cpp
     src/ecs/ComponentManager.cpp
     src/ecs/Coordinator.cpp

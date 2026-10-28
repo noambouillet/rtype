@@ -35,6 +35,8 @@ static bool isKnownType(std::uint8_t type)
 		case PacketType::JoinRejected:
 		case PacketType::Disconnect:
 		case PacketType::PlayerLeft:
+		case PacketType::Ping:
+		case PacketType::Pong:
 		case PacketType::PlayerInput:
 		case PacketType::WorldSnapshot:
 		case PacketType::EntitySpawn:
@@ -109,6 +111,7 @@ ParsedHeader parseClientHeader(const std::vector<std::uint8_t>& bytes)
 		result.error = ErrorCode::UnknownType;
 	} else if (bytes[5] != static_cast<std::uint8_t>(PacketType::JoinRequest) &&
 			   bytes[5] != static_cast<std::uint8_t>(PacketType::Disconnect) &&
+			   bytes[5] != static_cast<std::uint8_t>(PacketType::Ping) &&
 			   bytes[5] != static_cast<std::uint8_t>(PacketType::PlayerInput)) {
 		// If the client sends an ERROR packet, he never receives an ERROR in response.
 		if (bytes[5] != static_cast<std::uint8_t>(PacketType::Error)) {
@@ -141,6 +144,12 @@ static bool validSessionNotice(const Header& header, const std::vector<std::uint
 {
 	return header.payloadSize == 10 && header.sequence != 0 && header.sessionId == 0 &&
 		   bytes[HEADER_SIZE + 8] <= 3 && (bytes[HEADER_SIZE + 9] == 1 || bytes[HEADER_SIZE + 9] == 2);
+}
+
+/// Checks a latency probe answer: an echoed 8-byte client timestamp on a session packet.
+static bool validPong(const Header& header)
+{
+	return header.payloadSize == PING_PAYLOAD_SIZE && header.sequence != 0 && header.sessionId == 0;
 }
 
 /// Checks one entity record shared by snapshots and spawn events.
@@ -233,6 +242,8 @@ static bool validServerPayload(const Header& header, const std::vector<std::uint
 			return validJoinReply(header, bytes);
 		case PacketType::PlayerLeft:
 			return validSessionNotice(header, bytes);
+		case PacketType::Pong:
+			return validPong(header);
 		case PacketType::WorldSnapshot:
 			return validWorldSnapshot(header, bytes);
 		case PacketType::EntitySpawn:
@@ -281,6 +292,13 @@ std::optional<ErrorCode> validateClientPayload(const Header& header, const std::
 		}
 	} else if (header.type == PacketType::Disconnect) {
 		if (header.payloadSize != 0) {
+			return ErrorCode::InvalidLength;
+		}
+		if (header.sequence == 0) {
+			return ErrorCode::InvalidField;
+		}
+	} else if (header.type == PacketType::Ping) {
+		if (header.payloadSize != PING_PAYLOAD_SIZE) {
 			return ErrorCode::InvalidLength;
 		}
 		if (header.sequence == 0) {

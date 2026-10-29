@@ -14,7 +14,7 @@
 namespace engine::render {
 
 struct Sprite {
-	TextureId texture = 0;
+	TextureId texture = INVALID_TEXTURE_ID;
 	Rect region{};
 	float originX = 0.0F;
 	float originY = 0.0F;
@@ -24,7 +24,7 @@ struct Sprite {
 };
 
 struct Animation {
-	TextureId texture = 0;
+	TextureId texture = INVALID_TEXTURE_ID;
 	std::vector<Rect> frames;
 	float frameSeconds = 0.0F;
 	float elapsed = 0.0F;

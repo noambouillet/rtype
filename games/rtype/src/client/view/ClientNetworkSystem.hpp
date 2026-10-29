@@ -15,6 +15,7 @@
 
 #include "client/network/GameClient.hpp"
 #include "client/view/ViewEvent.hpp"
+#include "engine/core/TimedQueue.hpp"
 #include "engine/core/ecs/Components.hpp"
 #include "engine/core/ecs/Coordinator.hpp"
 #include "engine/core/ecs/System.hpp"
@@ -24,8 +25,8 @@ namespace rtype::client {
 
 class ClientNetworkSystem : public engine::core::System {
 public:
-	static constexpr std::size_t MAX_PENDING_EVENTS = 256;
-	static constexpr double MAX_EVENT_LATENESS = 0.25;
+	// Keeps at most 256 notices, drops those more than 0.25 s behind the view.
+	static constexpr engine::core::TimedQueueLimits EVENT_LIMITS{.maxSize = 256, .maxLateness = 0.25};
 
 	ClientNetworkSystem();
 	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
@@ -44,13 +45,12 @@ private:
 	void revealArrived(engine::core::Coordinator& coordinator);
 	void removeDeparted(engine::core::Coordinator& coordinator);
 	void queueEvent(const network::WorldEventNotice& notice);
-	std::vector<ViewEvent> releaseEvents();
 
 	engine::core::InterpolationClock _clock;
 	std::unordered_map<std::uint32_t, engine::core::Entity> _entitiesByServerId;
 	std::unordered_map<std::uint32_t, double> _pendingReveals;
 	std::unordered_map<std::uint32_t, double> _pendingRemovals;
-	std::vector<network::WorldEventNotice> _pendingEvents;
+	engine::core::TimedQueue<network::WorldEventNotice> _pendingEvents;
 	std::optional<std::uint64_t> _lastAppliedTick;
 	std::uint8_t _aliveMask;
 	std::uint8_t _connectedMask;

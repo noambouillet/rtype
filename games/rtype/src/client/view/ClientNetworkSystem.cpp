@@ -24,7 +24,7 @@
 namespace rtype::client {
 
 ClientNetworkSystem::ClientNetworkSystem()
-	: _clock(client_config::INTERPOLATION_DELAY), _entitiesByServerId{}, _pendingReveals{}, _pendingRemovals{}, _pendingEvents{}, _lastAppliedTick{}, _aliveMask(0), _connectedMask(0)
+	: _clock(client_config::INTERPOLATION_DELAY), _entitiesByServerId{}, _pendingReveals{}, _pendingRemovals{}, _pendingEvents(EVENT_LIMITS), _lastAppliedTick{}, _aliveMask(0), _connectedMask(0)
 {
 }
 
@@ -69,12 +69,21 @@ std::vector<ViewEvent> ClientNetworkSystem::update(float deltaTime, engine::core
 	if (const auto& snapshot = client.worldSnapshot()) {
 		applySnapshot(coordinator, *snapshot);
 	}
+	// No timeline before the first snapshot, so notices play at once.
+	std::vector<ViewEvent> released;
 	for (const network::WorldEventNotice& notice : client.takeEvents()) {
-		queueEvent(notice);
+		if (_clock.isStarted()) {
+			queueEvent(notice);
+		} else {
+			released.push_back(toViewEvent(notice));
+		}
 	}
 	revealArrived(coordinator);
 	removeDeparted(coordinator);
-	return releaseEvents();
+	for (const network::WorldEventNotice& notice : _pendingEvents.release(_clock.renderTime())) {
+		released.push_back(toViewEvent(notice));
+	}
+	return released;
 }
 
 /// Records the positions of a newer snapshot and schedules the entities it adds or drops.
@@ -192,35 +201,14 @@ void ClientNetworkSystem::removeDeparted(engine::core::Coordinator& coordinator)
 }
 
 /// Holds a notice until the view reaches its tick.
-///
-/// A notice stamped further ahead of the estimated server time than the clock's jump
-/// threshold cannot come from a sane server, so it is dropped instead of waiting forever.
+/// Drops notices stamped too far in the future, they can't come from a sane server.
 void ClientNetworkSystem::queueEvent(const network::WorldEventNotice& notice)
 {
 	const double time = tickTime(notice.tick);
-	if (_clock.isStarted() && (time > _clock.sourceTime() + engine::core::InterpolationClock::SNAP_THRESHOLD || time < _clock.renderTime() - MAX_EVENT_LATENESS)) {
+	if (time > _clock.sourceTime() + engine::core::InterpolationClock::SNAP_THRESHOLD) {
 		return;
 	}
-	_pendingEvents.push_back(notice);
-}
-
-/// Returns, in arrival order, the notices whose tick the view has reached.
-std::vector<ViewEvent> ClientNetworkSystem::releaseEvents()
-{
-	const double now = _clock.renderTime();
-	const std::size_t overflow = _pendingEvents.size() > MAX_PENDING_EVENTS ? _pendingEvents.size() - MAX_PENDING_EVENTS : 0;
-	std::vector<ViewEvent> released;
-	std::vector<network::WorldEventNotice> waiting;
-	for (std::size_t index = 0; index < _pendingEvents.size(); index++) {
-		const network::WorldEventNotice& notice = _pendingEvents[index];
-		if (!_clock.isStarted() || index < overflow || tickTime(notice.tick) <= now) {
-			released.push_back(toViewEvent(notice));
-		} else {
-			waiting.push_back(notice);
-		}
-	}
-	_pendingEvents.swap(waiting);
-	return released;
+	_pendingEvents.push(time, notice);
 }
 
 std::optional<engine::core::Entity> ClientNetworkSystem::find(std::uint32_t serverId) const

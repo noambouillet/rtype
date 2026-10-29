@@ -16,7 +16,7 @@
 namespace engine::assets {
 
 /// Resolves an asset file path relative to a base directory or standard asset locations.
-/// Returns an absolute path if found, or an empty path if it does not exist.
+/// Returns a relative path if found, or an empty path if it does not exist.
 static std::filesystem::path resolveAssetPath(const std::filesystem::path& baseDirectory,
 	const std::string& rawAssetPath)
 {
@@ -28,13 +28,13 @@ static std::filesystem::path resolveAssetPath(const std::filesystem::path& baseD
 		return candidatePath;
 	}
 	if (!baseDirectory.empty() && std::filesystem::exists(baseDirectory / candidatePath)) {
-		return std::filesystem::absolute(baseDirectory / candidatePath);
+		return baseDirectory / candidatePath;
 	}
 	if (std::filesystem::exists(std::filesystem::path("assets") / candidatePath)) {
-		return std::filesystem::absolute(std::filesystem::path("assets") / candidatePath);
+		return std::filesystem::path("assets") / candidatePath;
 	}
 	if (std::filesystem::exists(candidatePath)) {
-		return std::filesystem::absolute(candidatePath);
+		return candidatePath;
 	}
 	return {};
 }
@@ -43,11 +43,11 @@ static std::filesystem::path resolveAssetPath(const std::filesystem::path& baseD
 static std::filesystem::path findManifestPath(const std::string& manifestPath)
 {
 	if (std::filesystem::exists(manifestPath)) {
-		return std::filesystem::absolute(manifestPath);
+		return manifestPath;
 	}
 	const std::filesystem::path standardPath = std::filesystem::path("assets") / manifestPath;
 	if (std::filesystem::exists(standardPath)) {
-		return std::filesystem::absolute(standardPath);
+		return standardPath;
 	}
 	return {};
 }

@@ -33,17 +33,20 @@ engine::core::Signature SoundEventSystem::signature(engine::core::Coordinator& c
 	return signature;
 }
 
-std::string SoundEventSystem::resolveSound(std::string_view key) const
+std::string_view SoundEventSystem::resolveSound(std::string_view key) const
 {
 	if (_assets && _assets->hasSound(std::string(key))) {
 		return _assets->getSoundPath(std::string(key));
 	}
-	return std::string(key);
+	return {};
 }
 
 /// Queues a one-shot sound entity for the audio system to play this frame.
 void SoundEventSystem::emit(engine::core::Coordinator& coordinator, std::string_view name, float volume)
 {
+	if (name.empty()) {
+		return;
+	}
 	const engine::core::Entity entity = coordinator.createEntity();
 	coordinator.addComponent(entity, engine::audio::Sound{.name = std::string(name), .volume = volume});
 }

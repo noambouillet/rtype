@@ -46,7 +46,7 @@ private:
 	static constexpr float PLAYER_DEATH_VOLUME = 150.0F;
 	static constexpr float CONNECTION_VOLUME = 150.0F;
 
-	[[nodiscard]] std::string resolveSound(std::string_view key) const;
+	[[nodiscard]] std::string_view resolveSound(std::string_view key) const;
 	void emit(engine::core::Coordinator& coordinator, std::string_view name, float volume);
 	void handle(engine::core::Coordinator& coordinator, const SpawnEvent& event, std::optional<std::uint8_t> localPlayerId);
 	void handle(engine::core::Coordinator& coordinator, const DestroyEvent& event);

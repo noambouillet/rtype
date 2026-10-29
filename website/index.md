@@ -13,7 +13,7 @@ replicated world snapshots through a view ECS.
 - [Entity Component System guide](../docs/ecs_guide.md): ECS paradigm, generational entity IDs, sparse sets, and system signatures.
 - [Accessibility technical study](../docs/accessibility_study.md): motor and visual accessibility features, comparative analysis, and standards compliance.
 - [UDP protocol](../docs/RFC.md): network wire protocol, session handshakes, sequence numbers, and packet specifications.
-- [Metrics](../docs/metrics.md): performance and network metrics, the in-game overlay (F3), server reports, and how to measure under bad network conditions.
+- [Metrics](../docs/engine/tools/metrics.md): performance and network metrics, the in-game overlay (F3), server reports, and how to measure under bad network conditions.
 - [Coding style](../docs/coding-style.md): C++ conventions and `///` comments.
 - [Contributing](../docs/contributing.md): project workflow and conventional commits.
 - [R-Type gameplay reference](../docs/R-TYPE.md): original game mechanics and assignment requirements.

@@ -20,7 +20,7 @@ Modularity works at two levels:
 | `engine::physics` | `ENGINE_BUILD_PHYSICS` | ON      | core                  | none                   | none          | `Collider`, `CollisionSystem`             |
 | `engine::net`     | `ENGINE_BUILD_NET`     | ON      | core                  | asio                   | `net`         | Transport interfaces, UDP, packets        |
 | `engine::script`  | `ENGINE_BUILD_SCRIPT`  | OFF     | core                  | Lua, sol2              | `script`      | Lua bindings (not implemented yet)        |
-| `engine::tools`   | `ENGINE_BUILD_TOOLS`   | OFF     | core, render, input   | (from render, input)   | `tools`       | `MetricsOverlay` (see [Metrics](metrics.md)); console and editor not implemented yet |
+| `engine::tools`   | `ENGINE_BUILD_TOOLS`   | OFF     | core, render, input   | (from render, input)   | `tools`       | `MetricsOverlay` (see [Metrics](engine/tools/metrics.md)); console and editor not implemented yet |
 
 `script` has no sources yet: configure stops with an error if `ENGINE_BUILD_SCRIPT` is ON. The R-Type root build turns `ENGINE_BUILD_TOOLS` on together with the client.
 

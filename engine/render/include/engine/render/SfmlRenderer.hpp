@@ -10,7 +10,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <string_view>
 
 #include "engine/render/GraphicsBackend.hpp"
 
@@ -34,7 +33,6 @@ public:
 	bool hasFocus() const;
 	void close();
 	void handleEvent();
-	void preload(std::string_view texture);
 
 	TextureId loadTextureFromFile(const std::string& filepath) override;
 	void beginFrame() override;

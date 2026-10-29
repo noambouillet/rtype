@@ -8,7 +8,6 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
-#include <string>
 #include <unordered_map>
 
 #include "engine/render/GraphicsBackend.hpp"
@@ -21,7 +20,6 @@ struct SfmlRenderer::Implementation {
 
 	sf::RenderWindow window;
 	std::unordered_map<TextureId, sf::Texture> loadedTextures;
-	std::unordered_map<std::string, TextureId> pathToTextureId;
 	TextureId nextTextureId = 1;
 
 	std::unordered_map<TextureId, sf::Texture>::iterator resolveTexture(TextureId textureId);

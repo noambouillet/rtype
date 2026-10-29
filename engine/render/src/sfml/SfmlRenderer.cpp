@@ -12,7 +12,6 @@
 #include <iostream>
 
 #include "SfmlRendererImplementation.hpp"
-#include "engine/render/GraphicsError.hpp"
 
 namespace engine::render {
 
@@ -60,32 +59,16 @@ void SfmlRenderer::handleEvent()
 	}
 }
 
-/// Loads a texture from file into the SFML texture cache and returns an ID.
+/// Loads a texture from file into the SFML texture storage and returns an ID.
 TextureId SfmlRenderer::loadTextureFromFile(const std::string& filepath)
 {
-	const auto existingMapping = _implementation->pathToTextureId.find(filepath);
-	if (existingMapping != _implementation->pathToTextureId.end()) {
-		return existingMapping->second;
-	}
-
 	sf::Texture loadedTexture;
 	if (!loadedTexture.loadFromFile(std::filesystem::path(filepath))) {
-		_implementation->pathToTextureId.emplace(filepath, INVALID_TEXTURE_ID);
 		return INVALID_TEXTURE_ID;
 	}
 	const TextureId assignedTextureId = _implementation->nextTextureId++;
 	_implementation->loadedTextures.emplace(assignedTextureId, std::move(loadedTexture));
-	_implementation->pathToTextureId.emplace(filepath, assignedTextureId);
 	return assignedTextureId;
-}
-
-/// Loads a texture before the first frame, so a missing required file fails at startup
-/// instead of being drawn as the fallback texture.
-void SfmlRenderer::preload(std::string_view texture)
-{
-	if (loadTextureFromFile(std::string(texture)) == INVALID_TEXTURE_ID) {
-		throw GraphicsError("Failed to preload required texture: " + std::string(texture));
-	}
 }
 
 void SfmlRenderer::beginFrame()

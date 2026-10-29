@@ -145,6 +145,7 @@ int runClient(const ClientOptions& options)
 	network::GameClient client(transport);
 	engine::render::SfmlRenderer window({.width = client_config::WINDOW_WIDTH, .height = client_config::WINDOW_HEIGHT, .title = "R-Type"});
 	assets.loadManifest("games/rtype/assets/manifest.json", window);
+	assets.preload("level1", window);
 	engine::input::SfmlInput input(std::move(bindings));
 	engine::audio::SfmlAudio audio;
 	client::ClientControls controls;

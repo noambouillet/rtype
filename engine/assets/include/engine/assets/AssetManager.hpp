@@ -7,19 +7,23 @@
 
 #pragma once
 
-#include <cstdint>
 #include <filesystem>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 #include "engine/render/GraphicsBackend.hpp"
 
-namespace engine::render {
+namespace engine::assets {
+
+using render::IGraphicsBackend;
+using render::INVALID_TEXTURE_ID;
+using render::Rect;
+using render::TextureId;
 
 static constexpr std::string_view DEFAULT_FALLBACK_FILE = "magenta-checkerboard-200px.png";
-using TextureId = std::uint32_t;
 
 struct SpriteDescriptor {
 	TextureId texture = INVALID_TEXTURE_ID;
@@ -55,8 +59,6 @@ public:
 	const AnimationDescriptor& getAnimation(const std::string& name) const;
 	const std::string& getSoundPath(const std::string& name) const;
 
-	void update(IGraphicsBackend& graphics);
-
 	bool hasTexture(const std::string& name) const;
 	bool hasSprite(const std::string& name) const;
 	bool hasAnimation(const std::string& name) const;
@@ -82,7 +84,6 @@ private:
 	SpriteDescriptor _fallbackSprite{};
 	AnimationDescriptor _fallbackAnimation{};
 	std::string _manifestPath;
-	std::filesystem::file_time_type _lastWriteTime{};
 };
 
 }

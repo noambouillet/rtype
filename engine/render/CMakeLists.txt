@@ -1,5 +1,4 @@
 add_library(engine_render
-    src/AssetManager.cpp
     src/RenderSystem.cpp
     src/sfml/SfmlRenderer.cpp
 )
@@ -11,6 +10,6 @@ target_include_directories(engine_render PUBLIC
 )
 
 target_link_libraries(engine_render
-    PUBLIC engine::core nlohmann_json::nlohmann_json
+    PUBLIC engine::core
     PRIVATE SFML::Graphics SFML::Window SFML::System
 )

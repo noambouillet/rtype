@@ -5,7 +5,7 @@
 ** Data-driven asset manager implementation
 */
 
-#include "engine/render/AssetManager.hpp"
+#include "engine/assets/AssetManager.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -13,34 +13,41 @@
 
 #include "engine/core/Error.hpp"
 
-namespace engine::render {
+namespace engine::assets {
 
 /// Resolves an asset file path relative to a base directory or standard asset locations.
+/// Returns an absolute path if found, or an empty path if it does not exist.
 static std::filesystem::path resolveAssetPath(const std::filesystem::path& baseDirectory,
 	const std::string& rawAssetPath)
 {
+	if (rawAssetPath.empty()) {
+		return {};
+	}
 	const std::filesystem::path candidatePath(rawAssetPath);
-	if (std::filesystem::exists(candidatePath)) {
+	if (candidatePath.is_absolute() && std::filesystem::exists(candidatePath)) {
 		return candidatePath;
 	}
 	if (!baseDirectory.empty() && std::filesystem::exists(baseDirectory / candidatePath)) {
-		return baseDirectory / candidatePath;
+		return std::filesystem::absolute(baseDirectory / candidatePath);
 	}
 	if (std::filesystem::exists(std::filesystem::path("assets") / candidatePath)) {
-		return std::filesystem::path("assets") / candidatePath;
+		return std::filesystem::absolute(std::filesystem::path("assets") / candidatePath);
 	}
-	return baseDirectory.empty() ? candidatePath : (baseDirectory / candidatePath);
+	if (std::filesystem::exists(candidatePath)) {
+		return std::filesystem::absolute(candidatePath);
+	}
+	return {};
 }
 
 /// Finds an existing manifest path from user input or fallback locations.
 static std::filesystem::path findManifestPath(const std::string& manifestPath)
 {
 	if (std::filesystem::exists(manifestPath)) {
-		return manifestPath;
+		return std::filesystem::absolute(manifestPath);
 	}
 	const std::filesystem::path standardPath = std::filesystem::path("assets") / manifestPath;
 	if (std::filesystem::exists(standardPath)) {
-		return standardPath;
+		return std::filesystem::absolute(standardPath);
 	}
 	return {};
 }
@@ -71,6 +78,9 @@ static TextureId loadFallbackTexture(const nlohmann::json& manifestJson,
 		fallbackFilename = manifestJson["fallback"].get<std::string>();
 	}
 	const std::filesystem::path fallbackPath = resolveAssetPath(baseDirectory, fallbackFilename);
+	if (fallbackPath.empty() || !std::filesystem::exists(fallbackPath)) {
+		throw engine::core::AssetError("Failed to find fallback texture: " + fallbackFilename);
+	}
 	const TextureId fallbackId = graphics.loadTextureFromFile(fallbackPath.string());
 	if (fallbackId == INVALID_TEXTURE_ID) {
 		throw engine::core::AssetError("Failed to load fallback texture: " + fallbackPath.string());
@@ -92,6 +102,11 @@ static void loadTextureEntry(const std::string& textureKey, const nlohmann::json
 		return;
 	}
 	const std::filesystem::path resolvedPath = resolveAssetPath(baseDirectory, relativePath);
+	if (resolvedPath.empty() || !std::filesystem::exists(resolvedPath)) {
+		std::cerr << "AssetManager warning: Missing texture asset '" << textureKey << "', using fallback ID\n";
+		loadedTextures[textureKey] = fallbackId;
+		return;
+	}
 	const TextureId textureId = graphics.loadTextureFromFile(resolvedPath.string());
 	if (textureId == INVALID_TEXTURE_ID) {
 		std::cerr << "AssetManager warning: Missing texture asset '" << textureKey << "', using fallback ID\n";
@@ -225,7 +240,11 @@ static void loadSoundsSection(const nlohmann::json& manifestJson, const std::fil
 	for (const auto& [soundKey, soundValue] : manifestJson["sounds"].items()) {
 		if (soundValue.is_string()) {
 			const std::filesystem::path resolved = resolveAssetPath(baseDirectory, soundValue.get<std::string>());
-			soundPaths[soundKey] = resolved.string();
+			if (!resolved.empty()) {
+				soundPaths[soundKey] = resolved.string();
+			} else {
+				soundPaths[soundKey] = (baseDirectory / soundValue.get<std::string>()).string();
+			}
 		}
 	}
 }
@@ -242,9 +261,7 @@ static void loadGroupsSection(const nlohmann::json& manifestJson,
 			continue;
 		}
 		ManifestGroup group{};
-		if (groupVal.contains("required") && groupVal["required"].is_boolean()) {
-			group.required = groupVal["required"].get<bool>();
-		}
+		group.required = groupVal.value("required", false);
 		if (groupVal.contains("textures") && groupVal["textures"].is_array()) {
 			for (const auto& item : groupVal["textures"]) {
 				if (item.is_string()) {
@@ -311,7 +328,7 @@ static void loadTagsSection(const nlohmann::json& manifestJson,
 	}
 }
 
-/// Parses the JSON manifest file to register all textures and sprites.
+/// Parses the JSON manifest file to register all textures and sprites with strong exception safety.
 void AssetManager::loadManifest(const std::string& path, IGraphicsBackend& graphics)
 {
 	const std::filesystem::path manifestPath = findManifestPath(path);
@@ -322,30 +339,41 @@ void AssetManager::loadManifest(const std::string& path, IGraphicsBackend& graph
 	if (!parseJsonFile(manifestPath, manifestJson)) {
 		throw engine::core::AssetError("Failed to parse manifest: " + manifestPath.string());
 	}
+	const std::filesystem::path baseDirectory = manifestPath.parent_path();
+
+	const TextureId fallbackTexture = loadFallbackTexture(manifestJson, baseDirectory, graphics);
+	SpriteDescriptor fallbackSprite{fallbackTexture, Rect{{0, 0}, {200, 200}}, 100.0F, 100.0F};
+	AnimationDescriptor fallbackAnimation{"fallback", fallbackTexture, {}, 0.0F, false};
+
+	std::unordered_map<std::string, SpriteDescriptor> sprites;
+	std::unordered_map<std::string, TextureId> textures;
+	std::unordered_map<std::string, AnimationDescriptor> animations;
+	std::unordered_map<std::string, std::string> soundPaths;
+	std::unordered_map<std::string, ManifestGroup> groups;
+	std::unordered_map<std::string, std::unordered_set<std::string>> assetTags;
+	std::unordered_map<TextureId, std::unordered_set<std::string>> textureTags;
+
+	textures[std::string(DEFAULT_FALLBACK_FILE)] = fallbackTexture;
+
+	loadTexturesSection(manifestJson, baseDirectory, graphics, fallbackTexture, textures);
+	loadSpritesSection(manifestJson, fallbackTexture, textures, sprites);
+	loadAnimationsSection(manifestJson, fallbackTexture, textures, animations);
+	loadSoundsSection(manifestJson, baseDirectory, soundPaths);
+	loadGroupsSection(manifestJson, groups);
+	loadTagsSection(manifestJson, assetTags, textures, textureTags);
+
 	_manifestPath = manifestPath.string();
-	std::error_code errorCode;
-	_lastWriteTime = std::filesystem::last_write_time(manifestPath, errorCode);
-	_baseDirectory = manifestPath.parent_path();
-
-	_fallbackTexture = loadFallbackTexture(manifestJson, _baseDirectory, graphics);
-	_fallbackSprite = SpriteDescriptor{_fallbackTexture, Rect{{0, 0}, {200, 200}}, 100.0F, 100.0F};
-	_fallbackAnimation = AnimationDescriptor{"fallback", _fallbackTexture, {}, 0.0F, false};
-
-	_sprites.clear();
-	_textures.clear();
-	_animations.clear();
-	_soundPaths.clear();
-	_groups.clear();
-	_assetTags.clear();
-	_textureTags.clear();
-	_textures[std::string(DEFAULT_FALLBACK_FILE)] = _fallbackTexture;
-
-	loadTexturesSection(manifestJson, _baseDirectory, graphics, _fallbackTexture, _textures);
-	loadSpritesSection(manifestJson, _fallbackTexture, _textures, _sprites);
-	loadAnimationsSection(manifestJson, _fallbackTexture, _textures, _animations);
-	loadSoundsSection(manifestJson, _baseDirectory, _soundPaths);
-	loadGroupsSection(manifestJson, _groups);
-	loadTagsSection(manifestJson, _assetTags, _textures, _textureTags);
+	_baseDirectory = baseDirectory;
+	_fallbackTexture = fallbackTexture;
+	_fallbackSprite = std::move(fallbackSprite);
+	_fallbackAnimation = std::move(fallbackAnimation);
+	_sprites = std::move(sprites);
+	_textures = std::move(textures);
+	_animations = std::move(animations);
+	_soundPaths = std::move(soundPaths);
+	_groups = std::move(groups);
+	_assetTags = std::move(assetTags);
+	_textureTags = std::move(textureTags);
 }
 
 /// Helper to preload all textures of a specific manifest group.
@@ -359,9 +387,11 @@ static void preloadGroupTextures(const ManifestGroup& group, const std::filesyst
 			id = textureIt->second;
 		} else {
 			const std::filesystem::path resolved = resolveAssetPath(baseDirectory, textureKey);
-			id = graphics.loadTextureFromFile(resolved.string());
-			if (id != INVALID_TEXTURE_ID) {
-				textures[textureKey] = id;
+			if (!resolved.empty() && std::filesystem::exists(resolved)) {
+				id = graphics.loadTextureFromFile(resolved.string());
+				if (id != INVALID_TEXTURE_ID) {
+					textures[textureKey] = id;
+				}
 			}
 		}
 
@@ -388,7 +418,7 @@ static void preloadGroupSounds(const ManifestGroup& group, const std::filesystem
 			resolved = resolveAssetPath(baseDirectory, soundKey);
 		}
 
-		if (!std::filesystem::exists(resolved)) {
+		if (resolved.empty() || !std::filesystem::exists(resolved)) {
 			if (group.required) {
 				throw engine::core::AssetError("Failed to load required sound from group: " + soundKey);
 			}
@@ -453,27 +483,6 @@ const std::string& AssetManager::getSoundPath(const std::string& name) const
 	}
 	static const std::string EMPTY_PATH;
 	return EMPTY_PATH;
-}
-
-/// Hot-reloads the manifest file if its modification timestamp has changed.
-void AssetManager::update(IGraphicsBackend& graphics)
-{
-	if (_manifestPath.empty()) {
-		return;
-	}
-	std::error_code errorCode;
-	const auto currentTime = std::filesystem::last_write_time(_manifestPath, errorCode);
-	if (!errorCode && currentTime != _lastWriteTime) {
-		_lastWriteTime = currentTime;
-		std::cout << "AssetManager: Manifest modification detected, hot-reloading...\n";
-		try {
-			loadManifest(_manifestPath, graphics);
-		} catch (const engine::core::AssetError& error) {
-			std::cerr << "AssetManager warning: Failed to hot-reload manifest (Asset Error): " << error.what() << "\n";
-		} catch (const nlohmann::json::exception& error) {
-			std::cerr << "AssetManager warning: Failed to hot-reload, JSON is malformed: " << error.what() << "\n";
-		}
-	}
 }
 
 /// Checks whether a texture exists by name.

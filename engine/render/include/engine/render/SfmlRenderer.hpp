@@ -25,8 +25,7 @@ struct WindowConfig {
 	std::filesystem::path assetRoot = "assets";
 	// Drawn in place of textures that cannot be loaded. It must exist under assetRoot.
 	std::filesystem::path fallbackTexture = "magenta-checkerboard-200px.png";
-	// Font used by drawText, relative to assetRoot. Leave empty to disable text.
-	std::filesystem::path fontFile;
+	std::filesystem::path fontFile;  // Leave empty to disable text.
 };
 
 class SfmlRenderer : public IGraphicsBackend {

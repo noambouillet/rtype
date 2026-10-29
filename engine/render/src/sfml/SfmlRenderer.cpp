@@ -117,7 +117,6 @@ void SfmlRenderer::drawRect(const RectDraw& rect)
 	_implementation->window.draw(shape);
 }
 
-/// Draws one line of text with its top-left corner at (`x`, `y`). Does nothing without a configured font.
 void SfmlRenderer::drawText(const TextDraw& text)
 {
 	if (!_implementation->font) {

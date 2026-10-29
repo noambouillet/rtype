@@ -38,7 +38,10 @@ struct MetricsUpdated {
 
 class Metrics {
 public:
-	static constexpr float WINDOW_SECONDS = 1.0F;
+	static constexpr float PERIOD_SECONDS = 1.0F;
+	static constexpr int WHOLE_DECIMALS = 0;
+	static constexpr int COARSE_DECIMALS = 1;
+	static constexpr int FINE_DECIMALS = 2;
 
 	explicit Metrics(EventBus& bus);
 
@@ -53,9 +56,9 @@ private:
 	static constexpr float PERCENT = 100.0F;
 	static constexpr float ROUND_TRIP_SMOOTHING = 0.125F;
 	static constexpr float JITTER_SMOOTHING = 0.25F;
-	static constexpr std::size_t LOSS_WINDOWS = 5;
+	static constexpr std::size_t LOSS_PERIODS = 5;
 
-	struct Window {
+	struct PeriodTotals {
 		float elapsed;
 		float worstFrame;
 		float busy;
@@ -69,6 +72,12 @@ private:
 		std::size_t pingsAnswered;
 	};
 
+	struct Latency {
+		float roundTrip;
+		float smoothedRoundTrip;
+		float jitter;
+	};
+
 	struct ProbeCount {
 		std::size_t sent;
 		std::size_t answered;
@@ -76,17 +85,15 @@ private:
 
 	void onFrame(const FrameEnded& event);
 	void onRoundTrip(const RoundTripMeasured& event);
-	void closeWindow();
+	void closePeriod();
 	[[nodiscard]] std::optional<float> packetLoss() const;
 
 	EventBus& _bus;
 	MetricsSnapshot _snapshot;
-	Window _window;
-	std::array<ProbeCount, LOSS_WINDOWS> _probes;
+	PeriodTotals _period;
+	std::array<ProbeCount, LOSS_PERIODS> _probes;
 	std::size_t _probeIndex;
-	std::optional<float> _roundTrip;
-	std::optional<float> _smoothedRoundTrip;
-	std::optional<float> _jitter;
+	std::optional<Latency> _latency;
 	Subscription _onFrame;
 	Subscription _onBytesSent;
 	Subscription _onBytesReceived;

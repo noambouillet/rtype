@@ -25,10 +25,11 @@ static std::string number(std::optional<float> value, int decimals)
 }
 
 /// Shows the last MetricsUpdated published on `bus`, which must outlive this object.
-/// Starts hidden and keeps the text of the last window, so drawing never formats numbers.
+/// Starts hidden and keeps the text of the last period, so drawing never formats numbers.
 MetricsOverlay::MetricsOverlay(core::EventBus& bus)
-	: _visible(false), _lines{"Collecting metrics..."}, _onUpdate(bus.subscribe<core::MetricsUpdated>([this](const core::MetricsUpdated& event) { _lines = format(event.snapshot); }))
+	: _visible(false), _lines{"Collecting metrics..."}, _onUpdate()
 {
+	_onUpdate = bus.subscribe<core::MetricsUpdated>([this](const core::MetricsUpdated& event) { _lines = format(event.snapshot); });
 }
 
 void MetricsOverlay::toggle()
@@ -60,12 +61,12 @@ void MetricsOverlay::draw(render::IGraphicsBackend& backend) const
 std::vector<std::string> MetricsOverlay::format(const core::MetricsSnapshot& snapshot)
 {
 	return {
-		"FPS     " + number(snapshot.framesPerSecond, COARSE_DECIMALS) + "   frame " + number(snapshot.averageFrameMs, COARSE_DECIMALS) + " ms (worst " + number(snapshot.worstFrameMs, COARSE_DECIMALS) + ")",
-		"Work    " + number(snapshot.averageBusyMs, FINE_DECIMALS) + " ms (worst " + number(snapshot.worstBusyMs, FINE_DECIMALS) + ")",
-		"Ping    " + number(snapshot.roundTripMs, WHOLE_DECIMALS) + " ms   avg " + number(snapshot.smoothedRoundTripMs, WHOLE_DECIMALS) + "   jitter " + number(snapshot.jitterMs, COARSE_DECIMALS),
-		"Loss    " + number(snapshot.packetLossPercent, COARSE_DECIMALS) + " %",
-		"Up      " + number(snapshot.uploadKiBps, FINE_DECIMALS) + " KiB/s   " + number(snapshot.packetsSentPerSecond, WHOLE_DECIMALS) + " pkt/s",
-		"Down    " + number(snapshot.downloadKiBps, FINE_DECIMALS) + " KiB/s   " + number(snapshot.packetsReceivedPerSecond, WHOLE_DECIMALS) + " pkt/s",
+		"FPS     " + number(snapshot.framesPerSecond, core::Metrics::COARSE_DECIMALS) + "   frame " + number(snapshot.averageFrameMs, core::Metrics::COARSE_DECIMALS) + " ms (worst " + number(snapshot.worstFrameMs, core::Metrics::COARSE_DECIMALS) + ")",
+		"Work    " + number(snapshot.averageBusyMs, core::Metrics::FINE_DECIMALS) + " ms (worst " + number(snapshot.worstBusyMs, core::Metrics::FINE_DECIMALS) + ")",
+		"Ping    " + number(snapshot.roundTripMs, core::Metrics::WHOLE_DECIMALS) + " ms   avg " + number(snapshot.smoothedRoundTripMs, core::Metrics::WHOLE_DECIMALS) + "   jitter " + number(snapshot.jitterMs, core::Metrics::COARSE_DECIMALS),
+		"Loss    " + number(snapshot.packetLossPercent, core::Metrics::COARSE_DECIMALS) + " %",
+		"Up      " + number(snapshot.uploadKiBps, core::Metrics::FINE_DECIMALS) + " KiB/s   " + number(snapshot.packetsSentPerSecond, core::Metrics::WHOLE_DECIMALS) + " pkt/s",
+		"Down    " + number(snapshot.downloadKiBps, core::Metrics::FINE_DECIMALS) + " KiB/s   " + number(snapshot.packetsReceivedPerSecond, core::Metrics::WHOLE_DECIMALS) + " pkt/s",
 	};
 }
 

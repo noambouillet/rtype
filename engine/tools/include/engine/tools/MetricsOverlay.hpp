@@ -33,9 +33,6 @@ private:
 	static constexpr float LINE_HEIGHT = 18.0F;
 	static constexpr float PANEL_WIDTH = 360.0F;
 	static constexpr unsigned int TEXT_SIZE = 14;
-	static constexpr int WHOLE_DECIMALS = 0;
-	static constexpr int COARSE_DECIMALS = 1;
-	static constexpr int FINE_DECIMALS = 2;
 	static constexpr render::Color PANEL_COLOR{0, 0, 0, 170};
 	static constexpr render::Color TEXT_COLOR{235, 235, 235, 255};
 

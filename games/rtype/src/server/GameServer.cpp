@@ -13,10 +13,11 @@
 
 namespace rtype {
 
-/// Creates the server. Its metrics are written to `logger` every `METRICS_REPORT_WINDOWS` windows while clients are talking to it.
+/// Creates the server. Its metrics are written to `logger` every `METRICS_REPORT_PERIODS` periods while clients are talking to it.
 GameServer::GameServer(engine::net::IServerTransport& transport, engine::core::Logger& logger)
-	: _logger(logger), _bus(), _metrics(_bus), _network(transport, _bus), _world{}, _windowsSinceReport(0), _onMetrics(_bus.subscribe<engine::core::MetricsUpdated>([this](const engine::core::MetricsUpdated& event) { reportMetrics(event.snapshot); }))
+	: _logger(logger), _bus(), _metrics(_bus), _network(transport, _bus), _world{}, _periodsSinceReport(0), _onMetrics()
 {
+	_onMetrics = _bus.subscribe<engine::core::MetricsUpdated>([this](const engine::core::MetricsUpdated& event) { reportMetrics(event.snapshot); });
 }
 
 GameWorld::Input GameServer::tick()
@@ -34,20 +35,20 @@ void GameServer::publishTick(Clock::time_point start, Clock::time_point& previou
 	_bus.publish(engine::core::FrameEnded{.seconds = interval, .busySeconds = busy});
 }
 
-/// Logs one window out of `METRICS_REPORT_WINDOWS`, and none while no datagram arrives.
+/// Logs one period out of `METRICS_REPORT_PERIODS`, and none while no datagram arrives.
 void GameServer::reportMetrics(const engine::core::MetricsSnapshot& snapshot)
 {
-	_windowsSinceReport++;
-	if (_windowsSinceReport < METRICS_REPORT_WINDOWS || snapshot.packetsReceivedPerSecond == 0.0F) {
+	_periodsSinceReport++;
+	if (_periodsSinceReport < METRICS_REPORT_PERIODS || snapshot.packetsReceivedPerSecond == 0.0F) {
 		return;
 	}
-	_windowsSinceReport = 0;
+	_periodsSinceReport = 0;
 	const float budget = std::chrono::duration<float, std::milli>(TICK_DURATION).count();
 	std::ostringstream text;
-	text << std::fixed << std::setprecision(COARSE_DECIMALS) << "Metrics: " << snapshot.framesPerSecond << " ticks/s, tick work avg "
-		 << std::setprecision(FINE_DECIMALS) << snapshot.averageBusyMs << " ms / worst " << snapshot.worstBusyMs << " ms (budget " << budget
-		 << " ms), up " << snapshot.uploadKiBps << " KiB/s (" << std::setprecision(WHOLE_DECIMALS) << snapshot.packetsSentPerSecond
-		 << " pkt/s), down " << std::setprecision(FINE_DECIMALS) << snapshot.downloadKiBps << " KiB/s (" << std::setprecision(WHOLE_DECIMALS)
+	text << std::fixed << std::setprecision(engine::core::Metrics::COARSE_DECIMALS) << "Metrics: " << snapshot.framesPerSecond << " ticks/s, tick work avg "
+		 << std::setprecision(engine::core::Metrics::FINE_DECIMALS) << snapshot.averageBusyMs << " ms / worst " << snapshot.worstBusyMs << " ms (budget " << budget
+		 << " ms), up " << snapshot.uploadKiBps << " KiB/s (" << std::setprecision(engine::core::Metrics::WHOLE_DECIMALS) << snapshot.packetsSentPerSecond
+		 << " pkt/s), down " << std::setprecision(engine::core::Metrics::FINE_DECIMALS) << snapshot.downloadKiBps << " KiB/s (" << std::setprecision(engine::core::Metrics::WHOLE_DECIMALS)
 		 << snapshot.packetsReceivedPerSecond << " pkt/s)";
 	_logger.info(text.str());
 }

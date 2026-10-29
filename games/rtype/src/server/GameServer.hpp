@@ -28,10 +28,7 @@ public:
 private:
 	static constexpr auto TICK_DURATION = std::chrono::microseconds(16667);
 	static constexpr auto SNAPSHOT_INTERVAL = std::chrono::milliseconds(50);
-	static constexpr unsigned int METRICS_REPORT_WINDOWS = 10;
-	static constexpr int WHOLE_DECIMALS = 0;
-	static constexpr int COARSE_DECIMALS = 1;
-	static constexpr int FINE_DECIMALS = 2;
+	static constexpr unsigned int METRICS_REPORT_PERIODS = 10;
 	using Clock = std::chrono::steady_clock;
 
 	void publishTick(Clock::time_point start, Clock::time_point& previousStart);
@@ -42,7 +39,7 @@ private:
 	engine::core::Metrics _metrics;
 	ServerNetworkService _network;
 	GameWorld _world;
-	unsigned int _windowsSinceReport;
+	unsigned int _periodsSinceReport;
 	engine::core::Subscription _onMetrics;
 };
 

@@ -12,84 +12,85 @@
 
 namespace engine::core {
 
-/// Subscribes to every metrics event of `bus` and publishes a MetricsUpdated on it once per window.
+/// Subscribes to every metrics event of `bus` and publishes a MetricsUpdated on it once per period.
 /// `bus` must outlive this object; the subscriptions end when it is destroyed.
 Metrics::Metrics(EventBus& bus)
-	: _bus(bus), _snapshot{}, _window{}, _probes{}, _probeIndex(0), _roundTrip(std::nullopt), _smoothedRoundTrip(std::nullopt), _jitter(std::nullopt), _onFrame(bus.subscribe<FrameEnded>([this](const FrameEnded& event) { onFrame(event); })), _onBytesSent(bus.subscribe<BytesSent>([this](const BytesSent& event) {
-		  _window.bytesSent += event.count;
-		  _window.packetsSent++;
-	  })),
-	  _onBytesReceived(bus.subscribe<BytesReceived>([this](const BytesReceived& event) {
-		  _window.bytesReceived += event.count;
-		  _window.packetsReceived++;
-	  })),
-	  _onPingSent(bus.subscribe<PingSent>([this]([[maybe_unused]] const PingSent& event) { _window.pingsSent++; })),
-	  _onRoundTrip(bus.subscribe<RoundTripMeasured>([this](const RoundTripMeasured& event) { onRoundTrip(event); }))
+	: _bus(bus), _snapshot{}, _period{}, _probes{}, _probeIndex(0), _latency(std::nullopt), _onFrame(), _onBytesSent(), _onBytesReceived(), _onPingSent(), _onRoundTrip()
 {
+	_onFrame = bus.subscribe<FrameEnded>([this](const FrameEnded& event) { onFrame(event); });
+	_onBytesSent = bus.subscribe<BytesSent>([this](const BytesSent& event) {
+		_period.bytesSent += event.count;
+		_period.packetsSent++;
+	});
+	_onBytesReceived = bus.subscribe<BytesReceived>([this](const BytesReceived& event) {
+		_period.bytesReceived += event.count;
+		_period.packetsReceived++;
+	});
+	_onPingSent = bus.subscribe<PingSent>([this]([[maybe_unused]] const PingSent& event) { _period.pingsSent++; });
+	_onRoundTrip = bus.subscribe<RoundTripMeasured>([this](const RoundTripMeasured& event) { onRoundTrip(event); });
 }
 
-/// Returns the values of the last completed window, all zero before the first one.
+/// Returns the values of the last completed period, all zero before the first one.
 const MetricsSnapshot& Metrics::snapshot() const
 {
 	return _snapshot;
 }
 
-/// Accumulates one frame and closes the window once it covers `WINDOW_SECONDS`.
+/// Accumulates one frame and closes the period once it covers `PERIOD_SECONDS`.
 void Metrics::onFrame(const FrameEnded& event)
 {
-	_window.elapsed += event.seconds;
-	_window.busy += event.busySeconds;
-	_window.worstFrame = std::max(_window.worstFrame, event.seconds);
-	_window.worstBusy = std::max(_window.worstBusy, event.busySeconds);
-	_window.frames++;
-	if (_window.elapsed >= WINDOW_SECONDS) {
-		closeWindow();
+	_period.elapsed += event.seconds;
+	_period.busy += event.busySeconds;
+	_period.worstFrame = std::max(_period.worstFrame, event.seconds);
+	_period.worstBusy = std::max(_period.worstBusy, event.busySeconds);
+	_period.frames++;
+	if (_period.elapsed >= PERIOD_SECONDS) {
+		closePeriod();
 	}
 }
 
 /// Updates the latency estimates. The smoothing factors are the ones TCP uses (RFC 6298).
 void Metrics::onRoundTrip(const RoundTripMeasured& event)
 {
-	_window.pingsAnswered++;
-	if (!_roundTrip || !_smoothedRoundTrip || !_jitter) {
-		_smoothedRoundTrip = event.milliseconds;
-		_jitter = 0.0F;
-	} else {
-		const float variation = std::abs(event.milliseconds - *_roundTrip);
-		*_jitter += (variation - *_jitter) * JITTER_SMOOTHING;
-		*_smoothedRoundTrip += (event.milliseconds - *_smoothedRoundTrip) * ROUND_TRIP_SMOOTHING;
+	_period.pingsAnswered++;
+	if (!_latency) {
+		_latency = Latency{.roundTrip = event.milliseconds, .smoothedRoundTrip = event.milliseconds, .jitter = 0.0F};
+		return;
 	}
-	_roundTrip = event.milliseconds;
+	const float variation = std::abs(event.milliseconds - _latency->roundTrip);
+	_latency->jitter += (variation - _latency->jitter) * JITTER_SMOOTHING;
+	_latency->smoothedRoundTrip += (event.milliseconds - _latency->smoothedRoundTrip) * ROUND_TRIP_SMOOTHING;
+	_latency->roundTrip = event.milliseconds;
 }
 
-/// Turns the window totals into rates, publishes them and starts a new window.
-void Metrics::closeWindow()
+/// Turns the period totals into rates, publishes them and starts a new period.
+void Metrics::closePeriod()
 {
-	const float seconds = _window.elapsed;
-	const auto frames = static_cast<float>(_window.frames);
-	_probes[_probeIndex] = {.sent = _window.pingsSent, .answered = _window.pingsAnswered};
-	_probeIndex = (_probeIndex + 1) % LOSS_WINDOWS;
+	const float seconds = _period.elapsed;
+	const auto frames = static_cast<float>(_period.frames);
+	_probes[_probeIndex] = {.sent = _period.pingsSent, .answered = _period.pingsAnswered};
+	_probeIndex = (_probeIndex + 1) % LOSS_PERIODS;
 	_snapshot = {
 		.framesPerSecond = frames / seconds,
 		.averageFrameMs = seconds / frames * MS_PER_SECOND,
-		.worstFrameMs = _window.worstFrame * MS_PER_SECOND,
-		.averageBusyMs = _window.busy / frames * MS_PER_SECOND,
-		.worstBusyMs = _window.worstBusy * MS_PER_SECOND,
-		.uploadKiBps = static_cast<float>(_window.bytesSent) / BYTES_PER_KIB / seconds,
-		.downloadKiBps = static_cast<float>(_window.bytesReceived) / BYTES_PER_KIB / seconds,
-		.packetsSentPerSecond = static_cast<float>(_window.packetsSent) / seconds,
-		.packetsReceivedPerSecond = static_cast<float>(_window.packetsReceived) / seconds,
-		.roundTripMs = _roundTrip,
-		.smoothedRoundTripMs = _smoothedRoundTrip,
-		.jitterMs = _jitter,
+		.worstFrameMs = _period.worstFrame * MS_PER_SECOND,
+		.averageBusyMs = _period.busy / frames * MS_PER_SECOND,
+		.worstBusyMs = _period.worstBusy * MS_PER_SECOND,
+		.uploadKiBps = static_cast<float>(_period.bytesSent) / BYTES_PER_KIB / seconds,
+		.downloadKiBps = static_cast<float>(_period.bytesReceived) / BYTES_PER_KIB / seconds,
+		.packetsSentPerSecond = static_cast<float>(_period.packetsSent) / seconds,
+		.packetsReceivedPerSecond = static_cast<float>(_period.packetsReceived) / seconds,
+		.roundTripMs = _latency ? std::optional(_latency->roundTrip) : std::nullopt,
+		.smoothedRoundTripMs = _latency ? std::optional(_latency->smoothedRoundTrip) : std::nullopt,
+		.jitterMs = _latency ? std::optional(_latency->jitter) : std::nullopt,
 		.packetLossPercent = packetLoss(),
 	};
-	_window = Window{};
+	_period = PeriodTotals{};
 	_bus.publish(MetricsUpdated{_snapshot});
 }
 
-/// Returns the share of probes left unanswered over the last `LOSS_WINDOWS` windows.
-/// An answer arriving one window late still counts, so short bursts can read slightly low.
+/// Returns the share of probes left unanswered over the last `LOSS_PERIODS` periods.
+/// An answer arriving one period late still counts, so short bursts can read slightly low.
 std::optional<float> Metrics::packetLoss() const
 {
 	std::size_t sent = 0;

@@ -13,8 +13,8 @@
 
 #include "client/view/ClientComponents.hpp"
 #include "client/view/SpriteCatalog.hpp"
+#include "engine/assets/AssetManager.hpp"
 #include "engine/core/ecs/Components.hpp"
-#include "engine/render/AssetManager.hpp"
 #include "engine/render/Components.hpp"
 
 namespace rtype::client {
@@ -23,7 +23,7 @@ ClientNetworkSystem::ClientNetworkSystem() : _entitiesByServerId{}, _lastApplied
 {
 }
 
-void ClientNetworkSystem::setAssetManager(const engine::render::AssetManager& assets)
+void ClientNetworkSystem::setAssetManager(const engine::assets::AssetManager& assets)
 {
 	_assets = &assets;
 }

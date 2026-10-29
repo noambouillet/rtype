@@ -9,13 +9,13 @@
 
 #include <string>
 
-#include "engine/render/AssetManager.hpp"
+#include "engine/assets/AssetManager.hpp"
 #include "game/GameTypes.hpp"
 
 namespace rtype::client {
 
 /// Selects the image and geometry used to present a gameplay entity.
-engine::render::Sprite spriteFor(const engine::render::AssetManager& assets, game::EntityType kind, std::uint8_t variant)
+engine::render::Sprite spriteFor(const engine::assets::AssetManager& assets, game::EntityType kind, std::uint8_t variant)
 {
 	switch (kind) {
 		case game::EntityType::Player: {
@@ -60,7 +60,7 @@ engine::render::Sprite spriteFor(const engine::render::AssetManager& assets, gam
 }
 
 /// Supplies the looping projectile frames; other entities are static.
-std::optional<engine::render::Animation> animationFor(const engine::render::AssetManager& assets, game::EntityType kind)
+std::optional<engine::render::Animation> animationFor(const engine::assets::AssetManager& assets, game::EntityType kind)
 {
 	if (kind != game::EntityType::PlayerProjectile) {
 		return std::nullopt;

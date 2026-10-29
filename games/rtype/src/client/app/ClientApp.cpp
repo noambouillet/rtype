@@ -23,6 +23,7 @@
 #include "client/app/ClientControls.hpp"
 #include "client/network/GameClient.hpp"
 #include "client/view/ClientWorld.hpp"
+#include "engine/assets/AssetManager.hpp"
 #include "engine/audio/SfmlAudio.hpp"
 #include "engine/core/ConfigParser.hpp"
 #include "engine/core/EngineSettings.hpp"
@@ -30,7 +31,6 @@
 #include "engine/core/Logger.hpp"
 #include "engine/input/SfmlInput.hpp"
 #include "engine/net/UdpClient.hpp"
-#include "engine/render/AssetManager.hpp"
 #include "engine/render/SfmlRenderer.hpp"
 #include "utils/network/Protocol.hpp"
 
@@ -103,8 +103,7 @@ static void loadSettings(engine::core::EngineSettings& engineSettings, engine::i
 /// Polls one frame and sends the current input state.
 static bool updateFrame(engine::render::SfmlRenderer& window, engine::input::SfmlInput& input, engine::audio::SfmlAudio& audio,
 	client::ClientControls& controls, network::GameClient& client, rtype::client::ClientWorld& view,
-	engine::core::Logger& logger, network::ClientStatus& previous, std::chrono::steady_clock::time_point& lastFrame,
-	engine::render::AssetManager& assets)
+	engine::core::Logger& logger, network::ClientStatus& previous, std::chrono::steady_clock::time_point& lastFrame)
 {
 	window.handleEvent();
 	input.update(window.hasFocus());
@@ -114,7 +113,6 @@ static bool updateFrame(engine::render::SfmlRenderer& window, engine::input::Sfm
 	if (!window.isOpen()) {
 		return true;
 	}
-	assets.update(window);
 	const auto now = std::chrono::steady_clock::now();
 	const float deltaTime = std::clamp(std::chrono::duration<float>(now - lastFrame).count(), 0.0F, 0.1F);
 	lastFrame = now;
@@ -158,7 +156,7 @@ int runClient(const ClientOptions& options)
 	engine::core::EngineSettings engineSettings;
 	engine::input::InputMap bindings = client::ClientControls::defaultBindings();
 	loadSettings(engineSettings, bindings);
-	engine::render::AssetManager assets;
+	engine::assets::AssetManager assets;
 	engine::net::UdpClient transport({.host = options.host, .port = options.port, .maxDatagramSize = network::MAX_DATAGRAM_SIZE});
 	network::GameClient client(transport);
 	engine::render::SfmlRenderer window({.width = client_config::WINDOW_WIDTH, .height = client_config::WINDOW_HEIGHT, .title = "R-Type"});
@@ -171,7 +169,7 @@ int runClient(const ClientOptions& options)
 	auto lastFrame = std::chrono::steady_clock::now();
 	logger->info("Connecting to " + options.host + ':' + std::to_string(options.port));
 	while (running != 0 && window.isOpen()) {
-		if (!updateFrame(window, input, audio, controls, client, view, *logger, previous, lastFrame, assets)) {
+		if (!updateFrame(window, input, audio, controls, client, view, *logger, previous, lastFrame)) {
 			client.disconnect();
 			logger->info("Disconnected");
 			return 1;

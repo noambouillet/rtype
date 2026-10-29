@@ -11,8 +11,8 @@
 #include <string>
 #include <variant>
 
+#include "engine/assets/AssetManager.hpp"
 #include "engine/core/ecs/Components.hpp"
-#include "engine/render/AssetManager.hpp"
 #include "engine/render/Components.hpp"
 #include "game/GameTypes.hpp"
 
@@ -37,7 +37,7 @@ EffectSystem::EffectSystem() : _firePredictor{}, _screenFlash(true), _assets(nul
 {
 }
 
-void EffectSystem::setAssetManager(const engine::render::AssetManager& assets)
+void EffectSystem::setAssetManager(const engine::assets::AssetManager& assets)
 {
 	_assets = &assets;
 }

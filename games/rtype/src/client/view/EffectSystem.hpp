@@ -15,9 +15,9 @@
 #include "client/view/ClientNetworkSystem.hpp"
 #include "client/view/LocalFirePredictor.hpp"
 #include "client/view/ViewEvent.hpp"
+#include "engine/assets/AssetManager.hpp"
 #include "engine/core/ecs/Coordinator.hpp"
 #include "engine/core/ecs/System.hpp"
-#include "engine/render/AssetManager.hpp"
 
 namespace rtype::client {
 
@@ -25,7 +25,7 @@ class EffectSystem : public engine::core::System {
 public:
 	EffectSystem();
 	void setScreenFlash(bool enabled);
-	void setAssetManager(const engine::render::AssetManager& assets);
+	void setAssetManager(const engine::assets::AssetManager& assets);
 	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	void consume(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network,
 		const std::vector<ViewEvent>& events, std::optional<std::uint8_t> localPlayerId);
@@ -48,7 +48,7 @@ private:
 
 	LocalFirePredictor _firePredictor;
 	bool _screenFlash;
-	const engine::render::AssetManager* _assets = nullptr;
+	const engine::assets::AssetManager* _assets = nullptr;
 };
 
 }

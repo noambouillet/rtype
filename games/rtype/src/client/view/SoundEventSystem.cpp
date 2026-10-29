@@ -21,7 +21,7 @@ SoundEventSystem::SoundEventSystem() : _assets(nullptr), _connectedMask(0)
 {
 }
 
-void SoundEventSystem::setAssetManager(const engine::render::AssetManager& assets)
+void SoundEventSystem::setAssetManager(const engine::assets::AssetManager& assets)
 {
 	_assets = &assets;
 }

@@ -15,17 +15,17 @@
 #include "client/view/ClientNetworkSystem.hpp"
 #include "client/view/EffectSystem.hpp"
 #include "client/view/SoundEventSystem.hpp"
+#include "engine/assets/AssetManager.hpp"
 #include "engine/audio/AudioSystem.hpp"
 #include "engine/audio/Components.hpp"
 #include "engine/core/ecs/Components.hpp"
-#include "engine/render/AssetManager.hpp"
 #include "engine/render/Components.hpp"
 #include "engine/render/RenderSystem.hpp"
 
 namespace rtype::client {
 
 /// Builds the view world. With screenFlash off, explosions are never shown (accessibility setting).
-ClientWorld::ClientWorld(const engine::render::AssetManager& assets, bool screenFlash)
+ClientWorld::ClientWorld(const engine::assets::AssetManager& assets, bool screenFlash)
 {
 	_coordinator.registerComponent<engine::core::Position>();
 	_coordinator.registerComponent<engine::render::Sprite>();
@@ -42,7 +42,7 @@ ClientWorld::ClientWorld(const engine::render::AssetManager& assets, bool screen
 	_coordinator.setSystemSignature<EffectSystem>(EffectSystem::signature(_coordinator));
 	auto& render = _coordinator.registerSystem<engine::render::RenderSystem>();
 	_coordinator.setSystemSignature<engine::render::RenderSystem>(engine::render::RenderSystem::signature(_coordinator));
-	render.setBackground("background.png", 40.0F);
+	render.setBackground(assets.getTexture("background"), 40.0F);
 	auto& sounds = _coordinator.registerSystem<SoundEventSystem>();
 	sounds.setAssetManager(assets);
 	_coordinator.setSystemSignature<SoundEventSystem>(SoundEventSystem::signature(_coordinator));

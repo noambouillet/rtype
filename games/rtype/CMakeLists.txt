@@ -81,7 +81,7 @@ if(RTYPE_BUILD_CLIENT)
         src/client/view/ClientWorld.cpp
         src/client/view/LocalFirePredictor.cpp
     )
-    target_link_libraries(rtype_client_core PUBLIC engine::core engine::render engine::audio engine::input engine::net rtype_protocol)
+    target_link_libraries(rtype_client_core PUBLIC engine::core engine::render engine::assets engine::audio engine::input engine::net rtype_protocol)
 
     add_executable(r-type_client
         src/client/main.cpp

@@ -72,7 +72,7 @@ static TextureId loadFallbackTexture(const nlohmann::json& manifestJson,
 	}
 	const std::filesystem::path fallbackPath = resolveAssetPath(baseDirectory, fallbackFilename);
 	const TextureId fallbackId = graphics.loadTextureFromFile(fallbackPath.string());
-	if (fallbackId == 0) {
+	if (fallbackId == INVALID_TEXTURE_ID) {
 		throw engine::core::AssetError("Failed to load fallback texture: " + fallbackPath.string());
 	}
 	return fallbackId;
@@ -93,7 +93,7 @@ static void loadTextureEntry(const std::string& textureKey, const nlohmann::json
 	}
 	const std::filesystem::path resolvedPath = resolveAssetPath(baseDirectory, relativePath);
 	const TextureId textureId = graphics.loadTextureFromFile(resolvedPath.string());
-	if (textureId == 0) {
+	if (textureId == INVALID_TEXTURE_ID) {
 		std::cerr << "AssetManager warning: Missing texture asset '" << textureKey << "', using fallback ID\n";
 		loadedTextures[textureKey] = fallbackId;
 		return;
@@ -242,6 +242,9 @@ static void loadGroupsSection(const nlohmann::json& manifestJson,
 			continue;
 		}
 		ManifestGroup group{};
+		if (groupVal.contains("required") && groupVal["required"].is_boolean()) {
+			group.required = groupVal["required"].get<bool>();
+		}
 		if (groupVal.contains("textures") && groupVal["textures"].is_array()) {
 			for (const auto& item : groupVal["textures"]) {
 				if (item.is_string()) {
@@ -345,32 +348,67 @@ void AssetManager::loadManifest(const std::string& path, IGraphicsBackend& graph
 	loadTagsSection(manifestJson, _assetTags, _textures, _textureTags);
 }
 
+/// Helper to preload all textures of a specific manifest group.
+static void preloadGroupTextures(const ManifestGroup& group, const std::filesystem::path& baseDirectory,
+	TextureId fallbackTexture, IGraphicsBackend& graphics, std::unordered_map<std::string, TextureId>& textures)
+{
+	for (const auto& textureKey : group.textures) {
+		TextureId id = INVALID_TEXTURE_ID;
+		const auto textureIt = textures.find(textureKey);
+		if (textureIt != textures.end()) {
+			id = textureIt->second;
+		} else {
+			const std::filesystem::path resolved = resolveAssetPath(baseDirectory, textureKey);
+			id = graphics.loadTextureFromFile(resolved.string());
+			if (id != INVALID_TEXTURE_ID) {
+				textures[textureKey] = id;
+			}
+		}
+
+		if (id == INVALID_TEXTURE_ID || (id == fallbackTexture && textureKey != DEFAULT_FALLBACK_FILE && textureKey != "checkerboard")) {
+			if (group.required) {
+				throw engine::core::AssetError("Failed to load required texture from group: " + textureKey);
+			}
+			std::cerr << "AssetManager warning: Preload failed for texture '" << textureKey << "'\n";
+			textures[textureKey] = fallbackTexture;
+		}
+	}
+}
+
+/// Helper to preload all sounds of a specific manifest group.
+static void preloadGroupSounds(const ManifestGroup& group, const std::filesystem::path& baseDirectory,
+	std::unordered_map<std::string, std::string>& soundPaths)
+{
+	for (const auto& soundKey : group.sounds) {
+		std::filesystem::path resolved;
+		const auto soundIterator = soundPaths.find(soundKey);
+		if (soundIterator != soundPaths.end()) {
+			resolved = soundIterator->second;
+		} else {
+			resolved = resolveAssetPath(baseDirectory, soundKey);
+		}
+
+		if (!std::filesystem::exists(resolved)) {
+			if (group.required) {
+				throw engine::core::AssetError("Failed to load required sound from group: " + soundKey);
+			}
+			std::cerr << "AssetManager warning: Preload failed for sound '" << soundKey << "'\n";
+		} else if (soundIterator == soundPaths.end()) {
+			soundPaths[soundKey] = resolved.string();
+		}
+	}
+}
+
 /// Preloads assets belonging to a specified group.
 void AssetManager::preload(const std::string& group, IGraphicsBackend& graphics)
 {
-	const auto groupIt = _groups.find(group);
-	if (groupIt == _groups.end()) {
+	const auto groupIterator = _groups.find(group);
+	if (groupIterator == _groups.end()) {
 		return;
 	}
 
-	for (const auto& texKey : groupIt->second.textures) {
-		if (_textures.find(texKey) == _textures.end()) {
-			const std::filesystem::path resolved = resolveAssetPath(_baseDirectory, texKey);
-			const TextureId id = graphics.loadTextureFromFile(resolved.string());
-			if (id != 0) {
-				_textures[texKey] = id;
-			} else {
-				std::cerr << "AssetManager warning: Preload failed for texture '" << texKey << "'\n";
-			}
-		}
-	}
-
-	for (const auto& soundKey : groupIt->second.sounds) {
-		if (_soundPaths.find(soundKey) == _soundPaths.end()) {
-			const std::filesystem::path resolved = resolveAssetPath(_baseDirectory, soundKey);
-			_soundPaths[soundKey] = resolved.string();
-		}
-	}
+	preloadGroupTextures(groupIterator->second, _baseDirectory, _fallbackTexture, graphics, _textures);
+	preloadGroupSounds(groupIterator->second, _baseDirectory, _soundPaths);
 }
 
 /// Retrieves a sprite descriptor or logs a warning and returns the fallback sprite.

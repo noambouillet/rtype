@@ -26,7 +26,7 @@ struct SfmlRenderer::Implementation {
 	std::unordered_map<TextureId, sf::Texture> loadedTextures;
 	std::unordered_map<std::string, TextureId> pathToTextureId;
 	TextureId nextTextureId = 1;
-	TextureId fallbackTextureId = 0;
+	TextureId fallbackTextureId = INVALID_TEXTURE_ID;
 
 	std::unordered_map<TextureId, sf::Texture>::iterator resolveTexture(TextureId textureId);
 };

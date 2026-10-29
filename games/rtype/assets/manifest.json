@@ -175,6 +175,7 @@
   },
   "groups": {
     "level1": {
+      "required": false,
       "textures": [
         "background",
         "player_sheet",

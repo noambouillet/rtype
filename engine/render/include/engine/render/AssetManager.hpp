@@ -22,7 +22,7 @@ static constexpr std::string_view DEFAULT_FALLBACK_FILE = "magenta-checkerboard-
 using TextureId = std::uint32_t;
 
 struct SpriteDescriptor {
-	TextureId texture = 0;
+	TextureId texture = INVALID_TEXTURE_ID;
 	Rect rect{};
 	float originX = 0.0F;
 	float originY = 0.0F;
@@ -30,7 +30,7 @@ struct SpriteDescriptor {
 
 struct AnimationDescriptor {
 	std::string name;
-	TextureId texture = 0;
+	TextureId texture = INVALID_TEXTURE_ID;
 	std::vector<Rect> frames;
 	float frameSeconds = 0.0F;
 	bool loop = false;
@@ -39,6 +39,7 @@ struct AnimationDescriptor {
 struct ManifestGroup {
 	std::vector<std::string> textures;
 	std::vector<std::string> sounds;
+	bool required = false;
 };
 
 class AssetManager {
@@ -77,7 +78,7 @@ private:
 	std::unordered_map<TextureId, std::unordered_set<std::string>> _textureTags;
 	std::filesystem::path _baseDirectory;
 
-	TextureId _fallbackTexture = 0;
+	TextureId _fallbackTexture = INVALID_TEXTURE_ID;
 	SpriteDescriptor _fallbackSprite{};
 	AnimationDescriptor _fallbackAnimation{};
 	std::string _manifestPath;

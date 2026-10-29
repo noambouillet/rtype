@@ -14,6 +14,7 @@
 namespace engine::render {
 
 using TextureId = std::uint32_t;
+static constexpr TextureId INVALID_TEXTURE_ID = 0;
 
 struct Point {
 	int x;

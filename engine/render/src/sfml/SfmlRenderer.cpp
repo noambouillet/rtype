@@ -13,6 +13,7 @@
 #include <tuple>
 
 #include "SfmlRendererImplementation.hpp"
+#include "engine/render/GraphicsError.hpp"
 
 namespace engine::render {
 
@@ -27,7 +28,7 @@ std::unordered_map<TextureId, sf::Texture>::iterator SfmlRenderer::Implementatio
 	if (textureIterator != loadedTextures.end()) {
 		return textureIterator;
 	}
-	return loadedTextures.begin();
+	return loadedTextures.end();
 }
 
 SfmlRenderer::Implementation::Implementation(const WindowConfig& config)
@@ -98,15 +99,15 @@ TextureId SfmlRenderer::loadTextureFromFile(const std::string& filepath)
 
 	sf::Texture loadedTexture;
 	if (!loadedTexture.loadFromFile(path)) {
-		std::cerr << "SfmlRenderer error: Failed to load texture: " << filepath << " (Returning 0 to trigger fallback)\n";
-		return 0;
+		_implementation->pathToTextureId.emplace(filepath, INVALID_TEXTURE_ID);
+		return INVALID_TEXTURE_ID;
 	}
 	const TextureId assignedTextureId = _implementation->nextTextureId++;
 	_implementation->loadedTextures.emplace(assignedTextureId, std::move(loadedTexture));
 	_implementation->pathToTextureId.emplace(filepath, assignedTextureId);
 	_implementation->pathToTextureId.emplace(path.filename().string(), assignedTextureId);
 	_implementation->pathToTextureId.emplace(path.string(), assignedTextureId);
-	if (_implementation->fallbackTextureId == 0 && filepath.find("magenta-checkerboard") != std::string::npos) {
+	if (_implementation->fallbackTextureId == INVALID_TEXTURE_ID && filepath.find(_implementation->fallbackFile.string()) != std::string::npos) {
 		_implementation->fallbackTextureId = assignedTextureId;
 	}
 	return assignedTextureId;
@@ -116,7 +117,9 @@ TextureId SfmlRenderer::loadTextureFromFile(const std::string& filepath)
 /// instead of being drawn as the fallback texture.
 void SfmlRenderer::preload(std::string_view texture)
 {
-	loadTextureFromFile(std::string(texture));
+	if (loadTextureFromFile(std::string(texture)) == INVALID_TEXTURE_ID) {
+		throw GraphicsError("Failed to preload required texture: " + std::string(texture));
+	}
 }
 
 void SfmlRenderer::beginFrame()

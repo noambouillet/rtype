@@ -18,7 +18,7 @@
 
 namespace rtype::client {
 
-static const char* animationNameFor(EffectKind kind)
+static std::string_view animationNameFor(EffectKind kind)
 {
 	switch (kind) {
 		case EffectKind::ShotBurst:
@@ -77,7 +77,7 @@ void EffectSystem::add(engine::core::Coordinator& coordinator, EffectKind kind, 
 	if (!_assets) {
 		return;
 	}
-	const auto& animDesc = _assets->getAnimation(animationNameFor(kind));
+	const auto& animDesc = _assets->getAnimation(std::string(animationNameFor(kind)));
 	if (animDesc.frames.empty()) {
 		return;
 	}

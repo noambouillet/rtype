@@ -130,22 +130,6 @@ static bool updateFrame(engine::render::SfmlRenderer& window, engine::input::Sfm
 	return true;
 }
 
-/// Resolves the path to the game manifest file.
-static std::string resolveClientManifestPath()
-{
-	const std::array<std::string, 4> candidates = {
-		"games/rtype/assets/manifest.json",
-		"assets/manifest.json",
-		"../assets/manifest.json",
-		"build/assets/manifest.json"};
-	for (const auto& candidate : candidates) {
-		if (std::filesystem::exists(candidate)) {
-			return candidate;
-		}
-	}
-	return "assets/manifest.json";
-}
-
 /// Runs the graphical client until the window closes or a signal arrives.
 int runClient(const ClientOptions& options)
 {
@@ -160,7 +144,7 @@ int runClient(const ClientOptions& options)
 	engine::net::UdpClient transport({.host = options.host, .port = options.port, .maxDatagramSize = network::MAX_DATAGRAM_SIZE});
 	network::GameClient client(transport);
 	engine::render::SfmlRenderer window({.width = client_config::WINDOW_WIDTH, .height = client_config::WINDOW_HEIGHT, .title = "R-Type"});
-	assets.loadManifest(resolveClientManifestPath(), window);
+	assets.loadManifest("games/rtype/assets/manifest.json", window);
 	engine::input::SfmlInput input(std::move(bindings));
 	engine::audio::SfmlAudio audio;
 	client::ClientControls controls;

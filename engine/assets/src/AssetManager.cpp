@@ -395,7 +395,7 @@ static void preloadGroupTextures(const ManifestGroup& group, const std::filesyst
 			}
 		}
 
-		if (id == INVALID_TEXTURE_ID || (id == fallbackTexture && textureKey != DEFAULT_FALLBACK_FILE && textureKey != "checkerboard")) {
+		if (id == INVALID_TEXTURE_ID || (id == fallbackTexture && textureKey != DEFAULT_FALLBACK_FILE && textureKey != CHECKERBOARD_KEY)) {
 			if (group.required) {
 				throw AssetError("Failed to load required texture from group: " + textureKey);
 			}

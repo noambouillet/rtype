@@ -24,6 +24,7 @@ using render::Rect;
 using render::TextureId;
 
 static constexpr std::string_view DEFAULT_FALLBACK_FILE = "magenta-checkerboard-200px.png";
+static constexpr std::string_view CHECKERBOARD_KEY = "checkerboard";
 
 struct SpriteDescriptor {
 	TextureId texture = INVALID_TEXTURE_ID;

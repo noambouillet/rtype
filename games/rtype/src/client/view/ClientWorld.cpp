@@ -48,8 +48,10 @@ ClientWorld::ClientWorld(const engine::assets::AssetManager& assets, bool screen
 	_coordinator.setSystemSignature<SoundEventSystem>(SoundEventSystem::signature(_coordinator));
 	auto& audio = _coordinator.registerSystem<engine::audio::AudioSystem>();
 	_coordinator.setSystemSignature<engine::audio::AudioSystem>(engine::audio::AudioSystem::signature(_coordinator));
-	const std::string musicPath = assets.hasSound("music") ? assets.getSoundPath("music") : std::string(SoundEventSystem::MUSIC);
-	audio.setMusic(musicPath, SoundEventSystem::MUSIC_VOLUME);
+	const std::string musicPath = assets.hasSound(std::string(SoundEventSystem::MUSIC)) ? assets.getSoundPath(std::string(SoundEventSystem::MUSIC)) : "";
+	if (!musicPath.empty()) {
+		audio.setMusic(musicPath, SoundEventSystem::MUSIC_VOLUME);
+	}
 }
 
 /// Updates the network copy and temporary presentation state for one client frame.

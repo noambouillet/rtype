@@ -13,7 +13,7 @@
 
 namespace rtype {
 
-/// Creates the server. Its metrics are written to `logger` every `METRICS_REPORT_PERIODS` periods while clients are talking to it.
+/// Creates the server. Its metrics are logged every METRICS_REPORT_PERIODS periods while clients are talking to it.
 GameServer::GameServer(engine::net::IServerTransport& transport, engine::core::Logger& logger)
 	: _logger(logger), _bus(), _metrics(_bus), _network(transport, _bus), _world{}, _periodsSinceReport(0), _onMetrics()
 {
@@ -25,7 +25,7 @@ GameWorld::Input GameServer::tick()
 	return _network.tick();
 }
 
-/// Reports the tick that began at `start`: the time since the previous tick, and how long it worked before sleeping.
+/// Reports a tick: the time since the previous one, and how long it worked before sleeping.
 void GameServer::publishTick(Clock::time_point start, Clock::time_point& previousStart)
 {
 	const auto end = Clock::now();
@@ -35,7 +35,7 @@ void GameServer::publishTick(Clock::time_point start, Clock::time_point& previou
 	_bus.publish(engine::core::FrameEnded{.seconds = interval, .busySeconds = busy});
 }
 
-/// Logs one period out of `METRICS_REPORT_PERIODS`, and none while no datagram arrives.
+/// Logs one period out of METRICS_REPORT_PERIODS, and none while no datagram arrives.
 void GameServer::reportMetrics(const engine::core::MetricsSnapshot& snapshot)
 {
 	_periodsSinceReport++;

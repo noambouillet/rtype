@@ -81,7 +81,7 @@ static std::uint32_t encodePosition(float position)
 	return static_cast<std::uint32_t>(fixed);
 }
 
-/// Creates the network service over `transport`. Every datagram sent or received is published on `bus`.
+/// Creates the network service over a transport. Every datagram sent or received is published on the bus.
 ServerNetworkService::ServerNetworkService(engine::net::IServerTransport& transport, engine::core::EventBus& bus)
 	: _network(transport), _bus(bus), _sessions{}, _issuedSessionIds{}, _tick(0)
 {

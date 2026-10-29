@@ -12,8 +12,8 @@
 
 namespace engine::core {
 
-/// Subscribes to every metrics event of `bus` and publishes a MetricsUpdated on it once per period.
-/// `bus` must outlive this object; the subscriptions end when it is destroyed.
+/// Subscribes to every metrics event of a bus and publishes a MetricsUpdated on it once per period.
+/// The bus must outlive this object.
 Metrics::Metrics(EventBus& bus)
 	: _bus(bus), _snapshot{}, _period{}, _probes{}, _probeIndex(0), _latency(std::nullopt), _onFrame(), _onBytesSent(), _onBytesReceived(), _onPingSent(), _onRoundTrip()
 {
@@ -36,7 +36,7 @@ const MetricsSnapshot& Metrics::snapshot() const
 	return _snapshot;
 }
 
-/// Accumulates one frame and closes the period once it covers `PERIOD_SECONDS`.
+/// Accumulates one frame and closes the period once it lasts PERIOD_SECONDS.
 void Metrics::onFrame(const FrameEnded& event)
 {
 	_period.elapsed += event.seconds;
@@ -89,7 +89,7 @@ void Metrics::closePeriod()
 	_bus.publish(MetricsUpdated{_snapshot});
 }
 
-/// Returns the share of probes left unanswered over the last `LOSS_PERIODS` periods.
+/// Returns the share of probes left unanswered over the last LOSS_PERIODS periods.
 /// An answer arriving one period late still counts, so short bursts can read slightly low.
 std::optional<float> Metrics::packetLoss() const
 {

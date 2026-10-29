@@ -30,7 +30,7 @@ static std::uint64_t toMicroseconds(std::chrono::steady_clock::time_point time)
 	return static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(time.time_since_epoch()).count());
 }
 
-/// Creates a client with a fresh nonce for this join attempt. Traffic and latency are published on `bus`.
+/// Creates a client with a fresh nonce for this join attempt. Traffic and latency are published on the bus.
 GameClient::GameClient(engine::net::IClientTransport& transport, engine::core::EventBus& bus)
 	: _udp(transport), _bus(bus), _nonce(generateNonce()), _sessionId(0), _nextSequence(1), _playerId(0), _lastButtons(0), _joinAttempts(0), _lastJoin{}, _lastInput{}, _lastPing{}, _status(ClientStatus::Joining), _worldSnapshot{}, _events{}
 {

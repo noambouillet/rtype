@@ -13,7 +13,7 @@
 
 namespace engine::tools {
 
-/// Writes `value` with `decimals` digits after the point, or "--" when it is not measured yet.
+/// Writes a value with the given number of decimals, or "--" when it is not measured yet.
 static std::string number(std::optional<float> value, int decimals)
 {
 	if (!value) {
@@ -24,7 +24,7 @@ static std::string number(std::optional<float> value, int decimals)
 	return text.str();
 }
 
-/// Shows the last MetricsUpdated published on `bus`, which must outlive this object.
+/// Shows the last MetricsUpdated published on a bus, which must outlive this object.
 /// Starts hidden and keeps the text of the last period, so drawing never formats numbers.
 MetricsOverlay::MetricsOverlay(core::EventBus& bus)
 	: _visible(false), _lines{"Collecting metrics..."}, _onUpdate()
@@ -42,7 +42,7 @@ bool MetricsOverlay::visible() const
 	return _visible;
 }
 
-/// Draws the panel in the top-left corner. Call it between `beginFrame` and `endFrame`, after the scene.
+/// Draws the panel in the top-left corner. Call it after drawing the scene, before ending the frame.
 void MetricsOverlay::draw(render::IGraphicsBackend& backend) const
 {
 	if (!_visible) {

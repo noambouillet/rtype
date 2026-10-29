@@ -6,8 +6,10 @@ else()
     set(ENGINE_IS_TOP_LEVEL OFF)
 endif()
 
+include(CMakeDependentOption)
+
 option(ENGINE_BUILD_RENDER "engine::render" ON)
-option(ENGINE_BUILD_ASSETS "engine::assets" ON)
+cmake_dependent_option(ENGINE_BUILD_ASSETS "engine::assets" ON "ENGINE_BUILD_RENDER" OFF)
 option(ENGINE_BUILD_AUDIO "engine::audio" ON)
 option(ENGINE_BUILD_INPUT "engine::input" ON)
 option(ENGINE_BUILD_PHYSICS "engine::physics" ON)

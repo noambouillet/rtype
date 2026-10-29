@@ -10,7 +10,6 @@
 #include <cmath>
 #include <filesystem>
 #include <iostream>
-#include <tuple>
 
 #include "SfmlRendererImplementation.hpp"
 #include "engine/render/GraphicsError.hpp"
@@ -20,35 +19,12 @@ namespace engine::render {
 std::unordered_map<TextureId, sf::Texture>::iterator SfmlRenderer::Implementation::resolveTexture(
 	TextureId textureId)
 {
-	auto textureIterator = loadedTextures.find(textureId);
-	if (textureIterator != loadedTextures.end()) {
-		return textureIterator;
-	}
-	textureIterator = loadedTextures.find(fallbackTextureId);
-	if (textureIterator != loadedTextures.end()) {
-		return textureIterator;
-	}
-	return loadedTextures.end();
+	return loadedTextures.find(textureId);
 }
 
 SfmlRenderer::Implementation::Implementation(const WindowConfig& config)
-	: window(sf::VideoMode({config.width, config.height}), config.title),
-	  assetRoot(config.assetRoot),
-	  fallbackFile(config.fallbackTexture)
+	: window(sf::VideoMode({config.width, config.height}), config.title)
 {
-	std::filesystem::path fbPath = fallbackFile;
-	if (!std::filesystem::exists(fbPath) && !assetRoot.empty()) {
-		fbPath = assetRoot / fallbackFile;
-	}
-	if (std::filesystem::exists(fbPath)) {
-		sf::Texture fbTexture;
-		if (fbTexture.loadFromFile(fbPath)) {
-			fallbackTextureId = nextTextureId++;
-			loadedTextures.emplace(fallbackTextureId, std::move(fbTexture));
-			pathToTextureId.emplace(fallbackFile.string(), fallbackTextureId);
-			pathToTextureId.emplace(fallbackFile.filename().string(), fallbackTextureId);
-		}
-	}
 }
 
 /// Opens the window.
@@ -92,24 +68,14 @@ TextureId SfmlRenderer::loadTextureFromFile(const std::string& filepath)
 		return existingMapping->second;
 	}
 
-	std::filesystem::path path(filepath);
-	if (!std::filesystem::exists(path) && !_implementation->assetRoot.empty()) {
-		path = _implementation->assetRoot / filepath;
-	}
-
 	sf::Texture loadedTexture;
-	if (!loadedTexture.loadFromFile(path)) {
+	if (!loadedTexture.loadFromFile(std::filesystem::path(filepath))) {
 		_implementation->pathToTextureId.emplace(filepath, INVALID_TEXTURE_ID);
 		return INVALID_TEXTURE_ID;
 	}
 	const TextureId assignedTextureId = _implementation->nextTextureId++;
 	_implementation->loadedTextures.emplace(assignedTextureId, std::move(loadedTexture));
 	_implementation->pathToTextureId.emplace(filepath, assignedTextureId);
-	_implementation->pathToTextureId.emplace(path.filename().string(), assignedTextureId);
-	_implementation->pathToTextureId.emplace(path.string(), assignedTextureId);
-	if (_implementation->fallbackTextureId == INVALID_TEXTURE_ID && filepath.find(_implementation->fallbackFile.string()) != std::string::npos) {
-		_implementation->fallbackTextureId = assignedTextureId;
-	}
 	return assignedTextureId;
 }
 
@@ -128,10 +94,8 @@ void SfmlRenderer::beginFrame()
 }
 
 /// Draws the repeated background at the offset selected by the render system.
-void SfmlRenderer::drawBackground(std::string_view texture, float offset)
+void SfmlRenderer::drawBackground(TextureId textureId, float offset)
 {
-	TextureId textureId = loadTextureFromFile(std::string(texture));
-
 	const auto textureIterator = _implementation->resolveTexture(textureId);
 	if (textureIterator == _implementation->loadedTextures.end()) {
 		return;

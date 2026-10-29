@@ -43,7 +43,7 @@ public:
 
 	virtual TextureId loadTextureFromFile(const std::string& filepath) = 0;
 	virtual void beginFrame() = 0;
-	virtual void drawBackground(std::string_view texture, float offset) = 0;
+	virtual void drawBackground(TextureId texture, float offset) = 0;
 	virtual void drawSprite(const SpriteDraw& sprite) = 0;
 	virtual void endFrame() = 0;
 };

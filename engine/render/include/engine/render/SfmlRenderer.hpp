@@ -8,7 +8,6 @@
 #pragma once
 
 #include <cstdint>
-#include <filesystem>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -22,9 +21,6 @@ struct WindowConfig {
 	std::uint32_t height = 720;
 	std::string title = "Engine";
 	std::uint32_t frameRateLimit = 60;
-	std::filesystem::path assetRoot = "assets";
-	// Drawn in place of textures that cannot be loaded. It must exist under assetRoot.
-	std::filesystem::path fallbackTexture = "magenta-checkerboard-200px.png";
 };
 
 class SfmlRenderer : public IGraphicsBackend {
@@ -42,7 +38,7 @@ public:
 
 	TextureId loadTextureFromFile(const std::string& filepath) override;
 	void beginFrame() override;
-	void drawBackground(std::string_view texture, float offset) override;
+	void drawBackground(TextureId texture, float offset) override;
 	void drawSprite(const SpriteDraw& command) override;
 	void endFrame() override;
 

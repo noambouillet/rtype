@@ -17,14 +17,14 @@
 
 namespace engine::render {
 
-RenderSystem::RenderSystem() : _backgroundTexture{}, _backgroundSpeed(0.0F), _backgroundOffset(0.0F)
+RenderSystem::RenderSystem() : _backgroundTexture(0), _backgroundSpeed(0.0F), _backgroundOffset(0.0F)
 {
 }
 
 /// Configures an optional scrolling background for this world.
-void RenderSystem::setBackground(std::string texture, float speed)
+void RenderSystem::setBackground(TextureId texture, float speed)
 {
-	_backgroundTexture = std::move(texture);
+	_backgroundTexture = texture;
 	_backgroundSpeed = speed;
 	_backgroundOffset = 0.0F;
 }
@@ -42,7 +42,7 @@ void RenderSystem::render(core::Coordinator& coordinator, IGraphicsBackend& back
 {
 	_backgroundOffset += _backgroundSpeed * std::max(0.0F, deltaTime);
 	backend.beginFrame();
-	if (!_backgroundTexture.empty()) {
+	if (_backgroundTexture != 0) {
 		backend.drawBackground(_backgroundTexture, _backgroundOffset);
 	}
 	std::vector<core::Entity> ordered(entities.begin(), entities.end());

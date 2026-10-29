@@ -11,7 +11,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-#include "engine/core/Error.hpp"
+#include "engine/assets/AssetError.hpp"
 
 namespace engine::assets {
 
@@ -79,11 +79,11 @@ static TextureId loadFallbackTexture(const nlohmann::json& manifestJson,
 	}
 	const std::filesystem::path fallbackPath = resolveAssetPath(baseDirectory, fallbackFilename);
 	if (fallbackPath.empty() || !std::filesystem::exists(fallbackPath)) {
-		throw engine::core::AssetError("Failed to find fallback texture: " + fallbackFilename);
+		throw AssetError("Failed to find fallback texture: " + fallbackFilename);
 	}
 	const TextureId fallbackId = graphics.loadTextureFromFile(fallbackPath.string());
 	if (fallbackId == INVALID_TEXTURE_ID) {
-		throw engine::core::AssetError("Failed to load fallback texture: " + fallbackPath.string());
+		throw AssetError("Failed to load fallback texture: " + fallbackPath.string());
 	}
 	return fallbackId;
 }
@@ -333,11 +333,11 @@ void AssetManager::loadManifest(const std::string& path, IGraphicsBackend& graph
 {
 	const std::filesystem::path manifestPath = findManifestPath(path);
 	if (manifestPath.empty()) {
-		throw engine::core::AssetError("Manifest file not found: " + path);
+		throw AssetError("Manifest file not found: " + path);
 	}
 	nlohmann::json manifestJson;
 	if (!parseJsonFile(manifestPath, manifestJson)) {
-		throw engine::core::AssetError("Failed to parse manifest: " + manifestPath.string());
+		throw AssetError("Failed to parse manifest: " + manifestPath.string());
 	}
 	const std::filesystem::path baseDirectory = manifestPath.parent_path();
 
@@ -397,7 +397,7 @@ static void preloadGroupTextures(const ManifestGroup& group, const std::filesyst
 
 		if (id == INVALID_TEXTURE_ID || (id == fallbackTexture && textureKey != DEFAULT_FALLBACK_FILE && textureKey != "checkerboard")) {
 			if (group.required) {
-				throw engine::core::AssetError("Failed to load required texture from group: " + textureKey);
+				throw AssetError("Failed to load required texture from group: " + textureKey);
 			}
 			std::cerr << "AssetManager warning: Preload failed for texture '" << textureKey << "'\n";
 			textures[textureKey] = fallbackTexture;
@@ -420,7 +420,7 @@ static void preloadGroupSounds(const ManifestGroup& group, const std::filesystem
 
 		if (resolved.empty() || !std::filesystem::exists(resolved)) {
 			if (group.required) {
-				throw engine::core::AssetError("Failed to load required sound from group: " + soundKey);
+				throw AssetError("Failed to load required sound from group: " + soundKey);
 			}
 			std::cerr << "AssetManager warning: Preload failed for sound '" << soundKey << "'\n";
 		} else if (soundIterator == soundPaths.end()) {

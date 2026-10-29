@@ -56,18 +56,4 @@ public:
 	}
 };
 
-class RenderError : public Error {
-public:
-	explicit RenderError(const std::string& message) : Error(message)
-	{
-	}
-};
-
-class AssetError : public RenderError {
-public:
-	explicit AssetError(const std::string& message) : RenderError(message)
-	{
-	}
-};
-
 }

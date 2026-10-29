@@ -49,7 +49,7 @@ struct ClientLoop {
 	engine::audio::SfmlAudio& audio;
 	client::ClientControls& controls;
 	network::GameClient& client;
-	rtype::client::ClientWorld& view;
+	client::ClientWorld& view;
 	engine::core::Logger& logger;
 	engine::core::EventBus& bus;
 	engine::tools::MetricsOverlay& overlay;
@@ -181,7 +181,7 @@ int runClient(const ClientOptions& options)
 	engine::input::SfmlInput input(std::move(bindings));
 	engine::audio::SfmlAudio audio("assets/sounds");
 	client::ClientControls controls;
-	rtype::client::ClientWorld view(engineSettings.screenFlashEnabled());
+	client::ClientWorld view(engineSettings.screenFlashEnabled());
 	ClientLoop loop{.window = window, .input = input, .audio = audio, .controls = controls, .client = client, .view = view, .logger = *logger, .bus = bus, .overlay = overlay, .previous = client.status(), .lastFrame = Clock::now()};
 	logger->info("Connecting to " + options.host + ':' + std::to_string(options.port));
 	while (running != 0 && window.isOpen()) {

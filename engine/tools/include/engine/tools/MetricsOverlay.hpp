@@ -18,14 +18,16 @@ namespace engine::tools {
 
 class MetricsOverlay {
 public:
-	explicit MetricsOverlay(core::EventBus& bus);
+	explicit MetricsOverlay(core::EventBus& bus, render::FontId font = render::INVALID_FONT_ID);
 
 	MetricsOverlay(const MetricsOverlay&) = delete;
 	MetricsOverlay& operator=(const MetricsOverlay&) = delete;
 
 	void toggle();
 	[[nodiscard]] bool visible() const;
+	void setFont(render::FontId font);
 	void draw(render::IGraphicsBackend& backend) const;
+	void draw(render::IGraphicsBackend& backend, render::FontId font) const;
 
 private:
 	static constexpr float MARGIN = 8.0F;
@@ -41,6 +43,7 @@ private:
 	bool _visible;
 	std::vector<std::string> _lines;
 	core::Subscription _onUpdate;
+	render::FontId _font;
 };
 
 }

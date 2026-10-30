@@ -26,8 +26,8 @@ static std::string formatMetric(std::optional<float> value, int decimals)
 
 /// Shows the last MetricsUpdated published on a bus, which must outlive this object.
 /// Starts hidden and keeps the text of the last period, so drawing never formats numbers.
-MetricsOverlay::MetricsOverlay(core::EventBus& bus)
-	: _visible(false), _lines{"Collecting metrics..."}, _onUpdate()
+MetricsOverlay::MetricsOverlay(core::EventBus& bus, render::FontId font)
+	: _visible(false), _lines{"Collecting metrics..."}, _onUpdate(), _font(font)
 {
 	_onUpdate = bus.subscribe<core::MetricsUpdated>([this](const core::MetricsUpdated& event) { _lines = format(event.snapshot); });
 }
@@ -42,8 +42,18 @@ bool MetricsOverlay::visible() const
 	return _visible;
 }
 
-/// Draws the panel in the top-left corner. Call it after drawing the scene, before ending the frame.
+void MetricsOverlay::setFont(render::FontId font)
+{
+	_font = font;
+}
+
 void MetricsOverlay::draw(render::IGraphicsBackend& backend) const
+{
+	draw(backend, _font);
+}
+
+/// Draws the panel in the top-left corner. Call it after drawing the scene, before ending the frame.
+void MetricsOverlay::draw(render::IGraphicsBackend& backend, render::FontId font) const
 {
 	if (!_visible) {
 		return;
@@ -52,7 +62,7 @@ void MetricsOverlay::draw(render::IGraphicsBackend& backend) const
 	backend.drawRect({.x = MARGIN, .y = MARGIN, .width = PANEL_WIDTH, .height = height, .color = PANEL_COLOR});
 	float y = MARGIN + PADDING;
 	for (const std::string& line : _lines) {
-		backend.drawText({.text = line, .x = MARGIN + PADDING, .y = y, .size = TEXT_SIZE, .color = TEXT_COLOR});
+		backend.drawText({.font = font, .text = line, .x = MARGIN + PADDING, .y = y, .size = TEXT_SIZE, .color = TEXT_COLOR});
 		y += LINE_HEIGHT;
 	}
 }
@@ -61,8 +71,8 @@ void MetricsOverlay::draw(render::IGraphicsBackend& backend) const
 std::vector<std::string> MetricsOverlay::format(const core::MetricsSnapshot& snapshot)
 {
 	return {
-		"FPS     " + formatMetric(snapshot.framesPerSecond, core::Metrics::COARSE_DECIMALS) + "   frame " + formatMetric(snapshot.averageFrameMs, core::Metrics::COARSE_DECIMALS) + " ms (worst " + formatMetric(snapshot.worstFrameMs, core::Metrics::COARSE_DECIMALS) + ")",
-		"Work    " + formatMetric(snapshot.averageBusyMs, core::Metrics::FINE_DECIMALS) + " ms (worst " + formatMetric(snapshot.worstBusyMs, core::Metrics::FINE_DECIMALS) + ")",
+		"FPS     " + formatMetric(snapshot.framesPerSecond, core::Metrics::COARSE_DECIMALS) + "   frame " + formatMetric(snapshot.averageFrameMs, core::Metrics::COARSE_DECIMALS) + " ms (worst " + formatMetric(snapshot.worstFrameMs, core::Metrics::COARSE_DECIMALS) + ") ",
+		"Work    " + formatMetric(snapshot.averageBusyMs, core::Metrics::FINE_DECIMALS) + " ms (worst " + formatMetric(snapshot.worstBusyMs, core::Metrics::FINE_DECIMALS) + ") ",
 		"Ping    " + formatMetric(snapshot.roundTripMs, core::Metrics::WHOLE_DECIMALS) + " ms   avg " + formatMetric(snapshot.smoothedRoundTripMs, core::Metrics::WHOLE_DECIMALS) + "   jitter " + formatMetric(snapshot.jitterMs, core::Metrics::COARSE_DECIMALS),
 		"Loss    " + formatMetric(snapshot.packetLossPercent, core::Metrics::COARSE_DECIMALS) + " %",
 		"Up      " + formatMetric(snapshot.uploadKiBps, core::Metrics::FINE_DECIMALS) + " KiB/s   " + formatMetric(snapshot.packetsSentPerSecond, core::Metrics::WHOLE_DECIMALS) + " pkt/s",

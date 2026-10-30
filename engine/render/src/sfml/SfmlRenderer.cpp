@@ -23,17 +23,15 @@ std::unordered_map<TextureId, sf::Texture>::iterator SfmlRenderer::Implementatio
 	return loadedTextures.find(textureId);
 }
 
+std::unordered_map<FontId, sf::Font>::iterator SfmlRenderer::Implementation::resolveFont(
+	FontId fontId)
+{
+	return loadedFonts.find(fontId);
+}
+
 SfmlRenderer::Implementation::Implementation(const WindowConfig& config)
 	: window(sf::VideoMode({config.width, config.height}), config.title)
 {
-	if (config.fontFile.empty()) {
-		return;
-	}
-	const std::filesystem::path path = config.fontFile;
-	font.emplace();
-	if (!font->openFromFile(path)) {
-		throw GraphicsError("Unable to load font: " + path.string());
-	}
 }
 
 static sf::Color toSfml(const Color& color)
@@ -41,7 +39,7 @@ static sf::Color toSfml(const Color& color)
 	return {color.r, color.g, color.b, color.a};
 }
 
-/// Opens the window. A configured font that cannot be loaded makes this throw a GraphicsError.
+/// Opens the window.
 SfmlRenderer::SfmlRenderer(const WindowConfig& config) : _implementation(std::make_unique<Implementation>(config))
 {
 	_implementation->window.setFramerateLimit(config.frameRateLimit);
@@ -84,6 +82,18 @@ TextureId SfmlRenderer::loadTextureFromFile(const std::string& filepath)
 	const TextureId assignedTextureId = _implementation->nextTextureId++;
 	_implementation->loadedTextures.emplace(assignedTextureId, std::move(loadedTexture));
 	return assignedTextureId;
+}
+
+/// Loads a font from file into the SFML font storage and returns an ID.
+FontId SfmlRenderer::loadFontFromFile(const std::string& filepath)
+{
+	sf::Font loadedFont;
+	if (!loadedFont.openFromFile(std::filesystem::path(filepath))) {
+		return INVALID_FONT_ID;
+	}
+	const FontId assignedFontId = _implementation->nextFontId++;
+	_implementation->loadedFonts.emplace(assignedFontId, std::move(loadedFont));
+	return assignedFontId;
 }
 
 void SfmlRenderer::beginFrame()
@@ -141,10 +151,11 @@ void SfmlRenderer::drawRect(const RectDraw& rect)
 
 void SfmlRenderer::drawText(const TextDraw& text)
 {
-	if (!_implementation->font) {
+	const auto fontIterator = _implementation->resolveFont(text.font);
+	if (fontIterator == _implementation->loadedFonts.end()) {
 		return;
 	}
-	sf::Text label(*_implementation->font, std::string(text.text), text.size);
+	sf::Text label(fontIterator->second, std::string(text.text), text.size);
 	label.setPosition({text.x, text.y});
 	label.setFillColor(toSfml(text.color));
 	_implementation->window.draw(label);

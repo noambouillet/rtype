@@ -173,6 +173,9 @@
     "PlayerJoin": "sounds/PlayerJoin.ogg",
     "Tuvasou": "sounds/Tuvasou.ogg"
   },
+  "fonts": {
+    "default": "fonts/LiberationMono-Regular.ttf"
+  },
   "groups": {
     "level1": {
       "required": false,

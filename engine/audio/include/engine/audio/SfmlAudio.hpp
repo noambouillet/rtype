@@ -35,7 +35,7 @@ public:
 
 private:
 	// Holds the SFML objects, so code including this header does not depend on SFML.
-	struct Implementation;
+	class Implementation;
 	std::unique_ptr<Implementation> _implementation;
 };
 

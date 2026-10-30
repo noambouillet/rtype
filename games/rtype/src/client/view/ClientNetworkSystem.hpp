@@ -43,13 +43,13 @@ public:
 private:
 	engine::core::Entity createVisualEntity(engine::core::Coordinator& coordinator, const network::WorldEntity& serverEntity, double time);
 	void updateVisualEntity(engine::core::Coordinator& coordinator, engine::core::Entity visualEntity, const network::WorldEntity& serverEntity, double time);
-  void reveal(engine::core::Coordinator& coordinator, engine::core::Entity visualEntity);
+	void reveal(engine::core::Coordinator& coordinator, engine::core::Entity visualEntity);
 	void revealArrived(engine::core::Coordinator& coordinator);
 	void removeDeparted(engine::core::Coordinator& coordinator);
 	void queueEvent(const network::WorldEventNotice& notice);
 
 	const engine::assets::AssetManager* _assets = nullptr;
-  engine::core::InterpolationClock _clock;
+	engine::core::InterpolationClock _clock;
 	std::unordered_map<std::uint32_t, engine::core::Entity> _entitiesByServerId;
 	std::unordered_map<std::uint32_t, double> _pendingReveals;
 	std::unordered_map<std::uint32_t, double> _pendingRemovals;

@@ -14,15 +14,16 @@
 
 namespace engine::audio {
 
-AudioSystem::AudioSystem() : _music{}, _musicVolume(0.0F), _musicStarted(false)
+AudioSystem::AudioSystem() : _music{}, _musicVolume(0.0F), _musicFade(0.0F), _musicStarted(false)
 {
 }
 
-/// Configures an optional looping music for this world, started on the next play.
-void AudioSystem::setMusic(std::string name, float volume)
+/// Sets the looping music started on the next play, faded in over fade.
+void AudioSystem::setMusic(std::string name, float volume, Seconds fade)
 {
 	_music = std::move(name);
 	_musicVolume = volume;
+	_musicFade = fade;
 	_musicStarted = false;
 }
 
@@ -33,17 +34,18 @@ core::Signature AudioSystem::signature(core::Coordinator& coordinator)
 	return signature;
 }
 
-/// Plays every pending one-shot sound entity once, then destroys it.
-void AudioSystem::play(core::Coordinator& coordinator, IAudioBackend& backend)
+/// Advances the backend fades, then plays and destroys every pending sound entity.
+void AudioSystem::play(core::Coordinator& coordinator, IAudioBackend& backend, float deltaTime)
 {
+	backend.update(deltaTime);
 	if (!_musicStarted && !_music.empty()) {
-		backend.playMusic(_music, _musicVolume);
+		backend.playMusic(_music, _musicVolume, _musicFade);
 		_musicStarted = true;
 	}
 	const std::vector<core::Entity> played(entities.begin(), entities.end());
 	for (core::Entity entity : played) {
 		const Sound& sound = coordinator.getComponent<Sound>(entity);
-		backend.playSound(sound.name, sound.volume);
+		backend.playSound(sound.name, sound.volume, sound.bus, sound.pan);
 		coordinator.destroyEntity(entity);
 	}
 }

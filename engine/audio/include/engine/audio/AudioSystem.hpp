@@ -19,12 +19,13 @@ class AudioSystem : public core::System {
 public:
 	AudioSystem();
 	static core::Signature signature(core::Coordinator& coordinator);
-	void setMusic(std::string name, float volume);
-	void play(core::Coordinator& coordinator, IAudioBackend& backend);
+	void setMusic(std::string name, float volume, Seconds fade);
+	void play(core::Coordinator& coordinator, IAudioBackend& backend, float deltaTime);
 
 private:
 	std::string _music;
 	float _musicVolume;
+	Seconds _musicFade;
 	bool _musicStarted;
 };
 

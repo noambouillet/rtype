@@ -64,7 +64,7 @@ sequenceDiagram
     alt Slot available
         S-->>C: JOIN_ACCEPTED (same nonce, player ID, session ID)
         C->>S: PLAYER_INPUT (session ID)
-        S-->>C: WORLD_SNAPSHOT (session ID 0; next tick, then every 50 ms)
+        S-->>C: WORLD_SNAPSHOT (session ID 0; next tick, then every tick)
     else Four players connected
         S-->>C: JOIN_REJECTED (same nonce, SERVER_FULL)
     end
@@ -211,8 +211,8 @@ appearance; clients may show that base for unknown non-player variants.
 
 ### Full snapshot
 
-The server sends a full `WORLD_SNAPSHOT` every 50 ms and at the next tick
-boundary after a join. It reflects all changes through `server_tick`.
+The server sends a full `WORLD_SNAPSHOT` every tick (60 per second), so a new
+player gets one at the next tick. It reflects all changes through `server_tick`.
 
 | Offset | Size | Type | Field |
 | ---: | ---: | --- | --- |
@@ -238,6 +238,14 @@ set and masks when `server_tick` is newer, so absent entities disappear and a
 later snapshot repairs lost events. Ignore snapshots at or before the last
 applied tick.
 
+The client does not draw a snapshot as soon as it arrives. It plays the server
+timeline 2.5 snapshot intervals late (about 42 ms, with time =
+`server_tick / 60` seconds) and blends each entity's position between the two
+snapshots around that moment. Entities a snapshot adds or drops, and gameplay
+events, take effect when playback reaches their tick, so they stay in step with
+the positions on screen. An event stamped more than 250 ms ahead of the
+client's estimate of the server time is dropped.
+
 ### Events
 
 `GameWorld` returns a tick-local list of spawn, surviving damage, destruction,
@@ -257,8 +265,10 @@ Each event is sent once and starts with `server_tick: u64`, followed by:
 
 `PLAYER_DEATH` removes the ship and clears its alive bit, but can leave the
 session connected. `ENTITY_DESTROY` covers enemies and projectiles. Respawning
-a player uses `ENTITY_SPAWN` with a new entity ID. Ignore events at or before
-the last applied snapshot tick. `ENTITY_DAMAGE` reports surviving health; at
+a player uses `ENTITY_SPAWN` with a new entity ID. An event may arrive after a
+newer snapshot; the client still plays it when its delayed playback reaches the
+event's tick, or at once if playback passed it less than 250 ms ago, and drops
+it otherwise. Repeated packet sequences are ignored. `ENTITY_DAMAGE` reports surviving health; at
 zero, the server sends `ENTITY_DESTROY` or `PLAYER_DEATH` instead. Repeated
 damage in one tick is coalesced to the final surviving health; a terminal event
 supersedes damage for the same entity. Destroy and death positions are the last

@@ -23,6 +23,8 @@ static constexpr std::array<std::uint8_t, 4> MAGIC{'R', 'T', 'Y', 'P'};
 static constexpr std::uint8_t VERSION = 1;
 static constexpr std::uint32_t HALF_SEQUENCE = 2147483648;
 static constexpr std::size_t MAX_SNAPSHOT_ENTITIES = 64;
+static constexpr double TICK_SECONDS = 1.0 / 60.0;
+static constexpr std::uint64_t SNAPSHOT_TICKS = 1;
 static constexpr std::size_t PING_PAYLOAD_SIZE = 8;
 
 enum class PacketType : std::uint8_t {

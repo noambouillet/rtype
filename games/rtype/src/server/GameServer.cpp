@@ -7,9 +7,12 @@
 
 #include "GameServer.hpp"
 
+#include <cstdint>
 #include <iomanip>
 #include <sstream>
 #include <thread>
+
+#include "utils/network/Protocol.hpp"
 
 namespace rtype {
 
@@ -57,7 +60,7 @@ void GameServer::reportMetrics(const engine::core::MetricsSnapshot& snapshot)
 void GameServer::run(const volatile std::sig_atomic_t& running)
 {
 	auto nextTick = Clock::now();
-	auto snapshotElapsed = Clock::duration::zero();
+	std::uint64_t ticksSinceSnapshot = 0;
 	std::uint8_t previousConnectedMask = 0;
 	const float deltaTime = std::chrono::duration<float>(TICK_DURATION).count();
 	auto previousStart = nextTick - TICK_DURATION;
@@ -67,10 +70,10 @@ void GameServer::run(const volatile std::sig_atomic_t& running)
 		const GameWorld::Input input = tick();
 		const std::vector<WorldEvent> events = _world.update(input, deltaTime);
 		_network.broadcastEvents(events);
-		snapshotElapsed += TICK_DURATION;
-		if (snapshotElapsed >= SNAPSHOT_INTERVAL || input.connectedMask != previousConnectedMask) {
+		ticksSinceSnapshot++;
+		if (ticksSinceSnapshot >= network::SNAPSHOT_TICKS || input.connectedMask != previousConnectedMask) {
 			_network.broadcastSnapshot(_world.replicatedEntities(), input.connectedMask, _world.aliveMask());
-			snapshotElapsed %= SNAPSHOT_INTERVAL;
+			ticksSinceSnapshot = 0;
 		}
 		previousConnectedMask = input.connectedMask;
 		publishTick(start, previousStart);

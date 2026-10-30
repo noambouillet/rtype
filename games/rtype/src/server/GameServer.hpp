@@ -27,7 +27,6 @@ public:
 
 private:
 	static constexpr auto TICK_DURATION = std::chrono::microseconds(16667);
-	static constexpr auto SNAPSHOT_INTERVAL = std::chrono::milliseconds(50);
 	static constexpr unsigned int METRICS_REPORT_PERIODS = 10;
 	using Clock = std::chrono::steady_clock;
 

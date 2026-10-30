@@ -8,6 +8,7 @@
 #include "ClientApp.hpp"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <csignal>
 #include <cstdint>
@@ -22,7 +23,7 @@
 #include "client/app/ClientControls.hpp"
 #include "client/network/GameClient.hpp"
 #include "client/view/ClientWorld.hpp"
-#include "client/view/SpriteRegions.hpp"
+#include "engine/assets/AssetManager.hpp"
 #include "engine/audio/SfmlAudio.hpp"
 #include "engine/core/ConfigParser.hpp"
 #include "engine/core/EngineSettings.hpp"
@@ -167,26 +168,26 @@ int runClient(const ClientOptions& options)
 	engine::core::EngineSettings engineSettings;
 	engine::input::InputMap bindings = client::ClientControls::defaultBindings();
 	loadSettings(engineSettings, bindings);
-	engine::core::EventBus bus;
+  engine::core::EventBus bus;
 	engine::core::Metrics metrics(bus);
 	engine::tools::MetricsOverlay overlay(bus);
+	engine::assets::AssetManager assets;
 	engine::net::UdpClient transport({.host = options.host, .port = options.port, .maxDatagramSize = network::MAX_DATAGRAM_SIZE});
 	network::GameClient client(transport, bus);
 	engine::render::SfmlRenderer window({.width = client_config::WINDOW_WIDTH, .height = client_config::WINDOW_HEIGHT, .title = "R-Type", .fontFile = std::string(client_config::FONT_FILE)});
-	window.preload(sprites::PLAYER_SHEET);
-	window.preload(sprites::SHOT_SHEET);
-	window.preload(sprites::ENEMY_SHEET);
-	window.preload("background.png");
-	window.preload(sprites::EXPLOSION_SHEET);
+	assets.loadManifest("games/rtype/assets/manifest.json", window);
+	assets.preload("level1", window);
 	engine::input::SfmlInput input(std::move(bindings));
-	engine::audio::SfmlAudio audio("assets/sounds");
+	engine::audio::SfmlAudio audio;
 	client::ClientControls controls;
-	client::ClientWorld view(engineSettings.screenFlashEnabled());
-	ClientLoop loop{.window = window, .input = input, .audio = audio, .controls = controls, .client = client, .view = view, .logger = *logger, .bus = bus, .overlay = overlay, .previous = client.status(), .lastFrame = Clock::now()};
+	client::ClientWorld view(assets, engineSettings.screenFlashEnabled());
+  ClientLoop loop{.window = window, .input = input, .audio = audio, .controls = controls, .client = client, .view = view, .logger = *logger, .bus = bus, .overlay = overlay, .previous = client.status(), .lastFrame = Clock::now()};
 	logger->info("Connecting to " + options.host + ':' + std::to_string(options.port));
 	while (running != 0 && window.isOpen()) {
 		if (!updateFrame(loop)) {
-			return 1;
+			client.disconnect();
+      logger->info("Disconnected");
+      return 1;
 		}
 	}
 	client.disconnect();

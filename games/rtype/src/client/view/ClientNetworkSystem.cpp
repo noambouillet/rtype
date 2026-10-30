@@ -16,6 +16,7 @@
 #include "client/GameConfig.hpp"
 #include "client/view/ClientComponents.hpp"
 #include "client/view/SpriteCatalog.hpp"
+#include "engine/assets/AssetManager.hpp"
 #include "engine/core/ecs/Components.hpp"
 #include "engine/core/systems/InterpolationSystem.hpp"
 #include "engine/render/Components.hpp"
@@ -26,6 +27,11 @@ namespace rtype::client {
 ClientNetworkSystem::ClientNetworkSystem()
 	: _clock(client_config::INTERPOLATION_DELAY), _entitiesByServerId{}, _pendingReveals{}, _pendingRemovals{}, _pendingEvents(EVENT_LIMITS), _lastAppliedTick{}, _aliveMask(0), _connectedMask(0)
 {
+}
+
+void ClientNetworkSystem::setAssetManager(const engine::assets::AssetManager& assets)
+{
+	_assets = &assets;
 }
 
 engine::core::Signature ClientNetworkSystem::signature(engine::core::Coordinator& coordinator)
@@ -131,7 +137,13 @@ engine::core::Entity ClientNetworkSystem::createVisualEntity(engine::core::Coord
 {
 	const engine::core::Entity visualEntity = coordinator.createEntity();
 	coordinator.addComponent(visualEntity, engine::core::Position{.x = serverEntity.x, .y = serverEntity.y});
-	coordinator.addComponent(visualEntity, engine::core::Interpolated{.samples = {{.time = time, .x = serverEntity.x, .y = serverEntity.y}}});
+  coordinator.addComponent(visualEntity, engine::core::Interpolated{.samples = {{.time = time, .x = serverEntity.x, .y = serverEntity.y}}});
+	if (_assets) {
+		coordinator.addComponent(visualEntity, spriteFor(*_assets, serverEntity.entityType, serverEntity.spriteId));
+		if (auto animation = animationFor(*_assets, serverEntity.entityType)) {
+			coordinator.addComponent(visualEntity, std::move(*animation));
+		}
+	}
 	const NetworkIdentity identity{.serverId = serverEntity.entityId, .kind = serverEntity.entityType, .owner = serverEntity.ownerPlayerId, .variant = serverEntity.spriteId};
 	coordinator.addComponent(visualEntity, identity);
 	return visualEntity;
@@ -143,26 +155,33 @@ void ClientNetworkSystem::updateVisualEntity(engine::core::Coordinator& coordina
 	engine::core::InterpolationSystem::addSample(coordinator.getComponent<engine::core::Interpolated>(visualEntity), {.time = time, .x = serverEntity.x, .y = serverEntity.y});
 	auto& identity = coordinator.getComponent<NetworkIdentity>(visualEntity);
 	const bool appearanceChanged = identity.kind != serverEntity.entityType || identity.variant != serverEntity.spriteId;
-	identity = {.serverId = serverEntity.entityId, .kind = serverEntity.entityType, .owner = serverEntity.ownerPlayerId, .variant = serverEntity.spriteId};
-	if (appearanceChanged && coordinator.hasComponent<engine::render::Sprite>(visualEntity)) {
-		coordinator.getComponent<engine::render::Sprite>(visualEntity) = spriteFor(serverEntity.entityType, serverEntity.spriteId);
-		const auto animation = animationFor(serverEntity.entityType);
-		if (animation && !coordinator.hasComponent<engine::render::Animation>(visualEntity)) {
-			coordinator.addComponent(visualEntity, *animation);
-		} else if (!animation && coordinator.hasComponent<engine::render::Animation>(visualEntity)) {
-			coordinator.removeComponent<engine::render::Animation>(visualEntity);
-		}
-	}
+  identity = {.serverId = serverEntity.entityId, .kind = serverEntity.entityType, .owner = serverEntity.ownerPlayerId, .variant = serverEntity.spriteId};
+
+  if (appearanceChanged && _assets) {
+    if (coordinator.hasComponent<engine::render::Sprite>(visualEntity)) {
+      coordinator.getComponent<engine::render::Sprite>(visualEntity) = spriteFor(*_assets, serverEntity.entityType, serverEntity.spriteId);
+    } else {
+        coordinator.addComponent(visualEntity, spriteFor(*_assets, serverEntity.entityType, serverEntity.spriteId));
+    }
+    const auto animation = animationFor(*_assets, serverEntity.entityType);
+    if (animation && !coordinator.hasComponent<engine::render::Animation>(visualEntity)) {
+      coordinator.addComponent(visualEntity, *animation);
+    } else if (!animation && coordinator.hasComponent<engine::render::Animation>(visualEntity)) {
+        coordinator.removeComponent<engine::render::Animation>(visualEntity);
+    }
+  }
 }
 
 /// Gives a hidden presentation entity the sprite matching its current identity.
 void ClientNetworkSystem::reveal(engine::core::Coordinator& coordinator, engine::core::Entity visualEntity)
 {
 	const NetworkIdentity& identity = coordinator.getComponent<NetworkIdentity>(visualEntity);
-	coordinator.addComponent(visualEntity, spriteFor(identity.kind, identity.variant));
-	if (auto animation = animationFor(identity.kind)) {
-		coordinator.addComponent(visualEntity, std::move(*animation));
-	}
+	if (_assets) {
+    coordinator.addComponent(visualEntity, spriteFor(*_assets, identity.kind, identity.variant));
+    if (auto animation = animationFor(*_assets, identity.kind)) {
+      coordinator.addComponent(visualEntity, std::move(*animation));
+    }
+  }
 }
 
 /// Shows the entities whose first snapshot the view has reached.

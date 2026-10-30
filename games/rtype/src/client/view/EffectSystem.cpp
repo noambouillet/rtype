@@ -2,48 +2,44 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** Client effect system
+** Effect presentation system
 */
 
 #include "EffectSystem.hpp"
 
 #include <algorithm>
-#include <span>
 #include <string>
-#include <string_view>
 #include <variant>
 
-#include "client/view/SpriteRegions.hpp"
+#include "engine/assets/AssetManager.hpp"
 #include "engine/core/ecs/Components.hpp"
 #include "engine/render/Components.hpp"
 #include "game/GameTypes.hpp"
 
 namespace rtype::client {
 
-struct EffectArt {
-	std::string_view texture;
-	std::span<const engine::render::Rect> frames;
-	float frameSeconds;
-};
-
-/// Chooses asset frames for a temporary presentation effect.
-static EffectArt artFor(EffectKind kind)
+static std::string_view animationNameFor(EffectKind kind)
 {
 	switch (kind) {
 		case EffectKind::ShotBurst:
-			return {.texture = sprites::SHOT_SHEET, .frames = sprites::SHOT_BURST_FRAMES, .frameSeconds = 0.055F};
+			return "shot_burst";
 		case EffectKind::HitSpark:
-			return {.texture = sprites::SHOT_SHEET, .frames = sprites::HIT_SPARK_FRAMES, .frameSeconds = 0.04F};
+			return "hit_spark";
 		case EffectKind::MobExplosion:
-			return {.texture = sprites::EXPLOSION_SHEET, .frames = sprites::MOB_EXPLOSION_FRAMES, .frameSeconds = 0.025F};
+			return "mob_explosion";
 		case EffectKind::PlayerExplosion:
-			return {.texture = sprites::EXPLOSION_SHEET, .frames = sprites::PLAYER_EXPLOSION_FRAMES, .frameSeconds = 0.07F};
+			return "player_explosion";
 	}
-	return {};
+	return "";
 }
 
-EffectSystem::EffectSystem() : _firePredictor{}, _screenFlash(true)
+EffectSystem::EffectSystem() : _firePredictor{}, _screenFlash(true), _assets(nullptr)
 {
+}
+
+void EffectSystem::setAssetManager(const engine::assets::AssetManager& assets)
+{
+	_assets = &assets;
 }
 
 /// Enables or disables explosion effects, which flash the screen (accessibility setting).
@@ -78,16 +74,19 @@ void EffectSystem::add(engine::core::Coordinator& coordinator, EffectKind kind, 
 	if (entities.size() >= MAX_EFFECTS) {
 		coordinator.destroyEntity(*entities.begin());
 	}
-	const EffectArt art = artFor(kind);
-	if (art.frames.empty()) {
+	if (!_assets) {
 		return;
 	}
-	const engine::render::Rect first = art.frames.front();
+	const auto& animDesc = _assets->getAnimation(std::string(animationNameFor(kind)));
+	if (animDesc.frames.empty()) {
+		return;
+	}
+	const engine::render::Rect first = animDesc.frames.front();
 	const engine::core::Entity entity = coordinator.createEntity();
 	coordinator.addComponent(entity, position);
-	coordinator.addComponent(entity, engine::render::Sprite{.textureName = std::string(art.texture), .region = first, .originX = static_cast<float>(first.size.x) / 2.0F, .originY = static_cast<float>(first.size.y) / 2.0F, .scale = 2.0F, .rotation = 0.0F, .layer = 10});
-	coordinator.addComponent(entity, engine::render::Animation{.frames = {art.frames.begin(), art.frames.end()}, .frameSeconds = art.frameSeconds, .elapsed = 0.0F, .loop = false});
-	coordinator.addComponent(entity, Effect{.kind = kind, .remaining = art.frameSeconds * static_cast<float>(art.frames.size()), .targetId = targetId, .followPlayer = followPlayer});
+	coordinator.addComponent(entity, engine::render::Sprite{.texture = animDesc.texture, .region = first, .originX = static_cast<float>(first.size.x) / 2.0F, .originY = static_cast<float>(first.size.y) / 2.0F, .scale = 2.0F, .rotation = 0.0F, .layer = 10});
+	coordinator.addComponent(entity, engine::render::Animation{.texture = animDesc.texture, .frames = animDesc.frames, .frameSeconds = animDesc.frameSeconds, .elapsed = 0.0F, .loop = animDesc.loop});
+	coordinator.addComponent(entity, Effect{.kind = kind, .remaining = animDesc.frameSeconds * static_cast<float>(animDesc.frames.size()), .targetId = targetId, .followPlayer = followPlayer});
 }
 
 /// Removes a surviving-hit cue when that entity is destroyed.

@@ -15,6 +15,7 @@
 
 #include "client/network/GameClient.hpp"
 #include "client/view/ViewEvent.hpp"
+#include "engine/assets/AssetManager.hpp"
 #include "engine/core/TimedQueue.hpp"
 #include "engine/core/ecs/Components.hpp"
 #include "engine/core/ecs/Coordinator.hpp"
@@ -29,6 +30,7 @@ public:
 	static constexpr engine::core::TimedQueueLimits EVENT_LIMITS{.maxSize = 256, .maxLateness = 0.25};
 
 	ClientNetworkSystem();
+	void setAssetManager(const engine::assets::AssetManager& assets);
 	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	std::vector<ViewEvent> update(float deltaTime, engine::core::Coordinator& coordinator, network::GameClient& client, std::uint8_t buttons);
 	void applySnapshot(engine::core::Coordinator& coordinator, const network::WorldSnapshot& snapshot);
@@ -39,14 +41,15 @@ public:
 	[[nodiscard]] std::uint8_t connectedMask() const;
 
 private:
-	static engine::core::Entity createVisualEntity(engine::core::Coordinator& coordinator, const network::WorldEntity& serverEntity, double time);
-	static void updateVisualEntity(engine::core::Coordinator& coordinator, engine::core::Entity visualEntity, const network::WorldEntity& serverEntity, double time);
-	static void reveal(engine::core::Coordinator& coordinator, engine::core::Entity visualEntity);
+	engine::core::Entity createVisualEntity(engine::core::Coordinator& coordinator, const network::WorldEntity& serverEntity, double time);
+	void updateVisualEntity(engine::core::Coordinator& coordinator, engine::core::Entity visualEntity, const network::WorldEntity& serverEntity, double time);
+  void reveal(engine::core::Coordinator& coordinator, engine::core::Entity visualEntity);
 	void revealArrived(engine::core::Coordinator& coordinator);
 	void removeDeparted(engine::core::Coordinator& coordinator);
 	void queueEvent(const network::WorldEventNotice& notice);
 
-	engine::core::InterpolationClock _clock;
+	const engine::assets::AssetManager* _assets = nullptr;
+  engine::core::InterpolationClock _clock;
 	std::unordered_map<std::uint32_t, engine::core::Entity> _entitiesByServerId;
 	std::unordered_map<std::uint32_t, double> _pendingReveals;
 	std::unordered_map<std::uint32_t, double> _pendingRemovals;

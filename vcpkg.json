@@ -11,7 +11,11 @@
     },
     "client": {
       "description": "r-type_client: engine render, audio, input and net",
-      "dependencies": ["asio", {"name": "sfml", "default-features": false, "features": ["graphics", "audio", "window"]}]
+      "dependencies": [
+        "asio",
+        {"name": "sfml", "default-features": false, "features": ["graphics", "audio", "window"]},
+        "nlohmann-json"
+      ]
     },
     "script": {
       "description": "engine::script, Lua bindings",

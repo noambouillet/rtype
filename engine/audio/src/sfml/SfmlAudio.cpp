@@ -15,7 +15,7 @@
 
 namespace engine::audio {
 
-/// Music and sound names given to this backend are file paths relative to root.
+/// Music and sound names given to this backend are file paths relative to root (or direct paths if root is empty).
 SfmlAudio::SfmlAudio(std::filesystem::path root) : _implementation(std::make_unique<Implementation>())
 {
 	_implementation->root = std::move(root);
@@ -26,7 +26,9 @@ SfmlAudio::~SfmlAudio() = default;
 /// Plays music in a loop, or stays silent if the file cannot be opened.
 void SfmlAudio::playMusic(std::string_view name, float volume)
 {
-	const std::filesystem::path musicPath = _implementation->root / std::filesystem::path(name).lexically_normal();
+	const std::filesystem::path musicPath = _implementation->root.empty()
+												? std::filesystem::path(name)
+												: _implementation->root / std::filesystem::path(name).lexically_normal();
 	if (!_implementation->music.openFromFile(musicPath)) {
 		return;
 	}
@@ -45,7 +47,9 @@ sf::SoundBuffer& SfmlAudio::Implementation::loadBuffer(const std::string& name)
 {
 	const auto [bufferEntry, wasInserted] = buffers.try_emplace(name);
 	if (wasInserted) {
-		const std::filesystem::path soundPath = root / std::filesystem::path(name).lexically_normal();
+		const std::filesystem::path soundPath = root.empty()
+													? std::filesystem::path(name)
+													: root / std::filesystem::path(name).lexically_normal();
 		if (!bufferEntry->second.loadFromFile(soundPath)) {
 			buffers.erase(bufferEntry);
 			throw AudioError("Cannot load sound: " + soundPath.string());

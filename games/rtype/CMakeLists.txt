@@ -33,7 +33,7 @@ endforeach()
 
 find_package(Threads REQUIRED)
 
-set(RTYPE_ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../assets" CACHE PATH "R-Type assets directory")
+set(RTYPE_ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets" CACHE PATH "R-Type assets directory")
 
 add_library(rtype_protocol src/utils/network/Protocol.cpp)
 target_include_directories(rtype_protocol PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -81,7 +81,7 @@ if(RTYPE_BUILD_CLIENT)
         src/client/view/ClientWorld.cpp
         src/client/view/LocalFirePredictor.cpp
     )
-    target_link_libraries(rtype_client_core PUBLIC engine::core engine::render engine::audio engine::input engine::net rtype_protocol)
+    target_link_libraries(rtype_client_core PUBLIC engine::core engine::render engine::assets engine::audio engine::input engine::net rtype_protocol)
 
     add_executable(r-type_client
         src/client/main.cpp

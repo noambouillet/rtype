@@ -108,8 +108,9 @@ The rendering pipeline is split into an abstract engine interface and a hardware
 classDiagram
     class IGraphicsBackend {
         <<interface>>
+        +loadTextureFromFile(string filepath)* TextureId
         +beginFrame()*
-        +drawBackground(string_view texture, float offset)*
+        +drawBackground(TextureId texture, float offset)*
         +drawSprite(SpriteDraw command)*
         +drawRect(RectDraw rect)*
         +drawText(TextDraw text)*
@@ -118,11 +119,10 @@ classDiagram
 
     class SfmlRenderer {
         -sf::RenderWindow window
-        -AssetManager assets
         +handleEvent()
-        +preload(string_view texture)
+        +loadTextureFromFile(string filepath) TextureId
         +beginFrame()
-        +drawBackground(string_view texture, float offset)
+        +drawBackground(TextureId texture, float offset)
         +drawSprite(SpriteDraw command)
         +drawRect(RectDraw rect)
         +drawText(TextDraw text)
@@ -130,10 +130,10 @@ classDiagram
     }
 
     class RenderSystem {
-        -string _bgTexture
+        -TextureId _bgTexture
         -float _bgSpeed
         -float _bgOffset
-        +setBackground(texture, speed)
+        +setBackground(TextureId texture, float speed)
         +render(Coordinator coordinator, IGraphicsBackend backend, float dt)
     }
 
@@ -188,7 +188,7 @@ flowchart LR
    - `HoverMotionSystem.cpp`: Applies smooth hovering and drifting behavior.
 4. **Linear Motion Integration** (`engine/core/src/systems/MovementSystem.cpp`):
    - Signature: `ecs::Position` and `ecs::Velocity`.
-   - Formula:PositionincrementsbyVelocitymultipliedbydelta time.
+   - Formula: Position increments by Velocity multiplied by delta time.
 5. **Collision Detection** (`engine/physics/src/CollisionSystem.cpp`):
    - Signature: `ecs::Position` and `ecs::Collider`.
    - Executes 2D Axis-Aligned Bounding Box (AABB) intersection tests and emits a list of `CollisionPair` structs.

@@ -8,9 +8,10 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <unordered_map>
 #include <optional>
 
-#include "AssetManager.hpp"
+#include "engine/render/GraphicsBackend.hpp"
 #include "engine/render/SfmlRenderer.hpp"
 
 namespace engine::render {
@@ -18,8 +19,11 @@ namespace engine::render {
 struct SfmlRenderer::Implementation {
 	explicit Implementation(const WindowConfig& config);
 
-	AssetManager assets;
 	sf::RenderWindow window;
+	std::unordered_map<TextureId, sf::Texture> loadedTextures;
+	TextureId nextTextureId = 1;
+
+	std::unordered_map<TextureId, sf::Texture>::iterator resolveTexture(TextureId textureId);
 	std::optional<sf::Font> font;
 };
 

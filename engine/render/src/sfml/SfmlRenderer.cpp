@@ -8,6 +8,8 @@
 #include "engine/render/SfmlRenderer.hpp"
 
 #include <cmath>
+#include <filesystem>
+#include <iostream>
 #include <string>
 
 #include "SfmlRendererImplementation.hpp"
@@ -15,15 +17,19 @@
 
 namespace engine::render {
 
+std::unordered_map<TextureId, sf::Texture>::iterator SfmlRenderer::Implementation::resolveTexture(
+	TextureId textureId)
+{
+	return loadedTextures.find(textureId);
+}
+
 SfmlRenderer::Implementation::Implementation(const WindowConfig& config)
-	: assets({.root = config.assetRoot, .fallbackFile = config.fallbackTexture}),
-	  window(sf::VideoMode({config.width, config.height}), config.title),
-	  font(std::nullopt)
+	: window(sf::VideoMode({config.width, config.height}), config.title)
 {
 	if (config.fontFile.empty()) {
 		return;
 	}
-	const std::filesystem::path path = config.assetRoot / config.fontFile;
+	const std::filesystem::path path = config.fontFile;
 	font.emplace();
 	if (!font->openFromFile(path)) {
 		throw GraphicsError("Unable to load font: " + path.string());
@@ -68,11 +74,16 @@ void SfmlRenderer::handleEvent()
 	}
 }
 
-/// Loads a texture before the first frame, so a missing required file fails at startup
-/// instead of being drawn as the fallback texture.
-void SfmlRenderer::preload(std::string_view texture)
+/// Loads a texture from file into the SFML texture storage and returns an ID.
+TextureId SfmlRenderer::loadTextureFromFile(const std::string& filepath)
 {
-	_implementation->assets.preload(texture);
+	sf::Texture loadedTexture;
+	if (!loadedTexture.loadFromFile(std::filesystem::path(filepath))) {
+		return INVALID_TEXTURE_ID;
+	}
+	const TextureId assignedTextureId = _implementation->nextTextureId++;
+	_implementation->loadedTextures.emplace(assignedTextureId, std::move(loadedTexture));
+	return assignedTextureId;
 }
 
 void SfmlRenderer::beginFrame()
@@ -81,31 +92,42 @@ void SfmlRenderer::beginFrame()
 }
 
 /// Draws the repeated background at the offset selected by the render system.
-void SfmlRenderer::drawBackground(std::string_view texture, float offset)
+void SfmlRenderer::drawBackground(TextureId textureId, float offset)
 {
-	_implementation->assets.setRepeated(texture, true);
-	const sf::Texture& image = _implementation->assets.texture(texture);
-	const sf::Vector2u size = _implementation->window.getSize();
-	if (size.x == 0 || size.y == 0 || image.getSize().x == 0) {
+	const auto textureIterator = _implementation->resolveTexture(textureId);
+	if (textureIterator == _implementation->loadedTextures.end()) {
 		return;
 	}
-	const float wrapped = std::fmod(offset, static_cast<float>(image.getSize().x));
-	const int left = static_cast<int>(wrapped);
-	sf::Sprite sprite(image, sf::IntRect({left, 0}, {static_cast<int>(size.x) + 1, static_cast<int>(size.y)}));
-	sprite.setPosition({-(wrapped - static_cast<float>(left)), 0.0F});
-	_implementation->window.draw(sprite);
+	textureIterator->second.setRepeated(true);
+	const sf::Texture& backgroundImage = textureIterator->second;
+	const sf::Vector2u windowSize = _implementation->window.getSize();
+	if (windowSize.x == 0 || windowSize.y == 0 || backgroundImage.getSize().x == 0) {
+		return;
+	}
+	const float wrappedOffset = std::fmod(offset, static_cast<float>(backgroundImage.getSize().x));
+	const int leftPosition = static_cast<int>(wrappedOffset);
+	sf::Sprite backgroundSprite(backgroundImage,
+		sf::IntRect({leftPosition, 0}, {static_cast<int>(windowSize.x) + 1, static_cast<int>(windowSize.y)}));
+	backgroundSprite.setPosition({-(wrappedOffset - static_cast<float>(leftPosition)), 0.0F});
+	_implementation->window.draw(backgroundSprite);
 }
 
 /// Translates a library independent sprite command into an SFML draw call.
 void SfmlRenderer::drawSprite(const SpriteDraw& command)
 {
+	const auto textureIterator = _implementation->resolveTexture(command.textureId);
+	if (textureIterator == _implementation->loadedTextures.end()) {
+		return;
+	}
+	const sf::Texture& spriteTexture = textureIterator->second;
 	const Rect& region = command.region;
-	sf::Sprite sprite = _implementation->assets.sprite(command.texture, sf::IntRect({region.position.x, region.position.y}, {region.size.x, region.size.y}));
-	sprite.setOrigin({command.originX, command.originY});
-	sprite.setScale({command.scale, command.scale});
-	sprite.setRotation(sf::degrees(command.rotation));
-	sprite.setPosition({command.x, command.y});
-	_implementation->window.draw(sprite);
+	sf::Sprite renderedSprite(spriteTexture,
+		sf::IntRect({region.position.x, region.position.y}, {region.size.x, region.size.y}));
+	renderedSprite.setOrigin({command.originX, command.originY});
+	renderedSprite.setScale({command.scale, command.scale});
+	renderedSprite.setRotation(sf::degrees(command.rotation));
+	renderedSprite.setPosition({command.x, command.y});
+	_implementation->window.draw(renderedSprite);
 }
 
 /// Fills a screen-space rectangle, drawn over everything already in the frame.

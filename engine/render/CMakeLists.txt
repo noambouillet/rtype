@@ -1,6 +1,5 @@
 add_library(engine_render
     src/RenderSystem.cpp
-    src/sfml/AssetManager.cpp
     src/sfml/SfmlRenderer.cpp
 )
 add_library(engine::render ALIAS engine_render)

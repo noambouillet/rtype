@@ -10,6 +10,7 @@
 #include <cstdint>
 
 #include "client/network/GameClient.hpp"
+#include "engine/assets/AssetManager.hpp"
 #include "engine/audio/AudioBackend.hpp"
 #include "engine/core/ecs/Coordinator.hpp"
 #include "engine/render/GraphicsBackend.hpp"
@@ -18,7 +19,7 @@ namespace rtype::client {
 
 class ClientWorld {
 public:
-	explicit ClientWorld(bool screenFlash);
+	explicit ClientWorld(const engine::assets::AssetManager& assets, bool screenFlash = true);
 	void update(float deltaTime, network::GameClient& client, std::uint8_t buttons);
 	void render(engine::render::IGraphicsBackend& backend, float deltaTime);
 	void playAudio(engine::audio::IAudioBackend& backend);

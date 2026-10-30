@@ -2,7 +2,7 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** Client effect system
+** Effect system
 */
 
 #pragma once
@@ -15,6 +15,7 @@
 #include "client/view/ClientNetworkSystem.hpp"
 #include "client/view/LocalFirePredictor.hpp"
 #include "client/view/ViewEvent.hpp"
+#include "engine/assets/AssetManager.hpp"
 #include "engine/core/ecs/Coordinator.hpp"
 #include "engine/core/ecs/System.hpp"
 
@@ -24,6 +25,7 @@ class EffectSystem : public engine::core::System {
 public:
 	EffectSystem();
 	void setScreenFlash(bool enabled);
+	void setAssetManager(const engine::assets::AssetManager& assets);
 	static engine::core::Signature signature(engine::core::Coordinator& coordinator);
 	void consume(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network,
 		const std::vector<ViewEvent>& events, std::optional<std::uint8_t> localPlayerId);
@@ -36,8 +38,7 @@ private:
 	static constexpr float PLAYER_WEAPON_OFFSET = 32.0F;
 
 	void add(engine::core::Coordinator& coordinator, EffectKind kind, engine::core::Position position,
-		std::optional<std::uint32_t> targetId = std::nullopt,
-		std::optional<std::uint8_t> followPlayer = std::nullopt);
+		std::optional<std::uint32_t> targetId = std::nullopt, std::optional<std::uint8_t> followPlayer = std::nullopt);
 	void removeHitSpark(engine::core::Coordinator& coordinator, std::uint32_t targetId);
 	void handle(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network,
 		const SpawnEvent& event, std::optional<std::uint8_t> localPlayerId);
@@ -47,6 +48,7 @@ private:
 
 	LocalFirePredictor _firePredictor;
 	bool _screenFlash;
+	const engine::assets::AssetManager* _assets = nullptr;
 };
 
 }

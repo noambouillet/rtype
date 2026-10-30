@@ -19,11 +19,11 @@ class RenderSystem : public core::System {
 public:
 	RenderSystem();
 	static core::Signature signature(core::Coordinator& coordinator);
-	void setBackground(std::string texture, float speed);
+	void setBackground(TextureId texture, float speed);
 	void render(core::Coordinator& coordinator, IGraphicsBackend& backend, float deltaTime);
 
 private:
-	std::string _backgroundTexture;
+	TextureId _backgroundTexture;
 	float _backgroundSpeed;
 	float _backgroundOffset;
 };

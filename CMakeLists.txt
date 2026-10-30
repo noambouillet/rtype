@@ -4,6 +4,7 @@ option(RTYPE_BUILD_SERVER "Build r-type_server (engine core, physics, net)" ON)
 option(RTYPE_BUILD_CLIENT "Build r-type_client (engine render, audio, input, net, tools)" ON)
 
 set(ENGINE_BUILD_RENDER ${RTYPE_BUILD_CLIENT})
+set(ENGINE_BUILD_ASSETS ${RTYPE_BUILD_CLIENT})
 set(ENGINE_BUILD_AUDIO ${RTYPE_BUILD_CLIENT})
 set(ENGINE_BUILD_INPUT ${RTYPE_BUILD_CLIENT})
 set(ENGINE_BUILD_TOOLS ${RTYPE_BUILD_CLIENT})

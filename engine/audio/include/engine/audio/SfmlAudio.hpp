@@ -17,7 +17,7 @@ namespace engine::audio {
 
 class SfmlAudio : public IAudioBackend {
 public:
-	explicit SfmlAudio(std::filesystem::path root);
+	explicit SfmlAudio(std::filesystem::path root = {});
 	~SfmlAudio() override;
 	SfmlAudio(const SfmlAudio&) = delete;
 	SfmlAudio& operator=(const SfmlAudio&) = delete;

@@ -17,14 +17,14 @@
 
 namespace engine::render {
 
-RenderSystem::RenderSystem() : _backgroundTexture{}, _backgroundSpeed(0.0F), _backgroundOffset(0.0F)
+RenderSystem::RenderSystem() : _backgroundTexture(0), _backgroundSpeed(0.0F), _backgroundOffset(0.0F)
 {
 }
 
 /// Configures an optional scrolling background for this world.
-void RenderSystem::setBackground(std::string texture, float speed)
+void RenderSystem::setBackground(TextureId texture, float speed)
 {
-	_backgroundTexture = std::move(texture);
+	_backgroundTexture = texture;
 	_backgroundSpeed = speed;
 	_backgroundOffset = 0.0F;
 }
@@ -42,7 +42,8 @@ core::Signature RenderSystem::signature(core::Coordinator& coordinator)
 void RenderSystem::render(core::Coordinator& coordinator, IGraphicsBackend& backend, float deltaTime)
 {
 	_backgroundOffset += _backgroundSpeed * std::max(0.0F, deltaTime);
-	if (!_backgroundTexture.empty()) {
+	backend.beginFrame();
+	if (_backgroundTexture != 0) {
 		backend.drawBackground(_backgroundTexture, _backgroundOffset);
 	}
 	std::vector<core::Entity> ordered(entities.begin(), entities.end());
@@ -53,15 +54,19 @@ void RenderSystem::render(core::Coordinator& coordinator, IGraphicsBackend& back
 		const core::Position& position = coordinator.getComponent<core::Position>(entity);
 		const Sprite& sprite = coordinator.getComponent<Sprite>(entity);
 		Rect region = sprite.region;
+		TextureId textureId = sprite.texture;
 		if (coordinator.hasComponent<Animation>(entity)) {
 			auto& animation = coordinator.getComponent<Animation>(entity);
+			if (animation.texture != 0) {
+				textureId = animation.texture;
+			}
 			if (!animation.frames.empty() && animation.frameSeconds > 0.0F) {
 				const auto frame = static_cast<std::size_t>(animation.elapsed / animation.frameSeconds);
 				region = animation.frames[animation.loop ? frame % animation.frames.size() : std::min(frame, animation.frames.size() - 1)];
 				animation.elapsed += std::max(0.0F, deltaTime);
 			}
 		}
-		backend.drawSprite({.texture = sprite.textureName, .region = region, .x = position.x, .y = position.y, .originX = sprite.originX, .originY = sprite.originY, .scale = sprite.scale, .rotation = sprite.rotation});
+		backend.drawSprite({.textureId = textureId, .region = region, .x = position.x, .y = position.y, .originX = sprite.originX, .originY = sprite.originY, .scale = sprite.scale, .rotation = sprite.rotation});
 	}
 }
 

@@ -28,7 +28,7 @@ Subscription EventBus::subscribe(std::function<void(const Event&)> handler)
 	} else {
 		_handlers[std::type_index(typeid(Event))].push_back(std::move(entry));
 	}
-	return Subscription(*this, id);
+	return {*this, id};
 }
 
 /// Calls every active handler subscribed to this event type, in subscription order.

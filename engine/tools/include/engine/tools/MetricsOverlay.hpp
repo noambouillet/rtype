@@ -35,8 +35,8 @@ private:
 	static constexpr float LINE_HEIGHT = 18.0F;
 	static constexpr float PANEL_WIDTH = 360.0F;
 	static constexpr unsigned int TEXT_SIZE = 14;
-	static constexpr render::Color PANEL_COLOR{0, 0, 0, 170};
-	static constexpr render::Color TEXT_COLOR{235, 235, 235, 255};
+	static constexpr render::Color PANEL_COLOR{.r = 0, .g = 0, .b = 0, .a = 170};
+	static constexpr render::Color TEXT_COLOR{.r = 235, .g = 235, .b = 235, .a = 255};
 
 	static std::vector<std::string> format(const core::MetricsSnapshot& snapshot);
 

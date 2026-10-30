@@ -1,4 +1,5 @@
 add_library(engine_audio
+    src/AudioSettings.cpp
     src/AudioSystem.cpp
     src/Mixer.cpp
     src/sfml/SfmlAudio.cpp

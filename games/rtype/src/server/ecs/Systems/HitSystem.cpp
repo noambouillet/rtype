@@ -38,7 +38,7 @@ std::vector<engine::physics::CollisionPair> HitSystem::update(engine::core::Coor
 	return accepted;
 }
 
-/// Adds `Destroy` to `entity` when this system tracks it and it is not already marked.
+/// Marks an entity with Destroy when this system tracks it and it is not already marked.
 void HitSystem::markHit(engine::core::Coordinator& coordinator, engine::core::Entity entity)
 {
 	if (entities.contains(entity) && !coordinator.hasComponent<engine::core::Destroy>(entity)) {

@@ -38,6 +38,7 @@ engine::input::InputMap ClientControls::defaultBindings()
 	map.bindKey(AUTO_FIRE, "X");
 	map.bindButton(AUTO_FIRE, 1);
 	map.bindKey(QUIT, "Escape");
+	map.bindKey(METRICS, "F3");
 	return map;
 }
 

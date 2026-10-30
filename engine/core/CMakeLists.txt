@@ -3,6 +3,7 @@ add_library(engine_core
     src/EngineSettings.cpp
     src/EventBus.cpp
     src/Logger.cpp
+    src/metrics/Metrics.cpp
     src/ecs/ComponentManager.cpp
     src/ecs/Coordinator.cpp
     src/ecs/Entity.cpp

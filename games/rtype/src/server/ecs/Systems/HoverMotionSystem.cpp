@@ -17,7 +17,7 @@
 
 namespace rtype::ecs {
 
-/// Returns the height of the player closest to `origin`, or nothing when no player is in the game.
+/// Returns the height of the player closest to a point, or nothing when no player is in the game.
 static std::optional<float> closestPlayerY(engine::core::Coordinator& coordinator, engine::core::Position origin)
 {
 	std::optional<float> y;
@@ -47,7 +47,7 @@ engine::core::Signature HoverMotionSystem::signature(engine::core::Coordinator& 
 	return sig;
 }
 
-/// Flies each hoverer in to `holdX`, follows the closest player's height there, then flies it off once `stayTime` is up.
+/// Flies each hoverer in to its hold position, follows the closest player's height there, then flies it off once its stay is over.
 void HoverMotionSystem::update(engine::core::Coordinator& coordinator, float elapsedTime)
 {
 	for (const engine::core::Entity& e : entities) {

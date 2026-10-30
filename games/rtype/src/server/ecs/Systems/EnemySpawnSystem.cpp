@@ -32,7 +32,7 @@ engine::core::Signature EnemySpawnSystem::signature(engine::core::Coordinator& c
 }
 
 /// Counts each spawner down and sends a wave when it reaches zero.
-/// `active` is true when at least one player is connected
+/// Nothing spawns while no player is connected.
 void EnemySpawnSystem::update(engine::core::Coordinator& coordinator, float elapsedTime, bool active)
 {
 	if (!active) {

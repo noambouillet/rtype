@@ -16,6 +16,7 @@
 #include <variant>
 #include <vector>
 
+#include "engine/core/EventBus.hpp"
 #include "engine/net/Transport.hpp"
 #include "utils/network/Protocol.hpp"
 
@@ -81,6 +82,8 @@ class GameClient {
 private:
 	static constexpr auto JOIN_RETRY = std::chrono::milliseconds(500);
 	static constexpr auto INPUT_INTERVAL = std::chrono::milliseconds(50);
+	static constexpr auto PING_INTERVAL = std::chrono::milliseconds(250);
+	static constexpr float MICROSECONDS_PER_MS = 1000.0F;
 	static constexpr unsigned int MAX_JOIN_ATTEMPTS = 10;
 	static constexpr std::size_t SNAPSHOT_HEADER_SIZE = 11;
 	static constexpr std::size_t ENTITY_RECORD_SIZE = 16;
@@ -93,14 +96,18 @@ private:
 	void handleSessionPacket(const Header& header, const std::vector<std::uint8_t>& bytes);
 	void handleSnapshot(const std::vector<std::uint8_t>& bytes);
 	void handleWorldEvent(const Header& header, const std::vector<std::uint8_t>& bytes);
+	void handlePong(const std::vector<std::uint8_t>& bytes);
 	static std::optional<WorldEntity> parseEntityRecord(const std::vector<std::uint8_t>& bytes, std::size_t offset);
 	static std::optional<std::vector<WorldEntity>> parseEntities(const std::vector<std::uint8_t>& bytes, std::uint8_t entityCount);
 	static float decodePosition(const std::vector<std::uint8_t>& bytes, std::size_t offset);
 	void sendJoin();
 	void sendInput(std::uint8_t buttons);
+	void sendPing(Clock::time_point now);
+	void send(const std::vector<std::uint8_t>& bytes);
 	std::uint32_t takeSequence();
 
 	engine::net::IClientTransport& _udp;
+	engine::core::EventBus& _bus;
 	std::uint64_t _nonce;
 	std::uint32_t _sessionId;
 	std::uint32_t _nextSequence;
@@ -109,6 +116,7 @@ private:
 	unsigned int _joinAttempts;
 	Clock::time_point _lastJoin;
 	Clock::time_point _lastInput;
+	Clock::time_point _lastPing;
 	ClientStatus _status;
 	std::optional<PlayerDeparture> _departure;
 	std::optional<ErrorCode> _error;
@@ -117,7 +125,7 @@ private:
 	std::deque<std::uint32_t> _recentEventSequences;
 
 public:
-	explicit GameClient(engine::net::IClientTransport& transport);
+	GameClient(engine::net::IClientTransport& transport, engine::core::EventBus& bus);
 	void tick(std::uint8_t buttons);
 	void disconnect();
 	std::optional<PlayerDeparture> takeDeparture();

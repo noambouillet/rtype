@@ -1,8 +1,8 @@
 # R-Type UDP protocol
 
 This protocol supports one game with up to four player
-sessions. The client sends joins, disconnects, and input commands and validates
-server replies. The server runs fixed ticks, simulates players, projectiles,
+sessions. The client sends joins, disconnects, input commands, and latency
+probes, and validates server replies. The server runs fixed ticks, simulates players, projectiles,
 enemies, collisions, and damage, and sends full world snapshots and gameplay
 events.
 
@@ -23,7 +23,7 @@ events.
 | 5 | 1 | `u8` | `type` | One of the packet types below |
 | 6 | 2 | `u16` | `payload_size` | Bytes after the header |
 | 8 | 4 | `u32` | `sequence` | Sender's packet sequence number |
-| 12 | 4 | `u32` | `session_id` | Nonzero in `JOIN_ACCEPTED`, `PLAYER_INPUT`, and `DISCONNECT`; `0` otherwise |
+| 12 | 4 | `u32` | `session_id` | Nonzero in `JOIN_ACCEPTED`, `PLAYER_INPUT`, `DISCONNECT`, and `PING`; `0` otherwise |
 
 The datagram length must equal `16 + payload_size`. Join messages and `ERROR`
 use sequence `0`. Session packets use nonzero sequence numbers, incremented by
@@ -39,6 +39,8 @@ the sender and skipping `0` on wraparound. Sequence `a` is newer than `b` when
 | `0x03` | `JOIN_REJECTED` | Server to client | 9 |
 | `0x04` | `DISCONNECT` | Client to server | 0 |
 | `0x05` | `PLAYER_LEFT` | Server to clients | 10 |
+| `0x06` | `PING` | Client to server | 8 |
+| `0x07` | `PONG` | Server to client | 8 |
 | `0x10` | `PLAYER_INPUT` | Client to server | 1 |
 | `0x20` | `WORLD_SNAPSHOT` | Server to client | `11 + 16 * entity_count` |
 | `0x21` | `ENTITY_SPAWN` | Server to clients | 24 |
@@ -111,6 +113,27 @@ once without acknowledgement and may be lost. Until world snapshots are added,
 clients cannot repair a missed departure from server state. Clients should
 continue sending input while connected; this phase sends no periodic server
 heartbeat.
+
+## Latency probes
+
+`PING` lets a client measure its round-trip time. Its payload is
+`client_time: u64`, an opaque value the server copies without reading it. The
+current client puts its monotonic clock there, in microseconds, and sends one
+probe every 250 ms while connected. `PING` needs a nonzero sequence and a
+valid session ID, and like any valid in-session packet it refreshes the session.
+
+The server answers each valid `PING` with a `PONG` whose payload is the same
+eight bytes. `PONG` is a session packet: nonzero sequence, session ID `0`. The
+client subtracts the echoed time from its current clock to get the round trip,
+so the two clocks never need to agree. It ignores a `PONG` whose time is in its
+future.
+
+The server handles datagrams once per tick, so a measured round trip includes
+up to one tick (16.7 ms) of queueing on top of the network delay. Probes are not
+retransmitted: comparing the number of `PING` sent with the number of `PONG`
+received estimates packet loss. A malformed `PING` gets `INVALID_LENGTH`
+(payload not 8 bytes) or `INVALID_FIELD` (sequence `0`); a client sending
+`PONG` gets `WRONG_DIRECTION`.
 
 ## Input commands and timing
 

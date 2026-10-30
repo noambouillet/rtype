@@ -20,7 +20,7 @@ Signature DestroySystem::signature(Coordinator& coordinator)
 	return sig;
 }
 
-/// Destroys every entity marked with `Destroy`.
+/// Destroys every entity marked with Destroy.
 void DestroySystem::update(Coordinator& coordinator)
 {
 	const std::vector<Entity> toDestroy(entities.begin(), entities.end());

@@ -8,18 +8,34 @@
 #include "engine/render/SfmlRenderer.hpp"
 
 #include <cmath>
+#include <string>
 
 #include "SfmlRendererImplementation.hpp"
+#include "engine/render/GraphicsError.hpp"
 
 namespace engine::render {
 
 SfmlRenderer::Implementation::Implementation(const WindowConfig& config)
 	: assets({.root = config.assetRoot, .fallbackFile = config.fallbackTexture}),
-	  window(sf::VideoMode({config.width, config.height}), config.title)
+	  window(sf::VideoMode({config.width, config.height}), config.title),
+	  font(std::nullopt)
 {
+	if (config.fontFile.empty()) {
+		return;
+	}
+	const std::filesystem::path path = config.assetRoot / config.fontFile;
+	font.emplace();
+	if (!font->openFromFile(path)) {
+		throw GraphicsError("Unable to load font: " + path.string());
+	}
 }
 
-/// Opens the window.
+static sf::Color toSfml(const Color& color)
+{
+	return {color.r, color.g, color.b, color.a};
+}
+
+/// Opens the window. A configured font that cannot be loaded makes this throw a GraphicsError.
 SfmlRenderer::SfmlRenderer(const WindowConfig& config) : _implementation(std::make_unique<Implementation>(config))
 {
 	_implementation->window.setFramerateLimit(config.frameRateLimit);
@@ -90,6 +106,26 @@ void SfmlRenderer::drawSprite(const SpriteDraw& command)
 	sprite.setRotation(sf::degrees(command.rotation));
 	sprite.setPosition({command.x, command.y});
 	_implementation->window.draw(sprite);
+}
+
+/// Fills a screen-space rectangle, drawn over everything already in the frame.
+void SfmlRenderer::drawRect(const RectDraw& rect)
+{
+	sf::RectangleShape shape({rect.width, rect.height});
+	shape.setPosition({rect.x, rect.y});
+	shape.setFillColor(toSfml(rect.color));
+	_implementation->window.draw(shape);
+}
+
+void SfmlRenderer::drawText(const TextDraw& text)
+{
+	if (!_implementation->font) {
+		return;
+	}
+	sf::Text label(*_implementation->font, std::string(text.text), text.size);
+	label.setPosition({text.x, text.y});
+	label.setFillColor(toSfml(text.color));
+	_implementation->window.draw(label);
 }
 
 void SfmlRenderer::endFrame()

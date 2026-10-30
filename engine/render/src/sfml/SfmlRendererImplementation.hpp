@@ -8,6 +8,7 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <optional>
 
 #include "AssetManager.hpp"
 #include "engine/render/SfmlRenderer.hpp"
@@ -19,6 +20,7 @@ struct SfmlRenderer::Implementation {
 
 	AssetManager assets;
 	sf::RenderWindow window;
+	std::optional<sf::Font> font;
 };
 
 }

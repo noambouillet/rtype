@@ -25,6 +25,7 @@ static constexpr std::uint32_t HALF_SEQUENCE = 2147483648;
 static constexpr std::size_t MAX_SNAPSHOT_ENTITIES = 64;
 static constexpr double TICK_SECONDS = 1.0 / 60.0;
 static constexpr std::uint64_t SNAPSHOT_TICKS = 1;
+static constexpr std::size_t PING_PAYLOAD_SIZE = 8;
 
 enum class PacketType : std::uint8_t {
 	JoinRequest = 0x01,
@@ -32,6 +33,8 @@ enum class PacketType : std::uint8_t {
 	JoinRejected = 0x03,
 	Disconnect = 0x04,
 	PlayerLeft = 0x05,
+	Ping = 0x06,
+	Pong = 0x07,
 	PlayerInput = 0x10,
 	WorldSnapshot = 0x20,
 	EntitySpawn = 0x21,

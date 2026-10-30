@@ -137,4 +137,4 @@ jobs:
             -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="$PWD/mingw-toolchain.cmake"
 
       - name: Build Windows executable
-        run: cmake --build build-windows --parallel
+        run: cmake --build build-windows -j 2

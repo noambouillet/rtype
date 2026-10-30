@@ -12,14 +12,14 @@ else()
 endif()
 
 option(RTYPE_BUILD_SERVER "Build r-type_server (engine core, physics, net)" ON)
-option(RTYPE_BUILD_CLIENT "Build r-type_client (engine render, audio, input, net)" ON)
+option(RTYPE_BUILD_CLIENT "Build r-type_client (engine render, audio, input, net, tools)" ON)
 
 set(RTYPE_ENGINE_MODULES core net)
 if(RTYPE_BUILD_SERVER)
     list(APPEND RTYPE_ENGINE_MODULES physics)
 endif()
 if(RTYPE_BUILD_CLIENT)
-    list(APPEND RTYPE_ENGINE_MODULES render audio input)
+    list(APPEND RTYPE_ENGINE_MODULES render audio input tools)
 endif()
 
 if(NOT TARGET engine::core)
@@ -89,7 +89,7 @@ if(RTYPE_BUILD_CLIENT)
         src/client/app/ClientControls.cpp
         src/client/app/ClientOptions.cpp
     )
-    target_link_libraries(r-type_client PRIVATE rtype_client_core Threads::Threads)
+    target_link_libraries(r-type_client PRIVATE rtype_client_core engine::tools Threads::Threads)
 
     add_custom_target(rtype_assets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory

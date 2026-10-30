@@ -20,7 +20,7 @@ FormationSystem::FormationSystem() : _rng(std::random_device{}())
 {
 }
 
-/// Returns how often an enemy of `kind` fires, which bounds the random delay before its first shot.
+/// Returns how often an enemy of a kind fires, which bounds the random delay before its first shot.
 static float fireCooldown(game::EnemyKind kind)
 {
 	switch (kind) {
@@ -45,9 +45,9 @@ engine::core::Signature FormationSystem::signature(engine::core::Coordinator& co
 	return sig;
 }
 
-/// Spawns one enemy of the formation's kind every `delay` seconds; the spawner is destroyed once all are out.
+/// Spawns one enemy of the formation's kind at the formation's delay; the spawner is destroyed once all are out.
 /// Bugs start at the same point and follow the path of the one before, Patapata get their own height within
-/// `spread` and a random phase, Binks walk on the ground.
+/// the spread and a random phase, Binks walk on the ground.
 std::vector<engine::core::Entity> FormationSystem::update(engine::core::Coordinator& coordinator, float elapsedTime)
 {
 	std::vector<engine::core::Entity> spawned;

@@ -66,7 +66,7 @@ std::optional<engine::core::Entity> WeaponSystem::fire(engine::core::Coordinator
 	return fireAtPlayer(coordinator, origin);
 }
 
-/// Fires a shot from `origin` toward where the closest player is now; the shot then flies straight on.
+/// Fires a shot from a position toward where the closest player is now; the shot then flies straight on.
 std::optional<engine::core::Entity> WeaponSystem::fireAtPlayer(engine::core::Coordinator& coordinator, engine::core::Position origin)
 {
 	std::optional<engine::core::Velocity> aim;

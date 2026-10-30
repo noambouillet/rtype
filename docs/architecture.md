@@ -111,6 +111,8 @@ classDiagram
         +beginFrame()*
         +drawBackground(string_view texture, float offset)*
         +drawSprite(SpriteDraw command)*
+        +drawRect(RectDraw rect)*
+        +drawText(TextDraw text)*
         +endFrame()*
     }
 
@@ -122,6 +124,8 @@ classDiagram
         +beginFrame()
         +drawBackground(string_view texture, float offset)
         +drawSprite(SpriteDraw command)
+        +drawRect(RectDraw rect)
+        +drawText(TextDraw text)
         +endFrame()
     }
 
@@ -133,15 +137,24 @@ classDiagram
         +render(Coordinator coordinator, IGraphicsBackend backend, float dt)
     }
 
+    class MetricsOverlay {
+        +toggle()
+        +draw(IGraphicsBackend backend)
+    }
+
     IGraphicsBackend <|.. SfmlRenderer : implements
     RenderSystem ..> IGraphicsBackend : consumes
+    MetricsOverlay ..> IGraphicsBackend : consumes
 ```
+
+The caller owns the frame: it calls `beginFrame()`, lets `RenderSystem` draw the world, draws overlays such as the `MetricsOverlay` on top, then calls `endFrame()`.
 
 #### Materialization in Code
 
 - **Graphics Backend Interface:** Defines `IGraphicsBackend`, decoupling the engine from graphics libraries (`engine/render/include/engine/render/GraphicsBackend.hpp`).
 - **Engine Render System:** Processes entities with `Position` and `Sprite`, updates animations, sorts by layer, and updates background offsets (`engine/render/src/RenderSystem.cpp`).
-- **SFML Backend Implementation:** Concrete `IGraphicsBackend` using SFML windowing and sprites with texture caching (`engine/render/src/sfml/SfmlRenderer.cpp`).
+- **SFML Backend Implementation:** Concrete `IGraphicsBackend` using SFML windowing and sprites with texture caching, plus rectangles and text in the font set by `WindowConfig::fontFile` (`engine/render/src/sfml/SfmlRenderer.cpp`).
+- **Metrics Overlay:** Debug panel from `engine::tools`, toggled with F3 in the client (`engine/tools/src/MetricsOverlay.cpp`, see [Metrics](engine/tools/metrics.md)).
 
 ---
 

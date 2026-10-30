@@ -1,0 +1,31 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+set(Engine_MODULES @ENGINE_MODULES@)
+set(_engine_sfml_components @ENGINE_SFML_COMPONENTS@)
+
+if(_engine_sfml_components)
+    find_dependency(SFML 3.0.2 EXACT COMPONENTS ${_engine_sfml_components} CONFIG)
+endif()
+if(@ENGINE_BUILD_ASSETS@)
+    find_dependency(nlohmann_json CONFIG)
+endif()
+if(@ENGINE_BUILD_NET@)
+    find_dependency(asio CONFIG)
+    find_dependency(Threads)
+endif()
+if(@ENGINE_BUILD_SCRIPT@)
+    find_dependency(Lua)
+    find_dependency(sol2 CONFIG)
+endif()
+unset(_engine_sfml_components)
+
+include("${CMAKE_CURRENT_LIST_DIR}/EngineTargets.cmake")
+
+foreach(_engine_module IN LISTS Engine_MODULES)
+    set(Engine_${_engine_module}_FOUND TRUE)
+endforeach()
+unset(_engine_module)
+
+check_required_components(Engine)

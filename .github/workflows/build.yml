@@ -7,6 +7,53 @@ on:
     branches: [main]
 
 jobs:
+  engine-only:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Install System Dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake ninja-build pkg-config curl zip unzip tar libx11-dev libxi-dev libxrandr-dev libxcursor-dev libudev-dev libgl1-mesa-dev libfontconfig1-dev
+
+      - name: Check engine has no game references
+        run: |
+          if grep -rniE "rtype|bydo|player" engine/; then
+            echo "engine/ must not reference the game." >&2
+            exit 1
+          fi
+
+      - name: Create vcpkg archives directory
+        run: mkdir -p ${{ github.workspace }}/.vcpkg-archives
+
+      - name: Set up Vcpkg Binary Cache
+        run: echo "VCPKG_BINARY_SOURCES=clear;files,${{ github.workspace }}/.vcpkg-archives,readwrite" >> $GITHUB_ENV
+
+      - name: Cache Vcpkg packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/.vcpkg-archives
+            ${{ github.workspace }}/build-engine/vcpkg_installed
+          key: ${{ runner.os }}-engine-vcpkg-${{ hashFiles('**/vcpkg.json') }}
+          restore-keys: |
+            ${{ runner.os }}-engine-vcpkg-
+
+      - name: Bootstrap Vcpkg
+        run: ./vcpkg/bootstrap-vcpkg.sh
+
+      - name: Configure engine
+        run: cmake -S engine -B build-engine -G Ninja -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake
+
+      - name: Build engine
+        run: cmake --build build-engine
+
+      - name: Install engine
+        run: cmake --install build-engine --prefix "${{ github.workspace }}/engine-install"
+
   build-linux:
     runs-on: self-hosted
 
@@ -90,4 +137,4 @@ jobs:
             -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="$PWD/mingw-toolchain.cmake"
 
       - name: Build Windows executable
-        run: cmake --build build-windows --parallel
+        run: cmake --build build-windows -j 2

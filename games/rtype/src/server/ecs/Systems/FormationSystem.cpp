@@ -1,0 +1,88 @@
+/*
+** EPITECH PROJECT, 2026
+** R-Type
+** File description:
+** FormationSystem
+*/
+
+#include "FormationSystem.hpp"
+
+#include <numbers>
+
+#include "engine/core/ecs/Components.hpp"
+#include "server/ecs/GameComponents.hpp"
+#include "server/game/GameConfig.hpp"
+#include "server/game/Prefabs.hpp"
+
+namespace rtype::ecs {
+
+FormationSystem::FormationSystem() : _rng(std::random_device{}())
+{
+}
+
+/// Returns how often an enemy of a kind fires, which bounds the random delay before its first shot.
+static float fireCooldown(game::EnemyKind kind)
+{
+	switch (kind) {
+		case game::EnemyKind::Bug:
+			return config::BUG_FIRE_COOLDOWN;
+		case game::EnemyKind::Scant:
+			return config::SCANT_FIRE_COOLDOWN;
+		case game::EnemyKind::Bink:
+			return config::BINK_FIRE_COOLDOWN;
+		case game::EnemyKind::Patapata:
+		default:
+			return config::PATAPATA_FIRE_COOLDOWN;
+	}
+}
+
+/// Builds the signature the system needs (FormationSpawner).
+engine::core::Signature FormationSystem::signature(engine::core::Coordinator& coordinator)
+{
+	engine::core::Signature sig;
+
+	sig.set(coordinator.getComponentType<FormationSpawner>());
+	return sig;
+}
+
+/// Spawns one enemy of the formation's kind at the formation's delay; the spawner is destroyed once all are out.
+/// Bugs start at the same point and follow the path of the one before, Patapata get their own height within
+/// the spread and a random phase, Binks walk on the ground.
+std::vector<engine::core::Entity> FormationSystem::update(engine::core::Coordinator& coordinator, float elapsedTime)
+{
+	std::vector<engine::core::Entity> spawned;
+	for (const engine::core::Entity& e : entities) {
+		auto& formation = coordinator.getComponent<FormationSpawner>(e);
+
+		formation.timer -= elapsedTime;
+		if (formation.timer > 0.0F || formation.remaining <= 0) {
+			continue;
+		}
+		formation.timer += formation.delay;
+		formation.remaining--;
+		const bool done = formation.remaining <= 0;
+		const game::EnemyKind kind = formation.kind;
+		std::uniform_real_distribution<float> height(formation.y - formation.spread, formation.y + formation.spread);
+		std::uniform_real_distribution<float> phase(0.0F, 2.0F * std::numbers::pi_v<float>);
+		std::uniform_real_distribution<float> firstShot(config::ENEMY_FIRST_SHOT_MIN,
+			config::ENEMY_FIRST_SHOT_MIN + fireCooldown(kind));
+		const float y = height(_rng);
+		if (prefabs::canSpawnReplicated(coordinator)) {
+			if (kind == game::EnemyKind::Scant) {
+				spawned.push_back(prefabs::createScant(coordinator, {.y = y, .firstShot = firstShot(_rng)}));
+			} else if (kind == game::EnemyKind::Bink) {
+				spawned.push_back(prefabs::createBink(coordinator, firstShot(_rng)));
+			} else if (kind == game::EnemyKind::Bug) {
+				spawned.push_back(prefabs::createBug(coordinator, {.y = y, .firstShot = firstShot(_rng)}));
+			} else {
+				spawned.push_back(prefabs::createPatapata(coordinator, {.y = y, .firstShot = firstShot(_rng)}, phase(_rng)));
+			}
+		}
+		if (done && !coordinator.hasComponent<engine::core::Destroy>(e)) {
+			coordinator.addComponent(e, engine::core::Destroy{});
+		}
+	}
+	return spawned;
+}
+
+}

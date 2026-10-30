@@ -14,7 +14,7 @@
 namespace engine::tools {
 
 /// Writes a value with the given number of decimals, or "--" when it is not measured yet.
-static std::string number(std::optional<float> value, int decimals)
+static std::string formatMetric(std::optional<float> value, int decimals)
 {
 	if (!value) {
 		return "--";
@@ -61,12 +61,12 @@ void MetricsOverlay::draw(render::IGraphicsBackend& backend) const
 std::vector<std::string> MetricsOverlay::format(const core::MetricsSnapshot& snapshot)
 {
 	return {
-		"FPS     " + number(snapshot.framesPerSecond, core::Metrics::COARSE_DECIMALS) + "   frame " + number(snapshot.averageFrameMs, core::Metrics::COARSE_DECIMALS) + " ms (worst " + number(snapshot.worstFrameMs, core::Metrics::COARSE_DECIMALS) + ")",
-		"Work    " + number(snapshot.averageBusyMs, core::Metrics::FINE_DECIMALS) + " ms (worst " + number(snapshot.worstBusyMs, core::Metrics::FINE_DECIMALS) + ")",
-		"Ping    " + number(snapshot.roundTripMs, core::Metrics::WHOLE_DECIMALS) + " ms   avg " + number(snapshot.smoothedRoundTripMs, core::Metrics::WHOLE_DECIMALS) + "   jitter " + number(snapshot.jitterMs, core::Metrics::COARSE_DECIMALS),
-		"Loss    " + number(snapshot.packetLossPercent, core::Metrics::COARSE_DECIMALS) + " %",
-		"Up      " + number(snapshot.uploadKiBps, core::Metrics::FINE_DECIMALS) + " KiB/s   " + number(snapshot.packetsSentPerSecond, core::Metrics::WHOLE_DECIMALS) + " pkt/s",
-		"Down    " + number(snapshot.downloadKiBps, core::Metrics::FINE_DECIMALS) + " KiB/s   " + number(snapshot.packetsReceivedPerSecond, core::Metrics::WHOLE_DECIMALS) + " pkt/s",
+		"FPS     " + formatMetric(snapshot.framesPerSecond, core::Metrics::COARSE_DECIMALS) + "   frame " + formatMetric(snapshot.averageFrameMs, core::Metrics::COARSE_DECIMALS) + " ms (worst " + formatMetric(snapshot.worstFrameMs, core::Metrics::COARSE_DECIMALS) + ")",
+		"Work    " + formatMetric(snapshot.averageBusyMs, core::Metrics::FINE_DECIMALS) + " ms (worst " + formatMetric(snapshot.worstBusyMs, core::Metrics::FINE_DECIMALS) + ")",
+		"Ping    " + formatMetric(snapshot.roundTripMs, core::Metrics::WHOLE_DECIMALS) + " ms   avg " + formatMetric(snapshot.smoothedRoundTripMs, core::Metrics::WHOLE_DECIMALS) + "   jitter " + formatMetric(snapshot.jitterMs, core::Metrics::COARSE_DECIMALS),
+		"Loss    " + formatMetric(snapshot.packetLossPercent, core::Metrics::COARSE_DECIMALS) + " %",
+		"Up      " + formatMetric(snapshot.uploadKiBps, core::Metrics::FINE_DECIMALS) + " KiB/s   " + formatMetric(snapshot.packetsSentPerSecond, core::Metrics::WHOLE_DECIMALS) + " pkt/s",
+		"Down    " + formatMetric(snapshot.downloadKiBps, core::Metrics::FINE_DECIMALS) + " KiB/s   " + formatMetric(snapshot.packetsReceivedPerSecond, core::Metrics::WHOLE_DECIMALS) + " pkt/s",
 	};
 }
 

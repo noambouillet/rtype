@@ -59,11 +59,13 @@ public:
 	TextureId getTexture(const std::string& name) const;
 	const AnimationDescriptor& getAnimation(const std::string& name) const;
 	const std::string& getSoundPath(const std::string& name) const;
+	const std::string& getFontPath(const std::string& name) const;
 
 	bool hasTexture(const std::string& name) const;
 	bool hasSprite(const std::string& name) const;
 	bool hasAnimation(const std::string& name) const;
 	bool hasSound(const std::string& name) const;
+	bool hasFont(const std::string& name) const;
 	[[nodiscard]] bool hasTag(const std::string& key, const std::string& tag) const;
 	[[nodiscard]] bool hasTag(TextureId id, const std::string& tag) const;
 
@@ -76,6 +78,7 @@ private:
 	std::unordered_map<std::string, TextureId> _textures;
 	std::unordered_map<std::string, AnimationDescriptor> _animations;
 	std::unordered_map<std::string, std::string> _soundPaths;
+	std::unordered_map<std::string, std::string> _fontPaths;
 	std::unordered_map<std::string, ManifestGroup> _groups;
 	std::unordered_map<std::string, std::unordered_set<std::string>> _assetTags;
 	std::unordered_map<TextureId, std::unordered_set<std::string>> _textureTags;

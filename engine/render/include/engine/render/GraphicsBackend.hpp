@@ -16,6 +16,9 @@ namespace engine::render {
 using TextureId = std::uint32_t;
 static constexpr TextureId INVALID_TEXTURE_ID = 0;
 
+using FontId = std::uint32_t;
+static constexpr FontId INVALID_FONT_ID = 0;
+
 struct Point {
 	int x;
 	int y;
@@ -53,6 +56,7 @@ struct RectDraw {
 };
 
 struct TextDraw {
+	FontId font = INVALID_FONT_ID;
 	std::string_view text;
 	float x;
 	float y;
@@ -65,6 +69,7 @@ public:
 	virtual ~IGraphicsBackend() = default;
 
 	virtual TextureId loadTextureFromFile(const std::string& filepath) = 0;
+	virtual FontId loadFontFromFile(const std::string& filepath) = 0;
 	virtual void beginFrame() = 0;
 	virtual void drawBackground(TextureId texture, float offset) = 0;
 	virtual void drawSprite(const SpriteDraw& sprite) = 0;

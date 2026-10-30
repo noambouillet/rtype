@@ -168,26 +168,30 @@ int runClient(const ClientOptions& options)
 	engine::core::EngineSettings engineSettings;
 	engine::input::InputMap bindings = client::ClientControls::defaultBindings();
 	loadSettings(engineSettings, bindings);
-  engine::core::EventBus bus;
+	engine::core::EventBus bus;
 	engine::core::Metrics metrics(bus);
 	engine::tools::MetricsOverlay overlay(bus);
 	engine::assets::AssetManager assets;
 	engine::net::UdpClient transport({.host = options.host, .port = options.port, .maxDatagramSize = network::MAX_DATAGRAM_SIZE});
 	network::GameClient client(transport, bus);
-	engine::render::SfmlRenderer window({.width = client_config::WINDOW_WIDTH, .height = client_config::WINDOW_HEIGHT, .title = "R-Type", .fontFile = std::string(client_config::FONT_FILE)});
+	engine::render::SfmlRenderer window({.width = client_config::WINDOW_WIDTH, .height = client_config::WINDOW_HEIGHT, .title = "R-Type"});
 	assets.loadManifest("games/rtype/assets/manifest.json", window);
 	assets.preload("level1", window);
+	if (assets.hasFont("default")) {
+		const engine::render::FontId fontId = window.loadFontFromFile(assets.getFontPath("default"));
+		overlay.setFont(fontId);
+	}
 	engine::input::SfmlInput input(std::move(bindings));
 	engine::audio::SfmlAudio audio;
 	client::ClientControls controls;
 	client::ClientWorld view(assets, engineSettings.screenFlashEnabled());
-  ClientLoop loop{.window = window, .input = input, .audio = audio, .controls = controls, .client = client, .view = view, .logger = *logger, .bus = bus, .overlay = overlay, .previous = client.status(), .lastFrame = Clock::now()};
+	ClientLoop loop{.window = window, .input = input, .audio = audio, .controls = controls, .client = client, .view = view, .logger = *logger, .bus = bus, .overlay = overlay, .previous = client.status(), .lastFrame = Clock::now()};
 	logger->info("Connecting to " + options.host + ':' + std::to_string(options.port));
 	while (running != 0 && window.isOpen()) {
 		if (!updateFrame(loop)) {
 			client.disconnect();
-      logger->info("Disconnected");
-      return 1;
+			logger->info("Disconnected");
+			return 1;
 		}
 	}
 	client.disconnect();

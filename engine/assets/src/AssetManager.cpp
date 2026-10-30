@@ -249,6 +249,25 @@ static void loadSoundsSection(const nlohmann::json& manifestJson, const std::fil
 	}
 }
 
+/// Iterates and registers all font filepaths from the JSON object.
+static void loadFontsSection(const nlohmann::json& manifestJson, const std::filesystem::path& baseDirectory,
+	std::unordered_map<std::string, std::string>& fontPaths)
+{
+	if (!manifestJson.contains("fonts") || !manifestJson["fonts"].is_object()) {
+		return;
+	}
+	for (const auto& [fontKey, fontValue] : manifestJson["fonts"].items()) {
+		if (fontValue.is_string()) {
+			const std::filesystem::path resolved = resolveAssetPath(baseDirectory, fontValue.get<std::string>());
+			if (!resolved.empty()) {
+				fontPaths[fontKey] = resolved.string();
+			} else {
+				fontPaths[fontKey] = (baseDirectory / fontValue.get<std::string>()).string();
+			}
+		}
+	}
+}
+
 /// Iterates and registers preload groups from the JSON object.
 static void loadGroupsSection(const nlohmann::json& manifestJson,
 	std::unordered_map<std::string, ManifestGroup>& groups)
@@ -349,6 +368,7 @@ void AssetManager::loadManifest(const std::string& path, IGraphicsBackend& graph
 	std::unordered_map<std::string, TextureId> textures;
 	std::unordered_map<std::string, AnimationDescriptor> animations;
 	std::unordered_map<std::string, std::string> soundPaths;
+	std::unordered_map<std::string, std::string> fontPaths;
 	std::unordered_map<std::string, ManifestGroup> groups;
 	std::unordered_map<std::string, std::unordered_set<std::string>> assetTags;
 	std::unordered_map<TextureId, std::unordered_set<std::string>> textureTags;
@@ -359,6 +379,7 @@ void AssetManager::loadManifest(const std::string& path, IGraphicsBackend& graph
 	loadSpritesSection(manifestJson, fallbackTexture, textures, sprites);
 	loadAnimationsSection(manifestJson, fallbackTexture, textures, animations);
 	loadSoundsSection(manifestJson, baseDirectory, soundPaths);
+	loadFontsSection(manifestJson, baseDirectory, fontPaths);
 	loadGroupsSection(manifestJson, groups);
 	loadTagsSection(manifestJson, assetTags, textures, textureTags);
 
@@ -371,6 +392,7 @@ void AssetManager::loadManifest(const std::string& path, IGraphicsBackend& graph
 	_textures = std::move(textures);
 	_animations = std::move(animations);
 	_soundPaths = std::move(soundPaths);
+	_fontPaths = std::move(fontPaths);
 	_groups = std::move(groups);
 	_assetTags = std::move(assetTags);
 	_textureTags = std::move(textureTags);
@@ -485,6 +507,17 @@ const std::string& AssetManager::getSoundPath(const std::string& name) const
 	return EMPTY_PATH;
 }
 
+/// Retrieves a resolved font file path by name.
+const std::string& AssetManager::getFontPath(const std::string& name) const
+{
+	const auto fontIterator = _fontPaths.find(name);
+	if (fontIterator != _fontPaths.end()) {
+		return fontIterator->second;
+	}
+	static const std::string EMPTY_PATH;
+	return EMPTY_PATH;
+}
+
 /// Checks whether a texture exists by name.
 bool AssetManager::hasTexture(const std::string& name) const
 {
@@ -507,6 +540,12 @@ bool AssetManager::hasAnimation(const std::string& name) const
 bool AssetManager::hasSound(const std::string& name) const
 {
 	return _soundPaths.find(name) != _soundPaths.end();
+}
+
+/// Checks whether a font exists by name.
+bool AssetManager::hasFont(const std::string& name) const
+{
+	return _fontPaths.find(name) != _fontPaths.end();
 }
 
 /// Checks whether an asset key or its associated texture has the specified tag.

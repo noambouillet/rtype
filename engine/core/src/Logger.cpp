@@ -9,6 +9,7 @@
 
 #include <ctime>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <string>
 
@@ -16,11 +17,14 @@
 
 namespace engine::core {
 
-Logger::Logger(std::ostream& output) : _output(output), _verbose(false)
+std::shared_ptr<Logger> Logger::globalLogger = nullptr;
+
+Logger::Logger(std::ostream& output) : _output(output), _minLevel(Level::Info)
 {
 }
 
-Logger::Logger(const std::filesystem::path& filename) : _file(filename, std::ios::app), _output(_file), _verbose(false)
+Logger::Logger(const std::filesystem::path& filename)
+	: _file(filename, std::ios::app), _output(_file), _minLevel(Level::Info)
 {
 	if (!_file) {
 		throw LoggerError("Cannot open log file: " + filename.string());
@@ -29,28 +33,38 @@ Logger::Logger(const std::filesystem::path& filename) : _file(filename, std::ios
 
 void Logger::setVerbose(bool verbose)
 {
-	_verbose = verbose;
+	_minLevel = verbose ? Level::Debug : Level::Info;
 }
 
-/// Writes a timestamped message to the configured stream.
-void Logger::write(const std::string& message)
+void Logger::setLevel(Level level)
 {
-	log(Level::Plain, message);
+	_minLevel = level;
 }
 
-/// Writes informational messages when verbose output is enabled.
+Logger::Level Logger::level() const
+{
+	return _minLevel;
+}
+
+/// Writes debug messages when debug level is enabled.
+void Logger::debug(const std::string& message)
+{
+	log(Level::Debug, message);
+}
+
+/// Writes informational messages when info level is enabled.
 void Logger::info(const std::string& message)
 {
 	log(Level::Info, message);
 }
 
-/// Writes warnings when verbose output is enabled.
+/// Writes warnings when warning level is enabled.
 void Logger::warn(const std::string& message)
 {
 	log(Level::Warn, message);
 }
 
-/// Writes errors regardless of the verbose setting.
+/// Writes errors when error level is enabled.
 void Logger::error(const std::string& message)
 {
 	log(Level::Error, message);
@@ -59,7 +73,7 @@ void Logger::error(const std::string& message)
 /// Writes one entry to this logger instance's output.
 void Logger::log(Level level, const std::string& message)
 {
-	if ((level == Level::Info || level == Level::Warn) && !_verbose) {
+	if (level < _minLevel) {
 		return;
 	}
 	const std::time_t now = std::time(nullptr);
@@ -75,17 +89,40 @@ void Logger::log(Level level, const std::string& message)
 	oss << std::put_time(&timeInfo, "%a %b %d %H:%M:%S %Y");
 	const std::string date = oss.str();
 	_output << '[' << date << "] ";
-	if (level != Level::Plain) {
-		std::string name = "ERROR";
-		if (level == Level::Info) {
+
+	std::string name = "INFO";
+	switch (level) {
+		case Level::Debug:
+			name = "DEBUG";
+			break;
+		case Level::Info:
 			name = "INFO";
-		} else if (level == Level::Warn) {
+			break;
+		case Level::Warn:
 			name = "WARN";
-		}
-		_output << '[' << name << "] ";
+			break;
+		case Level::Error:
+			name = "ERROR";
+			break;
+		default:
+			break;
 	}
-	_output << message << '\n';
+	_output << '[' << name << "] " << message << '\n';
 	_output.flush();
+}
+
+void Logger::setDefaultLogger(std::shared_ptr<Logger> logger)
+{
+	globalLogger = std::move(logger);
+}
+
+Logger& Logger::defaultLogger()
+{
+	if (!globalLogger) {
+		static auto fallback = std::make_shared<Logger>(std::cout);
+		return *fallback;
+	}
+	return *globalLogger;
 }
 
 }

@@ -13,15 +13,15 @@
 
 namespace engine::audio {
 
-static constexpr float MIN_VOLUME = 0.0F;
-static constexpr float MAX_VOLUME = 100.0F;
-
-float clampVolume(float volume);
-float stereoPan(float x, float listenerX, float range);
-
 class Mixer {
 public:
+	static constexpr float MIN_VOLUME = 0.0F;
+	static constexpr float MAX_VOLUME = 100.0F;
+
 	Mixer();
+
+	static float clampVolume(float volume);
+	static float stereoPan(float x, float listenerX, float range);
 
 	void setVolume(Bus bus, float volume);
 	[[nodiscard]] float volume(Bus bus) const;

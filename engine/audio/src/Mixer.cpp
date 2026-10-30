@@ -14,7 +14,7 @@
 namespace engine::audio {
 
 /// Limits a volume to 0-100.
-float clampVolume(float volume)
+float Mixer::clampVolume(float volume)
 {
 	if (std::isnan(volume)) {
 		return MIN_VOLUME;
@@ -23,7 +23,7 @@ float clampVolume(float volume)
 }
 
 /// Returns a pan from -1 (left) to 1 (right) for a sound at x heard from listenerX.
-float stereoPan(float x, float listenerX, float range)
+float Mixer::stereoPan(float x, float listenerX, float range)
 {
 	if (range <= 0.0F) {
 		return 0.0F;

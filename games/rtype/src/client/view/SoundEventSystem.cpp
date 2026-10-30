@@ -45,7 +45,7 @@ std::string_view SoundEventSystem::resolveSound(std::string_view key) const
 /// Returns the pan of a sound at x, heard from the local ship.
 float SoundEventSystem::panAt(float x) const
 {
-	return engine::audio::stereoPan(x, _listenerX, PAN_RANGE) * PAN_WIDTH;
+	return engine::audio::Mixer::stereoPan(x, _listenerX, PAN_RANGE) * PAN_WIDTH;
 }
 
 /// Moves the listener to the local ship. It stays at its last place while the ship is dead.

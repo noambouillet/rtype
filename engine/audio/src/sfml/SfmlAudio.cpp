@@ -120,7 +120,7 @@ void SfmlAudio::playMusic(std::string_view name, float volume, Seconds fade)
 	const std::filesystem::path path = _implementation->resolve(name);
 	SfmlMusicTrack& previous = _implementation->currentTrack();
 	if (previous.isPlaying() && previous.path == path) {
-		previous.volume = clampVolume(volume);
+		previous.volume = Mixer::clampVolume(volume);
 		previous.fadeTo(1.0F, fade);
 		_implementation->applyVolume(previous);
 		return;
@@ -136,7 +136,7 @@ void SfmlAudio::playMusic(std::string_view name, float volume, Seconds fade)
 		}
 	}
 	next.path = path;
-	next.volume = clampVolume(volume);
+	next.volume = Mixer::clampVolume(volume);
 	next.gain = fade > Seconds::zero() ? 0.0F : 1.0F;
 	next.fadeTo(1.0F, fade);
 	next.music.setLooping(true);
@@ -166,7 +166,7 @@ void SfmlAudio::playSound(std::string_view name, float volume, Bus bus, float pa
 	}
 	try {
 		const sf::SoundBuffer& buffer = _implementation->loadBuffer(key);
-		SfmlVoice& voice = _implementation->acquireVoice(buffer, bus, clampVolume(volume));
+		SfmlVoice& voice = _implementation->acquireVoice(buffer, bus, Mixer::clampVolume(volume));
 		voice.sound.setPan(std::clamp(pan, -1.0F, 1.0F));
 		_implementation->applyVolume(voice);
 		voice.sound.play();

@@ -8,14 +8,18 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include "client/GameConfig.hpp"
 #include "client/view/ClientNetworkSystem.hpp"
 #include "client/view/ViewEvent.hpp"
 #include "engine/assets/AssetManager.hpp"
+#include "engine/audio/AudioBackend.hpp"
+#include "engine/audio/Bus.hpp"
 #include "engine/core/ecs/Coordinator.hpp"
 #include "engine/core/ecs/System.hpp"
 
@@ -25,6 +29,7 @@ class SoundEventSystem : public engine::core::System {
 public:
 	static constexpr std::string_view MUSIC = "music";
 	static constexpr float MUSIC_VOLUME = 20.0F;
+	static constexpr engine::audio::Seconds MUSIC_FADE{2.0F};
 
 	SoundEventSystem();
 	void setAssetManager(const engine::assets::AssetManager& assets);
@@ -43,18 +48,23 @@ private:
 	static constexpr float PLAYER_SHOT_VOLUME = 100.0F;
 	static constexpr float ENEMY_SHOT_VOLUME = 70.0F;
 	static constexpr float ENEMY_DEATH_VOLUME = 80.0F;
-	static constexpr float PLAYER_DEATH_VOLUME = 150.0F;
-	static constexpr float CONNECTION_VOLUME = 150.0F;
+	static constexpr float PLAYER_DEATH_VOLUME = 100.0F;
+	static constexpr float CONNECTION_VOLUME = 100.0F;
+	static constexpr float PAN_WIDTH = 0.25F;
+	static constexpr float PAN_RANGE = static_cast<float>(client_config::WINDOW_WIDTH) / 2.0F;
 
 	[[nodiscard]] std::string_view resolveSound(std::string_view key) const;
-	void emit(engine::core::Coordinator& coordinator, std::string_view name, float volume);
+	[[nodiscard]] float panAt(float x) const;
+	void updateListener(engine::core::Coordinator& coordinator, const ClientNetworkSystem& network, std::optional<std::uint8_t> localPlayerId);
+	static void emit(engine::core::Coordinator& coordinator, std::string_view name, float volume, engine::audio::Bus bus, float pan);
 	void handle(engine::core::Coordinator& coordinator, const SpawnEvent& event, std::optional<std::uint8_t> localPlayerId);
 	void handle(engine::core::Coordinator& coordinator, const DestroyEvent& event);
 	void handle(engine::core::Coordinator& coordinator, const DeathEvent& event);
 	void updateConnections(engine::core::Coordinator& coordinator, std::uint8_t connected);
 
-	const engine::assets::AssetManager* _assets = nullptr;
+	std::optional<std::reference_wrapper<const engine::assets::AssetManager>> _assets;
 	std::uint8_t _connectedMask;
+	float _listenerX;
 };
 
 }

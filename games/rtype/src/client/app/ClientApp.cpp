@@ -24,6 +24,7 @@
 #include "client/network/GameClient.hpp"
 #include "client/view/ClientWorld.hpp"
 #include "engine/assets/AssetManager.hpp"
+#include "engine/audio/AudioSettings.hpp"
 #include "engine/audio/SfmlAudio.hpp"
 #include "engine/core/ConfigParser.hpp"
 #include "engine/core/EngineSettings.hpp"
@@ -105,15 +106,17 @@ static void reportNotices(network::GameClient& client, engine::core::Logger& log
 }
 
 /// Loads client settings, creating the settings file with default values if it is missing or empty.
-static void loadSettings(engine::core::EngineSettings& engineSettings, engine::input::InputMap& bindings)
+static void loadSettings(engine::core::EngineSettings& engineSettings, engine::input::InputMap& bindings, engine::audio::AudioSettings& audioSettings)
 {
 	const std::string configFile = std::string(client_config::SETTINGS_FILE);
 	std::map<std::string, std::string> config = engine::core::ConfigParser::parseFile(configFile);
 	engineSettings.loadFromMap(config);
 	bindings.loadFromMap(config);
+	audioSettings.loadFromMap(config);
 	if (config.empty()) {
 		engineSettings.saveToMap(config);
 		bindings.saveToMap(config);
+		audioSettings.saveToMap(config);
 		if (!engine::core::ConfigParser::saveFile(configFile, config)) {
 			throw engine::core::ConfigError("Unable to create settings file: " + configFile);
 		}
@@ -150,7 +153,7 @@ static bool updateFrame(ClientLoop& loop)
 	loop.window.beginFrame();
 	loop.view.render(loop.window, deltaTime);
 	loop.overlay.draw(loop.window);
-	loop.view.playAudio(loop.audio);
+	loop.view.playAudio(loop.audio, deltaTime);
 	// Measured before endFrame, which waits for the frame rate limit.
 	const float busySeconds = std::chrono::duration<float>(Clock::now() - frameStart).count();
 	loop.window.endFrame();
@@ -167,7 +170,8 @@ int runClient(const ClientOptions& options)
 	logger->setVerbose(true);
 	engine::core::EngineSettings engineSettings;
 	engine::input::InputMap bindings = client::ClientControls::defaultBindings();
-	loadSettings(engineSettings, bindings);
+	engine::audio::AudioSettings audioSettings;
+	loadSettings(engineSettings, bindings, audioSettings);
 	engine::core::EventBus bus;
 	engine::core::Metrics metrics(bus);
 	engine::tools::MetricsOverlay overlay(bus);
@@ -183,6 +187,7 @@ int runClient(const ClientOptions& options)
 	}
 	engine::input::SfmlInput input(std::move(bindings));
 	engine::audio::SfmlAudio audio;
+	audioSettings.apply(audio);
 	client::ClientControls controls;
 	client::ClientWorld view(assets, engineSettings.screenFlashEnabled());
 	ClientLoop loop{.window = window, .input = input, .audio = audio, .controls = controls, .client = client, .view = view, .logger = *logger, .bus = bus, .overlay = overlay, .previous = client.status(), .lastFrame = Clock::now()};

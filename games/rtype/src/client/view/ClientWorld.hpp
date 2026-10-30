@@ -22,7 +22,7 @@ public:
 	explicit ClientWorld(const engine::assets::AssetManager& assets, bool screenFlash = true);
 	void update(float deltaTime, network::GameClient& client, std::uint8_t buttons);
 	void render(engine::render::IGraphicsBackend& backend, float deltaTime);
-	void playAudio(engine::audio::IAudioBackend& backend);
+	void playAudio(engine::audio::IAudioBackend& backend, float deltaTime);
 
 private:
 	engine::core::Coordinator _coordinator;

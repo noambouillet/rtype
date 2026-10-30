@@ -54,7 +54,7 @@ ClientWorld::ClientWorld(const engine::assets::AssetManager& assets, bool screen
 	_coordinator.setSystemSignature<engine::audio::AudioSystem>(engine::audio::AudioSystem::signature(_coordinator));
 	const std::string musicPath = assets.hasSound(std::string(SoundEventSystem::MUSIC)) ? assets.getSoundPath(std::string(SoundEventSystem::MUSIC)) : "";
 	if (!musicPath.empty()) {
-		audio.setMusic(musicPath, SoundEventSystem::MUSIC_VOLUME);
+		audio.setMusic(musicPath, SoundEventSystem::MUSIC_VOLUME, SoundEventSystem::MUSIC_FADE);
 	}
 }
 
@@ -80,9 +80,9 @@ void ClientWorld::render(engine::render::IGraphicsBackend& backend, float deltaT
 	_coordinator.getSystem<engine::render::RenderSystem>().render(_coordinator, backend, deltaTime);
 }
 
-void ClientWorld::playAudio(engine::audio::IAudioBackend& backend)
+void ClientWorld::playAudio(engine::audio::IAudioBackend& backend, float deltaTime)
 {
-	_coordinator.getSystem<engine::audio::AudioSystem>().play(_coordinator, backend);
+	_coordinator.getSystem<engine::audio::AudioSystem>().play(_coordinator, backend, deltaTime);
 }
 
 }

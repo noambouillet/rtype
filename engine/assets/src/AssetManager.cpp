@@ -8,10 +8,10 @@
 #include "engine/assets/AssetManager.hpp"
 
 #include <fstream>
-#include <iostream>
 #include <nlohmann/json.hpp>
 
 #include "engine/assets/AssetError.hpp"
+#include "engine/core/Logger.hpp"
 
 namespace engine::assets {
 
@@ -24,8 +24,11 @@ static std::filesystem::path resolveAssetPath(const std::filesystem::path& baseD
 		return {};
 	}
 	const std::filesystem::path candidatePath(rawAssetPath);
-	if (candidatePath.is_absolute() && std::filesystem::exists(candidatePath)) {
-		return candidatePath;
+	if (candidatePath.is_absolute()) {
+		core::Logger::defaultLogger().warn("AssetManager: Absolute asset path detected: " + rawAssetPath + " (prefer relative paths)");
+		if (std::filesystem::exists(candidatePath)) {
+			return candidatePath;
+		}
 	}
 	if (!baseDirectory.empty() && std::filesystem::exists(baseDirectory / candidatePath)) {
 		return baseDirectory / candidatePath;
@@ -57,14 +60,14 @@ static bool parseJsonFile(const std::filesystem::path& filePath, nlohmann::json&
 {
 	std::ifstream manifestFile(filePath);
 	if (!manifestFile.is_open()) {
-		std::cerr << "AssetManager warning: Unable to open manifest: " << filePath << "\n";
+		core::Logger::defaultLogger().error("AssetManager: Unable to open manifest: " + filePath.string());
 		return false;
 	}
 	try {
 		manifestFile >> parsedJson;
 		return true;
 	} catch (const nlohmann::json::exception& exception) {
-		std::cerr << "AssetManager warning: JSON parse error in manifest: " << exception.what() << "\n";
+		core::Logger::defaultLogger().error("AssetManager: JSON parse error in manifest: " + std::string(exception.what()));
 		return false;
 	}
 }
@@ -79,12 +82,15 @@ static TextureId loadFallbackTexture(const nlohmann::json& manifestJson,
 	}
 	const std::filesystem::path fallbackPath = resolveAssetPath(baseDirectory, fallbackFilename);
 	if (fallbackPath.empty() || !std::filesystem::exists(fallbackPath)) {
+		core::Logger::defaultLogger().error("AssetManager: Failed to find fallback texture: " + fallbackFilename);
 		throw AssetError("Failed to find fallback texture: " + fallbackFilename);
 	}
 	const TextureId fallbackId = graphics.loadTextureFromFile(fallbackPath.string());
 	if (fallbackId == INVALID_TEXTURE_ID) {
+		core::Logger::defaultLogger().error("AssetManager: Failed to load fallback texture: " + fallbackPath.string());
 		throw AssetError("Failed to load fallback texture: " + fallbackPath.string());
 	}
+	core::Logger::defaultLogger().debug("AssetManager: Fallback texture loaded successfully from " + fallbackPath.string());
 	return fallbackId;
 }
 
@@ -103,19 +109,20 @@ static void loadTextureEntry(const std::string& textureKey, const nlohmann::json
 	}
 	const std::filesystem::path resolvedPath = resolveAssetPath(baseDirectory, relativePath);
 	if (resolvedPath.empty() || !std::filesystem::exists(resolvedPath)) {
-		std::cerr << "AssetManager warning: Missing texture asset '" << textureKey << "', using fallback ID\n";
+		core::Logger::defaultLogger().warn("AssetManager: Missing texture asset '" + textureKey + "', using fallback ID");
 		loadedTextures[textureKey] = fallbackId;
 		return;
 	}
 	const TextureId textureId = graphics.loadTextureFromFile(resolvedPath.string());
 	if (textureId == INVALID_TEXTURE_ID) {
-		std::cerr << "AssetManager warning: Missing texture asset '" << textureKey << "', using fallback ID\n";
+		core::Logger::defaultLogger().warn("AssetManager: Missing texture asset '" + textureKey + "', using fallback ID");
 		loadedTextures[textureKey] = fallbackId;
 		return;
 	}
 	loadedTextures[textureKey] = textureId;
 	loadedTextures[resolvedPath.filename().string()] = textureId;
 	loadedTextures[relativePath] = textureId;
+	core::Logger::defaultLogger().debug("AssetManager: Loaded texture asset '" + textureKey + "' from " + resolvedPath.string());
 }
 
 /// Iterates and registers all textures from the JSON object.
@@ -169,7 +176,7 @@ static TextureId resolveSpriteTexture(const std::string& spriteName, const nlohm
 	if (textureIterator != loadedTextures.end()) {
 		return textureIterator->second;
 	}
-	std::cerr << "AssetManager warning: Sprite '" << spriteName << "' unknown texture '" << textureReference << "'\n";
+	core::Logger::defaultLogger().warn("AssetManager: Sprite '" + spriteName + "' unknown texture '" + textureReference + "'");
 	return fallbackId;
 }
 
@@ -350,8 +357,10 @@ static void loadTagsSection(const nlohmann::json& manifestJson,
 /// Parses the JSON manifest file to register all textures and sprites with strong exception safety.
 void AssetManager::loadManifest(const std::string& path, IGraphicsBackend& graphics)
 {
+	core::Logger::defaultLogger().debug("AssetManager: Loading manifest from " + path);
 	const std::filesystem::path manifestPath = findManifestPath(path);
 	if (manifestPath.empty()) {
+		core::Logger::defaultLogger().error("AssetManager: Manifest file not found: " + path);
 		throw AssetError("Manifest file not found: " + path);
 	}
 	nlohmann::json manifestJson;
@@ -396,6 +405,13 @@ void AssetManager::loadManifest(const std::string& path, IGraphicsBackend& graph
 	_groups = std::move(groups);
 	_assetTags = std::move(assetTags);
 	_textureTags = std::move(textureTags);
+
+	core::Logger::defaultLogger().debug("AssetManager: Manifest loaded successfully (" +
+										std::to_string(_textures.size()) + " textures, " +
+										std::to_string(_sprites.size()) + " sprites, " +
+										std::to_string(_animations.size()) + " animations, " +
+										std::to_string(_soundPaths.size()) + " sounds, " +
+										std::to_string(_fontPaths.size()) + " fonts)");
 }
 
 /// Helper to preload all textures of a specific manifest group.
@@ -413,15 +429,17 @@ static void preloadGroupTextures(const ManifestGroup& group, const std::filesyst
 				id = graphics.loadTextureFromFile(resolved.string());
 				if (id != INVALID_TEXTURE_ID) {
 					textures[textureKey] = id;
+					core::Logger::defaultLogger().debug("AssetManager: Preloaded texture '" + textureKey + "' from " + resolved.string());
 				}
 			}
 		}
 
 		if (id == INVALID_TEXTURE_ID || (id == fallbackTexture && textureKey != DEFAULT_FALLBACK_FILE && textureKey != CHECKERBOARD_KEY)) {
 			if (group.required) {
+				core::Logger::defaultLogger().error("AssetManager: Failed to load required texture from group: " + textureKey);
 				throw AssetError("Failed to load required texture from group: " + textureKey);
 			}
-			std::cerr << "AssetManager warning: Preload failed for texture '" << textureKey << "'\n";
+			core::Logger::defaultLogger().warn("AssetManager: Preload failed for texture '" + textureKey + "', falling back");
 			textures[textureKey] = fallbackTexture;
 		}
 	}
@@ -442,11 +460,13 @@ static void preloadGroupSounds(const ManifestGroup& group, const std::filesystem
 
 		if (resolved.empty() || !std::filesystem::exists(resolved)) {
 			if (group.required) {
+				core::Logger::defaultLogger().error("AssetManager: Failed to load required sound from group: " + soundKey);
 				throw AssetError("Failed to load required sound from group: " + soundKey);
 			}
-			std::cerr << "AssetManager warning: Preload failed for sound '" << soundKey << "'\n";
+			core::Logger::defaultLogger().warn("AssetManager: Preload failed for sound '" + soundKey + "'");
 		} else if (soundIterator == soundPaths.end()) {
 			soundPaths[soundKey] = resolved.string();
+			core::Logger::defaultLogger().debug("AssetManager: Preloaded sound '" + soundKey + "' from " + resolved.string());
 		}
 	}
 }
@@ -454,13 +474,16 @@ static void preloadGroupSounds(const ManifestGroup& group, const std::filesystem
 /// Preloads assets belonging to a specified group.
 void AssetManager::preload(const std::string& group, IGraphicsBackend& graphics)
 {
+	core::Logger::defaultLogger().debug("AssetManager: Preloading group '" + group + "'");
 	const auto groupIterator = _groups.find(group);
 	if (groupIterator == _groups.end()) {
+		core::Logger::defaultLogger().warn("AssetManager: Preload group '" + group + "' not found in manifest");
 		return;
 	}
 
 	preloadGroupTextures(groupIterator->second, _baseDirectory, _fallbackTexture, graphics, _textures);
 	preloadGroupSounds(groupIterator->second, _baseDirectory, _soundPaths);
+	core::Logger::defaultLogger().debug("AssetManager: Preloading group '" + group + "' finished");
 }
 
 /// Retrieves a sprite descriptor or logs a warning and returns the fallback sprite.
@@ -470,7 +493,7 @@ const SpriteDescriptor& AssetManager::getSprite(const std::string& name) const
 	if (spriteIterator != _sprites.end()) {
 		return spriteIterator->second;
 	}
-	std::cerr << "AssetManager warning: Requested sprite '" << name << "' is missing, returning fallback\n";
+	core::Logger::defaultLogger().warn("AssetManager: Requested sprite '" + name + "' is missing, returning fallback");
 	return _fallbackSprite;
 }
 
@@ -481,7 +504,7 @@ TextureId AssetManager::getTexture(const std::string& name) const
 	if (textureIterator != _textures.end()) {
 		return textureIterator->second;
 	}
-	std::cerr << "AssetManager warning: Requested texture '" << name << "' is missing, returning fallback\n";
+	core::Logger::defaultLogger().warn("AssetManager: Requested texture '" + name + "' is missing, returning fallback");
 	return _fallbackTexture;
 }
 
@@ -492,7 +515,7 @@ const AnimationDescriptor& AssetManager::getAnimation(const std::string& name) c
 	if (animIterator != _animations.end()) {
 		return animIterator->second;
 	}
-	std::cerr << "AssetManager warning: Requested animation '" << name << "' is missing, returning fallback\n";
+	core::Logger::defaultLogger().warn("AssetManager: Requested animation '" + name + "' is missing, returning fallback");
 	return _fallbackAnimation;
 }
 
@@ -503,6 +526,7 @@ const std::string& AssetManager::getSoundPath(const std::string& name) const
 	if (soundIterator != _soundPaths.end()) {
 		return soundIterator->second;
 	}
+	core::Logger::defaultLogger().warn("AssetManager: Requested sound '" + name + "' is missing");
 	static const std::string EMPTY_PATH;
 	return EMPTY_PATH;
 }
@@ -514,6 +538,7 @@ const std::string& AssetManager::getFontPath(const std::string& name) const
 	if (fontIterator != _fontPaths.end()) {
 		return fontIterator->second;
 	}
+	core::Logger::defaultLogger().warn("AssetManager: Requested font '" + name + "' is missing");
 	static const std::string EMPTY_PATH;
 	return EMPTY_PATH;
 }

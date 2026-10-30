@@ -7,6 +7,7 @@
 
 #include "engine/net/UdpClient.hpp"
 
+#include "engine/core/Logger.hpp"
 #include "engine/net/NetworkError.hpp"
 
 namespace engine::net {
@@ -15,6 +16,7 @@ namespace engine::net {
 UdpClient::UdpClient(const UdpClientConfig& config)
 	: _socket(_context), _maxDatagramSize(config.maxDatagramSize), _receiveBuffer(config.maxDatagramSize + 1)
 {
+	core::Logger::defaultLogger().debug("UdpClient: Resolving server " + config.host + ':' + std::to_string(config.port));
 	connect(resolveServer(config.host, config.port));
 }
 
@@ -25,9 +27,11 @@ asio::ip::udp::endpoint UdpClient::resolveServer(const std::string& host, std::u
 	asio::error_code error;
 	const auto endpoints = resolver.resolve(host, std::to_string(port), error);
 	if (error) {
+		core::Logger::defaultLogger().error("UdpClient: Cannot resolve server " + host + ": " + error.message());
 		throw NetworkError("Cannot resolve server: " + error.message());
 	}
 	if (endpoints.empty()) {
+		core::Logger::defaultLogger().error("UdpClient: No UDP address found for server " + host);
 		throw NetworkError("No UDP address found for server");
 	}
 	asio::ip::udp::endpoint endpoint = endpoints.begin()->endpoint();
@@ -37,6 +41,7 @@ asio::ip::udp::endpoint UdpClient::resolveServer(const std::string& host, std::u
 			break;
 		}
 	}
+	core::Logger::defaultLogger().debug("UdpClient: Resolved server to " + endpoint.address().to_string() + ':' + std::to_string(endpoint.port()));
 	return endpoint;
 }
 
@@ -44,10 +49,13 @@ asio::ip::udp::endpoint UdpClient::resolveServer(const std::string& host, std::u
 void UdpClient::connect(const asio::ip::udp::endpoint& endpoint)
 {
 	try {
+		core::Logger::defaultLogger().debug("UdpClient: Connecting socket to " + endpoint.address().to_string() + ':' + std::to_string(endpoint.port()));
 		_socket.open(endpoint.protocol());
 		_socket.connect(endpoint);
 		_socket.non_blocking(true);
+		core::Logger::defaultLogger().debug("UdpClient: Connected socket opened in non-blocking mode");
 	} catch (const asio::system_error& error) {
+		core::Logger::defaultLogger().error("UdpClient: Cannot open UDP client socket: " + std::string(error.what()));
 		throw NetworkError("Cannot open UDP client socket: " + std::string(error.what()));
 	}
 }
@@ -56,12 +64,17 @@ void UdpClient::connect(const asio::ip::udp::endpoint& endpoint)
 void UdpClient::send(const std::vector<std::uint8_t>& bytes)
 {
 	if (bytes.empty() || bytes.size() > _maxDatagramSize) {
+		if (bytes.size() > _maxDatagramSize) {
+			core::Logger::defaultLogger().warn("UdpClient: Packet dropped, size " + std::to_string(bytes.size()) +
+											   " exceeds max datagram size " + std::to_string(_maxDatagramSize));
+		}
 		return;
 	}
 	asio::error_code error;
 	_socket.send(asio::buffer(bytes), 0, error);
 	if (error && error != asio::error::connection_refused &&
 		error != asio::error::would_block && error != asio::error::try_again) {
+		core::Logger::defaultLogger().error("UdpClient: UDP send failed: " + error.message());
 		throw NetworkError("UDP send failed: " + error.message());
 	}
 }
@@ -79,6 +92,7 @@ std::vector<std::vector<std::uint8_t>> UdpClient::receivePending()
 			break;
 		}
 		if (error) {
+			core::Logger::defaultLogger().error("UdpClient: UDP receive failed: " + error.message());
 			throw NetworkError("UDP receive failed: " + error.message());
 		}
 		result.emplace_back(_receiveBuffer.begin(), _receiveBuffer.begin() + static_cast<std::ptrdiff_t>(size));

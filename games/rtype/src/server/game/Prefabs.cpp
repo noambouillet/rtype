@@ -28,7 +28,7 @@ bool canSpawnReplicated(engine::core::Coordinator& coordinator)
 	return coordinator.getSystem<ecs::ReplicationSystem>().entities.size() < config::MAX_REPLICATED_ENTITIES;
 }
 
-/// Creates the ship of `playerId` at its starting slot on the left side.
+/// Creates a player's ship at its starting slot on the left side.
 engine::core::Entity createPlayer(engine::core::Coordinator& coordinator, std::uint8_t playerId)
 {
 	const engine::core::Entity entity = coordinator.createEntity();
@@ -47,7 +47,7 @@ engine::core::Entity createPlayer(engine::core::Coordinator& coordinator, std::u
 }
 
 /// Creates a projectile at the nose of a player's ship, flying right until it hits an enemy or leaves the world.
-/// `origin` is taken by value: adding components may reallocate the storage a reference would point into.
+/// The origin is taken by value: adding components may reallocate the storage a reference would point into.
 engine::core::Entity createPlayerProjectile(engine::core::Coordinator& coordinator, std::uint8_t playerId, engine::core::Position origin)
 {
 	const engine::core::Entity entity = coordinator.createEntity();
@@ -63,8 +63,8 @@ engine::core::Entity createPlayerProjectile(engine::core::Coordinator& coordinat
 	return entity;
 }
 
-/// Creates an enemy shot at `origin`, flying at `velocity` (aimed by WeaponSystem) until it hits a player or leaves
-/// the world. `origin` is taken by value for the same reason as in createPlayerProjectile.
+/// Creates an enemy shot flying at the velocity aimed by WeaponSystem until it hits a player or leaves the world.
+/// The origin is taken by value for the same reason as in createPlayerProjectile.
 engine::core::Entity createEnemyProjectile(engine::core::Coordinator& coordinator, engine::core::Position origin, engine::core::Velocity velocity)
 {
 	const engine::core::Entity entity = coordinator.createEntity();
@@ -80,8 +80,8 @@ engine::core::Entity createEnemyProjectile(engine::core::Coordinator& coordinato
 	return entity;
 }
 
-/// Creates a Scant charge-shot beam at the cannon of a Scant hovering at `origin`, flying straight left until it hits
-/// a player or leaves the world. `origin` is taken by value for the same reason as in createPlayerProjectile.
+/// Creates a charge-shot beam at the cannon of a hovering Scant, flying straight left until it hits a player or
+/// leaves the world. The origin is taken by value for the same reason as in createPlayerProjectile.
 engine::core::Entity createScantBeam(engine::core::Coordinator& coordinator, engine::core::Position origin)
 {
 	const engine::core::Entity entity = coordinator.createEntity();
@@ -98,9 +98,9 @@ engine::core::Entity createScantBeam(engine::core::Coordinator& coordinator, eng
 	return entity;
 }
 
-/// Creates a Patapata just past the right edge, weaving around `spawn.y`; `phase` sets where on its wave it starts,
+/// Creates a Patapata just past the right edge, weaving around its spawn height; the phase sets where on its wave it starts,
 /// so the members of a group do not rise and fall together. SineMotionSystem makes it weave left.
-/// It fires at the players `spawn.firstShot` seconds after spawning, then every PATAPATA_FIRE_COOLDOWN seconds.
+/// It fires at the players a first time after spawning, then every PATAPATA_FIRE_COOLDOWN seconds.
 engine::core::Entity createPatapata(engine::core::Coordinator& coordinator, EnemySpawn spawn, float phase)
 {
 	const engine::core::Entity entity = coordinator.createEntity();
@@ -119,8 +119,8 @@ engine::core::Entity createPatapata(engine::core::Coordinator& coordinator, Enem
 	return entity;
 }
 
-/// Creates a Bug just past the right edge at height `spawn.y`; SineMotionSystem flies it along the arch.
-/// It fires at the players `spawn.firstShot` seconds after spawning, then every BUG_FIRE_COOLDOWN seconds.
+/// Creates a Bug just past the right edge at its spawn height; SineMotionSystem flies it along the arch.
+/// It fires at the players a first time after spawning, then every BUG_FIRE_COOLDOWN seconds.
 engine::core::Entity createBug(engine::core::Coordinator& coordinator, EnemySpawn spawn)
 {
 	const engine::core::Entity entity = coordinator.createEntity();
@@ -155,7 +155,7 @@ engine::core::Entity createBink(engine::core::Coordinator& coordinator, float fi
 	return entity;
 }
 
-/// Creates a Scant just past the right edge at height `spawn.y`; HoverMotionSystem flies it in, keeps it level with the
+/// Creates a Scant just past the right edge at its spawn height; HoverMotionSystem flies it in, keeps it level with the
 /// closest player, then sends it off.
 engine::core::Entity createScant(engine::core::Coordinator& coordinator, EnemySpawn spawn)
 {
@@ -174,9 +174,9 @@ engine::core::Entity createScant(engine::core::Coordinator& coordinator, EnemySp
 	return entity;
 }
 
-/// Creates an invisible (not replicated) entity that sends `count` enemies of `kind` around height `y`, the first one
-/// next tick: Bugs all start at `y` so they trace one shared path, Patapata are scattered so each weaves on its own.
-/// Binks ignore `y`: they always walk on the ground.
+/// Creates an invisible (not replicated) entity that sends a group of enemies around a height, the first one next
+/// tick: Bugs all start at that height so they trace one shared path, Patapata are scattered so each weaves on its
+/// own. Binks ignore the height: they always walk on the ground.
 engine::core::Entity createFormation(engine::core::Coordinator& coordinator, game::EnemyKind kind, float y, int count)
 {
 	const engine::core::Entity entity = coordinator.createEntity();

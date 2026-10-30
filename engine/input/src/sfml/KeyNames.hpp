@@ -14,7 +14,7 @@
 
 namespace engine::input {
 
-static constexpr std::array<std::pair<std::string_view, sf::Keyboard::Key>, 33> KEY_NAMES = {{
+static constexpr std::array<std::pair<std::string_view, sf::Keyboard::Key>, 45> KEY_NAMES = {{
 	{"Up", sf::Keyboard::Key::Up},
 	{"Down", sf::Keyboard::Key::Down},
 	{"Left", sf::Keyboard::Key::Left},
@@ -48,6 +48,18 @@ static constexpr std::array<std::pair<std::string_view, sf::Keyboard::Key>, 33> 
 	{"X", sf::Keyboard::Key::X},
 	{"Y", sf::Keyboard::Key::Y},
 	{"Z", sf::Keyboard::Key::Z},
+	{"F1", sf::Keyboard::Key::F1},
+	{"F2", sf::Keyboard::Key::F2},
+	{"F3", sf::Keyboard::Key::F3},
+	{"F4", sf::Keyboard::Key::F4},
+	{"F5", sf::Keyboard::Key::F5},
+	{"F6", sf::Keyboard::Key::F6},
+	{"F7", sf::Keyboard::Key::F7},
+	{"F8", sf::Keyboard::Key::F8},
+	{"F9", sf::Keyboard::Key::F9},
+	{"F10", sf::Keyboard::Key::F10},
+	{"F11", sf::Keyboard::Key::F11},
+	{"F12", sf::Keyboard::Key::F12},
 }};
 
 sf::Keyboard::Key keyFromName(std::string_view name);

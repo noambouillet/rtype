@@ -111,6 +111,7 @@ left = Q
 right = D
 fire = Space
 auto_fire = X
+metrics = F3
 
 # Joystick settings
 joystick_fire = 0
@@ -124,8 +125,9 @@ screen_flash = true
 ### Configuration Sections
 
 1. **Keyboard Bindings:**
-   - Actions: `up`, `down`, `left`, `right`, `fire`, `auto_fire`.
-   - Supported keys include alphanumeric characters (`A`-`Z`), direction keys (`Up`, `Down`, `Left`, `Right`), and controls (`Space`, `Enter`, `Escape`).
+   - Actions: `up`, `down`, `left`, `right`, `fire`, `auto_fire`, `quit`, `metrics`.
+   - Supported keys include alphanumeric characters (`A`-`Z`), direction keys (`Up`, `Down`, `Left`, `Right`), function keys (`F1`-`F12`), and controls (`Space`, `Enter`, `Escape`).
+   - `metrics` (default `F3`) shows or hides the performance and network overlay. See [Metrics](engine/tools/metrics.md).
 2. **Joystick / Controller Bindings:**
    - `joystick_deadzone`: Axis deadzone threshold (default: `30` in a range of 0 to 100) to eliminate analog stick drift.
    - `joystick_fire`: Hardware button index for manual shot firing (default: `0`, usually button A / Cross).

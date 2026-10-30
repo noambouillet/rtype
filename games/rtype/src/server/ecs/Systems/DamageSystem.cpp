@@ -18,7 +18,7 @@ engine::core::Signature DamageSystem::signature(engine::core::Coordinator& coord
 	return sig;
 }
 
-/// Applies `Damage` in both directions for every pair in `collisions`.
+/// Applies Damage in both directions for every colliding pair.
 std::vector<HealthChange> DamageSystem::update(engine::core::Coordinator& coordinator, const std::vector<engine::physics::CollisionPair>& collisions)
 {
 	std::vector<HealthChange> changes;
@@ -33,8 +33,8 @@ std::vector<HealthChange> DamageSystem::update(engine::core::Coordinator& coordi
 	return changes;
 }
 
-/// Removes the `attacker`'s Damage from the `target`'s Health.
-/// Marks the target with `Destroy` once its health reaches zero.
+/// Removes the attacker's Damage from the target's Health.
+/// Marks the target with Destroy once its health reaches zero.
 std::optional<HealthChange> DamageSystem::applyDamage(engine::core::Coordinator& coordinator, engine::core::Entity attacker, engine::core::Entity target)
 {
 	if (!entities.contains(target) || !coordinator.hasComponent<Damage>(attacker) || coordinator.hasComponent<engine::core::Destroy>(target)) {

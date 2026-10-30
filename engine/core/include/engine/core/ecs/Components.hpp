@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <vector>
+
 namespace engine::core {
 
 struct Position {
@@ -20,5 +22,15 @@ struct Velocity {
 };
 
 struct Destroy {};
+
+struct PositionSample {
+	double time;
+	float x;
+	float y;
+};
+
+struct Interpolated {
+	std::vector<PositionSample> samples;
+};
 
 }

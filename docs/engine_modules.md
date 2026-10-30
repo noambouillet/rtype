@@ -13,16 +13,16 @@ Modularity works at two levels:
 
 | Module            | Option                 | Default | Depends on            | Third-party            | vcpkg feature | Content                                   |
 | ----------------- | ---------------------- | ------- | --------------------- | ---------------------- | ------------- | ----------------------------------------- |
-| `engine::core`    | always built           | ON      | none                  | none                   | none          | ECS, config, logger, errors, movement     |
-| `engine::render`  | `ENGINE_BUILD_RENDER`  | ON      | core                  | SFML Graphics          | `render`      | Graphics backend, `SfmlRenderer` (window, textures), `Sprite`, `RenderSystem` |
+| `engine::core`    | always built           | ON      | none                  | none                   | none          | ECS, config, logger, errors, movement, interpolation, timed queue, `EventBus`, `Metrics` |
+| `engine::render`  | `ENGINE_BUILD_RENDER`  | ON      | core                  | SFML Graphics          | `render`      | Graphics backend, `SfmlRenderer` (window, textures, text), `Sprite`, `RenderSystem` |
 | `engine::audio`   | `ENGINE_BUILD_AUDIO`   | ON      | core                  | SFML Audio             | `audio`       | Audio backend, `SfmlAudio`, `Sound`, `AudioSystem` |
 | `engine::input`   | `ENGINE_BUILD_INPUT`   | ON      | core                  | SFML Window            | `input`       | `InputMap` (actions), `SfmlInput` (keyboard, joystick) |
 | `engine::physics` | `ENGINE_BUILD_PHYSICS` | ON      | core                  | none                   | none          | `Collider`, `CollisionSystem`             |
 | `engine::net`     | `ENGINE_BUILD_NET`     | ON      | core                  | asio                   | `net`         | Transport interfaces, UDP, packets        |
 | `engine::script`  | `ENGINE_BUILD_SCRIPT`  | OFF     | core                  | Lua, sol2              | `script`      | Lua bindings (not implemented yet)        |
-| `engine::tools`   | `ENGINE_BUILD_TOOLS`   | OFF     | core, render, input   | (from render, input)   | `tools`       | Console, profiler overlay, editor (not implemented yet) |
+| `engine::tools`   | `ENGINE_BUILD_TOOLS`   | OFF     | core, render, input   | (from render, input)   | `tools`       | `MetricsOverlay` (see [Metrics](engine/tools/metrics.md)); console and editor not implemented yet |
 
-`script` and `tools` have no sources yet: configure stops with an error if `ENGINE_BUILD_SCRIPT` or `ENGINE_BUILD_TOOLS` is ON.
+`script` has no sources yet: configure stops with an error if `ENGINE_BUILD_SCRIPT` is ON. The R-Type root build turns `ENGINE_BUILD_TOOLS` on together with the client.
 
 Input does not depend on render. `SfmlInput` reads the keyboard and joysticks directly; the game passes it the window focus each frame:
 

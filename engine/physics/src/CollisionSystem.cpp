@@ -40,7 +40,7 @@ void CollisionSystem::update(core::Coordinator& coordinator)
 	}
 }
 
-/// Returns the pairs detected by the last call to `update`.
+/// Returns the pairs detected by the last update.
 const std::vector<CollisionPair>& CollisionSystem::collisions() const
 {
 	return _collisions;

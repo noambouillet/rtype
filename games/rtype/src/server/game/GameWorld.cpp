@@ -26,7 +26,7 @@
 
 namespace rtype {
 
-/// Registers T and gives it the signature its own `signature()` describes.
+/// Registers T and gives it the signature its own signature() describes.
 template <typename T>
 static void registerSystem(engine::core::Coordinator& coordinator)
 {

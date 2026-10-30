@@ -20,6 +20,7 @@ struct WindowConfig {
 	std::uint32_t height = 720;
 	std::string title = "Engine";
 	std::uint32_t frameRateLimit = 60;
+  std::filesystem::path fontFile;
 };
 
 class SfmlRenderer : public IGraphicsBackend {
@@ -38,6 +39,8 @@ public:
 	void beginFrame() override;
 	void drawBackground(TextureId texture, float offset) override;
 	void drawSprite(const SpriteDraw& command) override;
+	void drawRect(const RectDraw& rect) override;
+	void drawText(const TextDraw& text) override;
 	void endFrame() override;
 
 private:

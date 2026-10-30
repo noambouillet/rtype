@@ -19,6 +19,7 @@
 #include "engine/audio/AudioSystem.hpp"
 #include "engine/audio/Components.hpp"
 #include "engine/core/ecs/Components.hpp"
+#include "engine/core/systems/InterpolationSystem.hpp"
 #include "engine/render/Components.hpp"
 #include "engine/render/RenderSystem.hpp"
 
@@ -28,6 +29,7 @@ namespace rtype::client {
 ClientWorld::ClientWorld(const engine::assets::AssetManager& assets, bool screenFlash)
 {
 	_coordinator.registerComponent<engine::core::Position>();
+	_coordinator.registerComponent<engine::core::Interpolated>();
 	_coordinator.registerComponent<engine::render::Sprite>();
 	_coordinator.registerComponent<engine::render::Animation>();
 	_coordinator.registerComponent<NetworkIdentity>();
@@ -36,6 +38,8 @@ ClientWorld::ClientWorld(const engine::assets::AssetManager& assets, bool screen
 	auto& network = _coordinator.registerSystem<ClientNetworkSystem>();
 	network.setAssetManager(assets);
 	_coordinator.setSystemSignature<ClientNetworkSystem>(ClientNetworkSystem::signature(_coordinator));
+	_coordinator.registerSystem<engine::core::InterpolationSystem>();
+	_coordinator.setSystemSignature<engine::core::InterpolationSystem>(engine::core::InterpolationSystem::signature(_coordinator));
 	auto& effects = _coordinator.registerSystem<EffectSystem>();
 	effects.setAssetManager(assets);
 	effects.setScreenFlash(screenFlash);
@@ -60,7 +64,8 @@ void ClientWorld::update(float deltaTime, network::GameClient& client, std::uint
 	auto& network = _coordinator.getSystem<ClientNetworkSystem>();
 	auto& effects = _coordinator.getSystem<EffectSystem>();
 	auto& sounds = _coordinator.getSystem<SoundEventSystem>();
-	const std::vector<ViewEvent> events = network.update(_coordinator, client, buttons);
+	const std::vector<ViewEvent> events = network.update(deltaTime, _coordinator, client, buttons);
+	_coordinator.getSystem<engine::core::InterpolationSystem>().update(_coordinator, network.renderTime());
 	const std::optional<std::uint8_t> playerId = client.status() == network::ClientStatus::Connected ? std::optional<std::uint8_t>(client.playerId()) : std::nullopt;
 	effects.consume(_coordinator, network, events, playerId);
 	sounds.consume(_coordinator, network, events, playerId);

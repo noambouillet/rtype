@@ -9,6 +9,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <unordered_map>
+#include <optional>
 
 #include "engine/render/GraphicsBackend.hpp"
 #include "engine/render/SfmlRenderer.hpp"
@@ -23,6 +24,7 @@ struct SfmlRenderer::Implementation {
 	TextureId nextTextureId = 1;
 
 	std::unordered_map<TextureId, sf::Texture>::iterator resolveTexture(TextureId textureId);
+	std::optional<sf::Font> font;
 };
 
 }

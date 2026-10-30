@@ -1,8 +1,8 @@
 # R-Type UDP protocol
 
 This protocol supports one game with up to four player
-sessions. The client sends joins, disconnects, and input commands and validates
-server replies. The server runs fixed ticks, simulates players, projectiles,
+sessions. The client sends joins, disconnects, input commands, and latency
+probes, and validates server replies. The server runs fixed ticks, simulates players, projectiles,
 enemies, collisions, and damage, and sends full world snapshots and gameplay
 events.
 
@@ -23,7 +23,7 @@ events.
 | 5 | 1 | `u8` | `type` | One of the packet types below |
 | 6 | 2 | `u16` | `payload_size` | Bytes after the header |
 | 8 | 4 | `u32` | `sequence` | Sender's packet sequence number |
-| 12 | 4 | `u32` | `session_id` | Nonzero in `JOIN_ACCEPTED`, `PLAYER_INPUT`, and `DISCONNECT`; `0` otherwise |
+| 12 | 4 | `u32` | `session_id` | Nonzero in `JOIN_ACCEPTED`, `PLAYER_INPUT`, `DISCONNECT`, and `PING`; `0` otherwise |
 
 The datagram length must equal `16 + payload_size`. Join messages and `ERROR`
 use sequence `0`. Session packets use nonzero sequence numbers, incremented by
@@ -39,6 +39,8 @@ the sender and skipping `0` on wraparound. Sequence `a` is newer than `b` when
 | `0x03` | `JOIN_REJECTED` | Server to client | 9 |
 | `0x04` | `DISCONNECT` | Client to server | 0 |
 | `0x05` | `PLAYER_LEFT` | Server to clients | 10 |
+| `0x06` | `PING` | Client to server | 8 |
+| `0x07` | `PONG` | Server to client | 8 |
 | `0x10` | `PLAYER_INPUT` | Client to server | 1 |
 | `0x20` | `WORLD_SNAPSHOT` | Server to client | `11 + 16 * entity_count` |
 | `0x21` | `ENTITY_SPAWN` | Server to clients | 24 |
@@ -62,7 +64,7 @@ sequenceDiagram
     alt Slot available
         S-->>C: JOIN_ACCEPTED (same nonce, player ID, session ID)
         C->>S: PLAYER_INPUT (session ID)
-        S-->>C: WORLD_SNAPSHOT (session ID 0; next tick, then every 50 ms)
+        S-->>C: WORLD_SNAPSHOT (session ID 0; next tick, then every tick)
     else Four players connected
         S-->>C: JOIN_REJECTED (same nonce, SERVER_FULL)
     end
@@ -111,6 +113,27 @@ once without acknowledgement and may be lost. Until world snapshots are added,
 clients cannot repair a missed departure from server state. Clients should
 continue sending input while connected; this phase sends no periodic server
 heartbeat.
+
+## Latency probes
+
+`PING` lets a client measure its round-trip time. Its payload is
+`client_time: u64`, an opaque value the server copies without reading it. The
+current client puts its monotonic clock there, in microseconds, and sends one
+probe every 250 ms while connected. `PING` needs a nonzero sequence and a
+valid session ID, and like any valid in-session packet it refreshes the session.
+
+The server answers each valid `PING` with a `PONG` whose payload is the same
+eight bytes. `PONG` is a session packet: nonzero sequence, session ID `0`. The
+client subtracts the echoed time from its current clock to get the round trip,
+so the two clocks never need to agree. It ignores a `PONG` whose time is in its
+future.
+
+The server handles datagrams once per tick, so a measured round trip includes
+up to one tick (16.7 ms) of queueing on top of the network delay. Probes are not
+retransmitted: comparing the number of `PING` sent with the number of `PONG`
+received estimates packet loss. A malformed `PING` gets `INVALID_LENGTH`
+(payload not 8 bytes) or `INVALID_FIELD` (sequence `0`); a client sending
+`PONG` gets `WRONG_DIRECTION`.
 
 ## Input commands and timing
 
@@ -188,8 +211,8 @@ appearance; clients may show that base for unknown non-player variants.
 
 ### Full snapshot
 
-The server sends a full `WORLD_SNAPSHOT` every 50 ms and at the next tick
-boundary after a join. It reflects all changes through `server_tick`.
+The server sends a full `WORLD_SNAPSHOT` every tick (60 per second), so a new
+player gets one at the next tick. It reflects all changes through `server_tick`.
 
 | Offset | Size | Type | Field |
 | ---: | ---: | --- | --- |
@@ -215,6 +238,14 @@ set and masks when `server_tick` is newer, so absent entities disappear and a
 later snapshot repairs lost events. Ignore snapshots at or before the last
 applied tick.
 
+The client does not draw a snapshot as soon as it arrives. It plays the server
+timeline 2.5 snapshot intervals late (about 42 ms, with time =
+`server_tick / 60` seconds) and blends each entity's position between the two
+snapshots around that moment. Entities a snapshot adds or drops, and gameplay
+events, take effect when playback reaches their tick, so they stay in step with
+the positions on screen. An event stamped more than 250 ms ahead of the
+client's estimate of the server time is dropped.
+
 ### Events
 
 `GameWorld` returns a tick-local list of spawn, surviving damage, destruction,
@@ -234,8 +265,10 @@ Each event is sent once and starts with `server_tick: u64`, followed by:
 
 `PLAYER_DEATH` removes the ship and clears its alive bit, but can leave the
 session connected. `ENTITY_DESTROY` covers enemies and projectiles. Respawning
-a player uses `ENTITY_SPAWN` with a new entity ID. Ignore events at or before
-the last applied snapshot tick. `ENTITY_DAMAGE` reports surviving health; at
+a player uses `ENTITY_SPAWN` with a new entity ID. An event may arrive after a
+newer snapshot; the client still plays it when its delayed playback reaches the
+event's tick, or at once if playback passed it less than 250 ms ago, and drops
+it otherwise. Repeated packet sequences are ignored. `ENTITY_DAMAGE` reports surviving health; at
 zero, the server sends `ENTITY_DESTROY` or `PLAYER_DEATH` instead. Repeated
 damage in one tick is coalesced to the final surviving health; a terminal event
 supersedes damage for the same entity. Destroy and death positions are the last

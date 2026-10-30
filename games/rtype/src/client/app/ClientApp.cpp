@@ -28,15 +28,35 @@
 #include "engine/core/ConfigParser.hpp"
 #include "engine/core/EngineSettings.hpp"
 #include "engine/core/Error.hpp"
+#include "engine/core/EventBus.hpp"
 #include "engine/core/Logger.hpp"
+#include "engine/core/metrics/Metrics.hpp"
 #include "engine/input/SfmlInput.hpp"
 #include "engine/net/UdpClient.hpp"
 #include "engine/render/SfmlRenderer.hpp"
+#include "engine/tools/MetricsOverlay.hpp"
 #include "utils/network/Protocol.hpp"
 
 namespace rtype {
 
 static volatile std::sig_atomic_t running = 1;
+
+using Clock = std::chrono::steady_clock;
+
+/// Everything one client frame reads or updates.
+struct ClientLoop {
+	engine::render::SfmlRenderer& window;
+	engine::input::SfmlInput& input;
+	engine::audio::SfmlAudio& audio;
+	client::ClientControls& controls;
+	network::GameClient& client;
+	client::ClientWorld& view;
+	engine::core::Logger& logger;
+	engine::core::EventBus& bus;
+	engine::tools::MetricsOverlay& overlay;
+	network::ClientStatus previous;
+	Clock::time_point lastFrame;
+};
 
 static void stopClient([[maybe_unused]] int signal)
 {
@@ -100,33 +120,41 @@ static void loadSettings(engine::core::EngineSettings& engineSettings, engine::i
 	}
 }
 
-/// Polls one frame and sends the current input state.
-static bool updateFrame(engine::render::SfmlRenderer& window, engine::input::SfmlInput& input, engine::audio::SfmlAudio& audio,
-	client::ClientControls& controls, network::GameClient& client, rtype::client::ClientWorld& view,
-	engine::core::Logger& logger, network::ClientStatus& previous, std::chrono::steady_clock::time_point& lastFrame)
+/// Polls one frame, sends the current input state, draws the frame and reports its timing to the metrics.
+static bool updateFrame(ClientLoop& loop)
 {
-	window.handleEvent();
-	input.update(window.hasFocus());
-	if (input.justPressed(client::ClientControls::QUIT)) {
-		window.close();
+	const auto frameStart = Clock::now();
+	loop.window.handleEvent();
+	loop.input.update(loop.window.hasFocus());
+	if (loop.input.justPressed(client::ClientControls::QUIT)) {
+		loop.window.close();
 	}
-	if (!window.isOpen()) {
+	if (loop.input.justPressed(client::ClientControls::METRICS)) {
+		loop.overlay.toggle();
+	}
+	if (!loop.window.isOpen()) {
 		return true;
 	}
-	const auto now = std::chrono::steady_clock::now();
-	const float deltaTime = std::clamp(std::chrono::duration<float>(now - lastFrame).count(), 0.0F, 0.1F);
-	lastFrame = now;
-	const std::uint8_t buttons = controls.buttons(input);
-	view.update(deltaTime, client, buttons);
-	reportNotices(client, logger);
-	if (client.status() != previous) {
-		previous = client.status();
-		if (!reportStatus(client, logger)) {
+	const float frameSeconds = std::chrono::duration<float>(frameStart - loop.lastFrame).count();
+	const float deltaTime = std::clamp(frameSeconds, 0.0F, 0.1F);
+	loop.lastFrame = frameStart;
+	const std::uint8_t buttons = loop.controls.buttons(loop.input);
+	loop.view.update(deltaTime, loop.client, buttons);
+	reportNotices(loop.client, loop.logger);
+	if (loop.client.status() != loop.previous) {
+		loop.previous = loop.client.status();
+		if (!reportStatus(loop.client, loop.logger)) {
 			return false;
 		}
 	}
-	view.render(window, deltaTime);
-	view.playAudio(audio);
+	loop.window.beginFrame();
+	loop.view.render(loop.window, deltaTime);
+	loop.overlay.draw(loop.window);
+	loop.view.playAudio(loop.audio);
+	// Measured before endFrame, which waits for the frame rate limit.
+	const float busySeconds = std::chrono::duration<float>(Clock::now() - frameStart).count();
+	loop.window.endFrame();
+	loop.bus.publish(engine::core::FrameEnded{.seconds = frameSeconds, .busySeconds = busySeconds});
 	return true;
 }
 
@@ -140,24 +168,26 @@ int runClient(const ClientOptions& options)
 	engine::core::EngineSettings engineSettings;
 	engine::input::InputMap bindings = client::ClientControls::defaultBindings();
 	loadSettings(engineSettings, bindings);
+  engine::core::EventBus bus;
+	engine::core::Metrics metrics(bus);
+	engine::tools::MetricsOverlay overlay(bus);
 	engine::assets::AssetManager assets;
 	engine::net::UdpClient transport({.host = options.host, .port = options.port, .maxDatagramSize = network::MAX_DATAGRAM_SIZE});
-	network::GameClient client(transport);
-	engine::render::SfmlRenderer window({.width = client_config::WINDOW_WIDTH, .height = client_config::WINDOW_HEIGHT, .title = "R-Type"});
+	network::GameClient client(transport, bus);
+	engine::render::SfmlRenderer window({.width = client_config::WINDOW_WIDTH, .height = client_config::WINDOW_HEIGHT, .title = "R-Type", .fontFile = std::string(client_config::FONT_FILE)});
 	assets.loadManifest("games/rtype/assets/manifest.json", window);
 	assets.preload("level1", window);
 	engine::input::SfmlInput input(std::move(bindings));
 	engine::audio::SfmlAudio audio;
 	client::ClientControls controls;
-	rtype::client::ClientWorld view(assets, engineSettings.screenFlashEnabled());
-	auto previous = client.status();
-	auto lastFrame = std::chrono::steady_clock::now();
+	client::ClientWorld view(assets, engineSettings.screenFlashEnabled());
+  ClientLoop loop{.window = window, .input = input, .audio = audio, .controls = controls, .client = client, .view = view, .logger = *logger, .bus = bus, .overlay = overlay, .previous = client.status(), .lastFrame = Clock::now()};
 	logger->info("Connecting to " + options.host + ':' + std::to_string(options.port));
 	while (running != 0 && window.isOpen()) {
-		if (!updateFrame(window, input, audio, controls, client, view, *logger, previous, lastFrame)) {
+		if (!updateFrame(loop)) {
 			client.disconnect();
-			logger->info("Disconnected");
-			return 1;
+      logger->info("Disconnected");
+      return 1;
 		}
 	}
 	client.disconnect();

@@ -24,6 +24,7 @@ public:
 	static constexpr std::string_view FIRE = "fire";
 	static constexpr std::string_view AUTO_FIRE = "auto_fire";
 	static constexpr std::string_view QUIT = "quit";
+	static constexpr std::string_view METRICS = "metrics";
 
 	ClientControls();
 	static engine::input::InputMap defaultBindings();

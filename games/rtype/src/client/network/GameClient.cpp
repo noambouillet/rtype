@@ -7,9 +7,11 @@
 
 #include "GameClient.hpp"
 
+#include <algorithm>
 #include <random>
 #include <utility>
 
+#include "engine/core/metrics/MetricsEvents.hpp"
 #include "utils/RTypeError.hpp"
 #include "utils/network/Protocol.hpp"
 
@@ -23,19 +25,26 @@ static std::uint64_t generateNonce()
 	return distribution(random);
 }
 
-/// Creates a client with a fresh nonce for this join attempt.
-GameClient::GameClient(engine::net::IClientTransport& transport)
-	: _udp(transport), _nonce(generateNonce()), _sessionId(0), _nextSequence(1), _playerId(0), _lastButtons(0), _joinAttempts(0), _status(ClientStatus::Joining), _worldSnapshot{}, _events{}
+/// Converts a steady clock time to the microsecond count carried by PING and PONG.
+static std::uint64_t toMicroseconds(std::chrono::steady_clock::time_point time)
+{
+	return static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(time.time_since_epoch()).count());
+}
+
+/// Creates a client with a fresh nonce for this join attempt. Traffic and latency are published on the bus.
+GameClient::GameClient(engine::net::IClientTransport& transport, engine::core::EventBus& bus)
+	: _udp(transport), _bus(bus), _nonce(generateNonce()), _sessionId(0), _nextSequence(1), _playerId(0), _lastButtons(0), _joinAttempts(0), _lastJoin{}, _lastInput{}, _lastPing{}, _status(ClientStatus::Joining), _worldSnapshot{}, _events{}, _recentEventSequences{}
 {
 }
 
-/// Processes server packets and refreshes input at the RFC's 50 ms interval.
+/// Processes server packets, refreshes input at the RFC's 50 ms interval and probes latency while connected.
 void GameClient::tick(std::uint8_t buttons)
 {
 	if (buttons > game::MAX_BUTTON_STATE) {
 		throw NetworkError("Reserved input buttons are set");
 	}
 	for (const auto& bytes : _udp.receivePending()) {
+		_bus.publish(engine::core::BytesReceived{bytes.size()});
 		handlePacket(bytes);
 	}
 	const auto now = Clock::now();
@@ -49,13 +58,16 @@ void GameClient::tick(std::uint8_t buttons)
 	if (_status == ClientStatus::Connected && (_lastInput == Clock::time_point{} || buttons != _lastButtons || now - _lastInput >= INPUT_INTERVAL)) {
 		sendInput(buttons);
 	}
+	if (_status == ClientStatus::Connected && now - _lastPing >= PING_INTERVAL) {
+		sendPing(now);
+	}
 }
 
 /// Sends an orderly departure once when an active session is closed.
 void GameClient::disconnect()
 {
 	if (_status == ClientStatus::Connected) {
-		_udp.send(makePacket(PacketType::Disconnect, takeSequence(), _sessionId, {}));
+		send(makePacket(PacketType::Disconnect, takeSequence(), _sessionId, {}));
 	}
 	_status = ClientStatus::Disconnected;
 }
@@ -147,6 +159,8 @@ void GameClient::handleSessionPacket(const Header& header, const std::vector<std
 		if (*_error == ErrorCode::InvalidSession) {
 			_status = ClientStatus::Disconnected;
 		}
+	} else if (header.type == PacketType::Pong) {
+		handlePong(bytes);
 	} else if (header.type == PacketType::WorldSnapshot) {
 		handleSnapshot(bytes);
 	} else if (header.type == PacketType::EntitySpawn || header.type == PacketType::EntityDestroy ||
@@ -203,13 +217,17 @@ std::optional<WorldEntity> GameClient::parseEntityRecord(const std::vector<std::
 	return WorldEntity{.entityId = readU32(bytes, offset), .entityType = kind, .ownerPlayerId = owner, .spriteId = variant, .health = health, .x = decodePosition(bytes, offset + 8), .y = decodePosition(bytes, offset + 12)};
 }
 
-/// Queues a validated event newer than the last authoritative snapshot.
+/// Queues a validated event once, even if it arrives after a newer snapshot.
 void GameClient::handleWorldEvent(const Header& header, const std::vector<std::uint8_t>& bytes)
 {
-	const std::uint64_t tick = readU64(bytes, HEADER_SIZE);
-	if ((_worldSnapshot && tick <= _worldSnapshot->tick) || _events.size() >= MAX_PENDING_EVENTS) {
+	if (_events.size() >= MAX_PENDING_EVENTS || std::ranges::find(_recentEventSequences, header.sequence) != _recentEventSequences.end()) {
 		return;
 	}
+	_recentEventSequences.push_back(header.sequence);
+	if (_recentEventSequences.size() > MAX_RECENT_EVENT_SEQUENCES) {
+		_recentEventSequences.pop_front();
+	}
+	const std::uint64_t tick = readU64(bytes, HEADER_SIZE);
 	const std::size_t offset = HEADER_SIZE + 8;
 	switch (header.type) {
 		case PacketType::EntitySpawn: {
@@ -267,7 +285,7 @@ void GameClient::sendJoin()
 {
 	std::vector<std::uint8_t> payload;
 	appendU64(payload, _nonce);
-	_udp.send(makePacket(PacketType::JoinRequest, 0, 0, payload));
+	send(makePacket(PacketType::JoinRequest, 0, 0, payload));
 	_lastJoin = Clock::now();
 	_joinAttempts++;
 }
@@ -275,9 +293,37 @@ void GameClient::sendJoin()
 /// Sends the complete button state using the next nonzero sequence.
 void GameClient::sendInput(std::uint8_t buttons)
 {
-	_udp.send(makePacket(PacketType::PlayerInput, takeSequence(), _sessionId, {buttons}));
+	send(makePacket(PacketType::PlayerInput, takeSequence(), _sessionId, {buttons}));
 	_lastButtons = buttons;
 	_lastInput = Clock::now();
+}
+
+/// Sends a latency probe carrying the current time, which the server echoes back in a PONG.
+void GameClient::sendPing(Clock::time_point now)
+{
+	std::vector<std::uint8_t> payload;
+	appendU64(payload, toMicroseconds(now));
+	send(makePacket(PacketType::Ping, takeSequence(), _sessionId, payload));
+	_lastPing = now;
+	_bus.publish(engine::core::PingSent{});
+}
+
+/// Publishes the round trip of an echoed probe. A timestamp from the future cannot come from this client and is ignored.
+void GameClient::handlePong(const std::vector<std::uint8_t>& bytes)
+{
+	const std::uint64_t sent = readU64(bytes, HEADER_SIZE);
+	const std::uint64_t now = toMicroseconds(Clock::now());
+	if (sent > now) {
+		return;
+	}
+	_bus.publish(engine::core::RoundTripMeasured{static_cast<float>(now - sent) / MICROSECONDS_PER_MS});
+}
+
+/// Sends one datagram and reports its size to the metrics.
+void GameClient::send(const std::vector<std::uint8_t>& bytes)
+{
+	_udp.send(bytes);
+	_bus.publish(engine::core::BytesSent{bytes.size()});
 }
 
 /// Advances the session sequence while skipping zero after wraparound.

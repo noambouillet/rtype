@@ -53,7 +53,7 @@ void GameServer::reportMetrics(const engine::core::MetricsSnapshot& snapshot)
 		 << " ms), up " << snapshot.uploadKiBps << " KiB/s (" << std::setprecision(engine::core::Metrics::WHOLE_DECIMALS) << snapshot.packetsSentPerSecond
 		 << " pkt/s), down " << std::setprecision(engine::core::Metrics::FINE_DECIMALS) << snapshot.downloadKiBps << " KiB/s (" << std::setprecision(engine::core::Metrics::WHOLE_DECIMALS)
 		 << snapshot.packetsReceivedPerSecond << " pkt/s)";
-	_logger.info(text.str());
+	_logger.debug(text.str());
 }
 
 /// Advances the authoritative world at a fixed rate and publishes its results.

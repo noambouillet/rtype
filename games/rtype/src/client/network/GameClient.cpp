@@ -11,6 +11,7 @@
 #include <random>
 #include <utility>
 
+#include "engine/core/Logger.hpp"
 #include "engine/core/metrics/MetricsEvents.hpp"
 #include "utils/RTypeError.hpp"
 #include "utils/network/Protocol.hpp"
@@ -35,21 +36,25 @@ static std::uint64_t toMicroseconds(std::chrono::steady_clock::time_point time)
 GameClient::GameClient(engine::net::IClientTransport& transport, engine::core::EventBus& bus)
 	: _udp(transport), _bus(bus), _nonce(generateNonce()), _sessionId(0), _nextSequence(1), _playerId(0), _lastButtons(0), _joinAttempts(0), _lastJoin{}, _lastInput{}, _lastPing{}, _status(ClientStatus::Joining), _worldSnapshot{}, _events{}, _recentEventSequences{}
 {
+	engine::core::Logger::defaultLogger().debug("GameClient initialized with nonce " + std::to_string(_nonce));
 }
 
 /// Processes server packets, refreshes input at the RFC's 50 ms interval and probes latency while connected.
 void GameClient::tick(std::uint8_t buttons)
 {
 	if (buttons > game::MAX_BUTTON_STATE) {
+		engine::core::Logger::defaultLogger().error("GameClient: Reserved input buttons are set (" + std::to_string(buttons) + ")");
 		throw NetworkError("Reserved input buttons are set");
 	}
 	for (const auto& bytes : _udp.receivePending()) {
 		_bus.publish(engine::core::BytesReceived{bytes.size()});
+		engine::core::Logger::defaultLogger().debug("GameClient: Received packet of " + std::to_string(bytes.size()) + " bytes");
 		handlePacket(bytes);
 	}
 	const auto now = Clock::now();
 	if (_status == ClientStatus::Joining && (_joinAttempts == 0 || now - _lastJoin >= JOIN_RETRY)) {
 		if (_joinAttempts == MAX_JOIN_ATTEMPTS) {
+			engine::core::Logger::defaultLogger().warn("GameClient: Join connection attempts exceeded limit (" + std::to_string(MAX_JOIN_ATTEMPTS) + ")");
 			_status = ClientStatus::TimedOut;
 		} else {
 			sendJoin();
@@ -67,6 +72,7 @@ void GameClient::tick(std::uint8_t buttons)
 void GameClient::disconnect()
 {
 	if (_status == ClientStatus::Connected) {
+		engine::core::Logger::defaultLogger().debug("GameClient: Sending disconnect packet for session " + std::to_string(_sessionId));
 		send(makePacket(PacketType::Disconnect, takeSequence(), _sessionId, {}));
 	}
 	_status = ClientStatus::Disconnected;
@@ -122,6 +128,7 @@ void GameClient::handlePacket(const std::vector<std::uint8_t>& bytes)
 {
 	const auto header = parseServerHeader(bytes);
 	if (!header) {
+		engine::core::Logger::defaultLogger().debug("GameClient: Failed to parse server header, dropping packet");
 		return;
 	}
 	if (_status == ClientStatus::Joining) {
@@ -138,11 +145,13 @@ void GameClient::handleJoinPacket(const Header& header, const std::vector<std::u
 		return;
 	}
 	if (header.type == PacketType::JoinRejected) {
+		engine::core::Logger::defaultLogger().warn("GameClient: Join was rejected by server");
 		_status = ClientStatus::Rejected;
 	} else {
 		_sessionId = header.sessionId;
 		_playerId = bytes[HEADER_SIZE + 8];
 		_status = ClientStatus::Connected;
+		engine::core::Logger::defaultLogger().debug("GameClient: Connected! Assigned player ID " + std::to_string(_playerId) + ", session ID " + std::to_string(_sessionId));
 	}
 }
 
@@ -154,9 +163,12 @@ void GameClient::handleSessionPacket(const Header& header, const std::vector<std
 		departure.playerId = bytes[HEADER_SIZE + 8];
 		departure.reason = bytes[HEADER_SIZE + 9];
 		_departure = departure;
+		engine::core::Logger::defaultLogger().info("GameClient: PlayerLeft notice for player ID " + std::to_string(departure.playerId));
 	} else if (header.type == PacketType::Error) {
 		_error = static_cast<ErrorCode>(bytes[HEADER_SIZE]);
+		engine::core::Logger::defaultLogger().warn("GameClient: Received Error notice with code " + std::to_string(static_cast<int>(*_error)));
 		if (*_error == ErrorCode::InvalidSession) {
+			engine::core::Logger::defaultLogger().warn("GameClient: Session invalid according to server, disconnecting");
 			_status = ClientStatus::Disconnected;
 		}
 	} else if (header.type == PacketType::Pong) {
@@ -182,6 +194,7 @@ std::optional<std::vector<WorldEntity>> GameClient::parseEntities(const std::vec
 {
 	if (entityCount > MAX_SNAPSHOT_ENTITIES ||
 		bytes.size() != HEADER_SIZE + SNAPSHOT_HEADER_SIZE + (entityCount * ENTITY_RECORD_SIZE)) {
+		engine::core::Logger::defaultLogger().warn("GameClient: Invalid snapshot size or entity count (" + std::to_string(entityCount) + ")");
 		return std::nullopt;
 	}
 
@@ -285,6 +298,7 @@ void GameClient::sendJoin()
 {
 	std::vector<std::uint8_t> payload;
 	appendU64(payload, _nonce);
+	engine::core::Logger::defaultLogger().debug("GameClient: Attempting to join server (attempt " + std::to_string(_joinAttempts + 1) + "/" + std::to_string(MAX_JOIN_ATTEMPTS) + ")");
 	send(makePacket(PacketType::JoinRequest, 0, 0, payload));
 	_lastJoin = Clock::now();
 	_joinAttempts++;
@@ -322,6 +336,7 @@ void GameClient::handlePong(const std::vector<std::uint8_t>& bytes)
 /// Sends one datagram and reports its size to the metrics.
 void GameClient::send(const std::vector<std::uint8_t>& bytes)
 {
+	engine::core::Logger::defaultLogger().debug("GameClient: Sending packet of " + std::to_string(bytes.size()) + " bytes");
 	_udp.send(bytes);
 	_bus.publish(engine::core::BytesSent{bytes.size()});
 }

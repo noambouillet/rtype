@@ -30,6 +30,7 @@
 
 #endif
 
+#include "engine/core/Logger.hpp"
 #include "engine/core/metrics/MetricsEvents.hpp"
 #include "utils/RTypeError.hpp"
 #include "utils/network/Protocol.hpp"
@@ -44,6 +45,7 @@ static std::uint32_t randomSessionId()
 	std::uint32_t id = 0;
 
 	if (BCryptGenRandom(nullptr, reinterpret_cast<PUCHAR>(&id), sizeof(id), BCRYPT_USE_SYSTEM_PREFERRED_RNG) < 0) {
+		engine::core::Logger::defaultLogger().error("ServerNetworkService: Cryptographic random generator failed");
 		throw NetworkError("Unable to generate a session ID");
 	}
 	return id;
@@ -62,6 +64,7 @@ static std::uint32_t randomSessionId()
 			continue;
 		}
 		if (received <= 0) {
+			engine::core::Logger::defaultLogger().error("ServerNetworkService: getrandom syscall failed");
 			throw NetworkError("Unable to generate a session ID");
 		}
 		filled += static_cast<std::size_t>(received);
@@ -85,6 +88,7 @@ static std::uint32_t encodePosition(float position)
 ServerNetworkService::ServerNetworkService(engine::net::IServerTransport& transport, engine::core::EventBus& bus)
 	: _network(transport), _bus(bus), _sessions{}, _issuedSessionIds{}, _tick(0)
 {
+	engine::core::Logger::defaultLogger().debug("ServerNetworkService initialized");
 }
 
 /// Appends one 16-byte entity record to the snapshot payload, multi-byte fields in big-endian:
@@ -131,6 +135,7 @@ GameWorld::Input ServerNetworkService::tick()
 
 	for (const auto& datagram : _network.receivePending()) {
 		_bus.publish(engine::core::BytesReceived{datagram.bytes.size()});
+		engine::core::Logger::defaultLogger().debug("ServerNetworkService: Datagram received (" + std::to_string(datagram.bytes.size()) + " bytes) from " + datagram.sender.address + ":" + std::to_string(datagram.sender.port));
 		handleDatagram(datagram, now);
 	}
 	return collectInput(now);
@@ -143,6 +148,7 @@ void ServerNetworkService::handleDatagram(const engine::net::Datagram& datagram,
 	const network::ParsedHeader parsed = network::parseClientHeader(bytes);
 
 	if (parsed.error) {
+		engine::core::Logger::defaultLogger().warn("ServerNetworkService: Dropping malformed client packet from " + datagram.sender.address + ":" + std::to_string(datagram.sender.port) + ", error code " + std::to_string(static_cast<int>(*parsed.error)));
 		send(datagram.sender, network::makeError(*parsed.error, parsed));
 		return;
 	}
@@ -162,6 +168,7 @@ void ServerNetworkService::handleJoinDatagram(const engine::net::Datagram& datag
 	const network::ParsedHeader& parsed, Clock::time_point now)
 {
 	if (const auto error = network::validateClientPayload(header, datagram.bytes)) {
+		engine::core::Logger::defaultLogger().warn("ServerNetworkService: Invalid JoinRequest payload from " + datagram.sender.address + ":" + std::to_string(datagram.sender.port));
 		send(datagram.sender, network::makeError(*error, parsed));
 		return;
 	}
@@ -178,11 +185,13 @@ void ServerNetworkService::handleSessionDatagram(const engine::net::Datagram& da
 			continue;
 		}
 		if (const auto error = network::validateClientPayload(header, datagram.bytes)) {
+			engine::core::Logger::defaultLogger().warn("ServerNetworkService: Invalid session packet payload from player " + std::to_string(index));
 			send(datagram.sender, network::makeError(*error, parsed));
 			return;
 		}
 		session->refresh(datagram.sender, now);
 		if (header.type == network::PacketType::Disconnect) {
+			engine::core::Logger::defaultLogger().debug("ServerNetworkService: Player " + std::to_string(index) + " (" + datagram.sender.address + ":" + std::to_string(datagram.sender.port) + ") sent disconnect");
 			removeSession(static_cast<std::uint8_t>(index), 1);
 		} else if (header.type == network::PacketType::Ping) {
 			sendPong(*session, datagram.bytes);
@@ -191,6 +200,7 @@ void ServerNetworkService::handleSessionDatagram(const engine::net::Datagram& da
 		}
 		return;
 	}
+	engine::core::Logger::defaultLogger().warn("ServerNetworkService: Received packet with unknown session ID " + std::to_string(header.sessionId) + " from " + datagram.sender.address + ":" + std::to_string(datagram.sender.port));
 	send(
 		datagram.sender,
 		network::makeError(network::ErrorCode::InvalidSession, parsed));
@@ -205,15 +215,18 @@ void ServerNetworkService::handleJoin(const engine::net::Datagram& datagram, std
 
 	const auto freeIndex = findFreeSlot();
 	if (!freeIndex) {
+		engine::core::Logger::defaultLogger().warn("ServerNetworkService: Join rejected: Server is full, rejecting connection from " + datagram.sender.address + ":" + std::to_string(datagram.sender.port));
 		sendJoinRejected(datagram, nonce);
 		return;
 	}
 	const auto sessionId = createSessionId();
 	if (!sessionId) {
+		engine::core::Logger::defaultLogger().error("ServerNetworkService: Join rejected: Unable to allocate unique session ID");
 		sendJoinRejected(datagram, nonce);
 		return;
 	}
 	Session& session = _sessions[freeIndex.value()].emplace(datagram.sender, nonce, now, *sessionId);
+	engine::core::Logger::defaultLogger().info("ServerNetworkService: Client joined from " + datagram.sender.address + ":" + std::to_string(datagram.sender.port) + " -> assigned player slot " + std::to_string(freeIndex.value()) + ", session ID " + std::to_string(*sessionId));
 	sendJoinAccepted(session, static_cast<std::uint8_t>(freeIndex.value()));
 }
 
@@ -283,6 +296,8 @@ void ServerNetworkService::sendJoinRejected(const engine::net::Datagram& datagra
 /// Frees a player slot and announces the departure to the other sessions.
 void ServerNetworkService::removeSession(std::uint8_t playerId, std::uint8_t reason)
 {
+	std::string reasonStr = (reason == 2) ? "timeout" : "client request";
+	engine::core::Logger::defaultLogger().info("ServerNetworkService: Removing player " + std::to_string(playerId) + " session (reason: " + reasonStr + ")");
 	_sessions[playerId].reset();
 	std::vector<std::uint8_t> payload;
 	network::appendU64(payload, _tick);
@@ -302,6 +317,7 @@ void ServerNetworkService::sendPong(Session& session, const std::vector<std::uin
 void ServerNetworkService::send(const engine::net::Endpoint& recipient, std::vector<std::uint8_t> bytes)
 {
 	const std::size_t size = bytes.size();
+	engine::core::Logger::defaultLogger().debug("ServerNetworkService: Sending datagram of " + std::to_string(size) + " bytes to " + recipient.address + ":" + std::to_string(recipient.port));
 	_network.send(recipient, std::move(bytes));
 	_bus.publish(engine::core::BytesSent{size});
 }
@@ -370,6 +386,7 @@ GameWorld::Input ServerNetworkService::collectInput(Clock::time_point now)
 			continue;
 		}
 		if (session->hasExpired(now, SESSION_TIMEOUT)) {
+			engine::core::Logger::defaultLogger().warn("ServerNetworkService: Session for player " + std::to_string(index) + " timed out after inactivity");
 			removeSession(static_cast<std::uint8_t>(index), 2);
 			continue;
 		}

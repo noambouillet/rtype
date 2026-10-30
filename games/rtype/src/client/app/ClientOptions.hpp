@@ -18,6 +18,7 @@ struct ClientOptions {
 	std::string host;
 	std::uint16_t port;
 	std::string logFile;
+	bool isDebugMode;
 	bool showHelp;
 };
 

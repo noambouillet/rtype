@@ -27,6 +27,7 @@ namespace rtype {
 struct ServerOptions {
 	std::uint16_t port = 6767;
 	std::string logFile;
+	bool isDebugMode = false;
 	bool showHelp = false;
 };
 
@@ -50,56 +51,75 @@ static bool parsePort(std::string_view text, std::uint16_t& port)
 	return true;
 }
 
-/// Reads the optional UDP port and log file from the command line.
+/// Applies a single argument or flag to the server options, updating the index and positional counter.
+static bool applyArgument(int argc, char** argv, int& index,
+	ServerOptions& options, int& positionalIndex)
+{
+	const std::string_view argument(argv[index]);
+
+	if (argument == "-h" || argument == "--help") {
+		options.showHelp = true;
+		return true;
+	}
+	if (argument == "--debug") {
+		options.isDebugMode = true;
+		return true;
+	}
+	if (argument.starts_with("--log-file=") && argument.size() > 11) {
+		options.logFile = std::string(argument.substr(11));
+		return true;
+	}
+	if (argument == "--log-file") {
+		if (index + 1 >= argc) {
+			return false;
+		}
+		options.logFile = argv[++index];
+		return true;
+	}
+	if (positionalIndex == 0 && parsePort(argument, options.port)) {
+		positionalIndex = 1;
+		return true;
+	}
+	return false;
+}
+
+/// Reads the optional UDP port, debug flag, and log file from the command line.
 static std::optional<ServerOptions> parseOptions(int argc, char** argv)
 {
 	ServerOptions options;
-	bool hasPort = false;
+	int positionalIndex = 0;
 
-	for (int index = 1; index < argc; index++) {
-		const std::string_view argument(argv[index]);
-		if (argument == "-h" || argument == "--help") {
-			options.showHelp = true;
+	for (int index = 1; index < argc; ++index) {
+		if (!applyArgument(argc, argv, index, options, positionalIndex)) {
+			return std::nullopt;
+		}
+		if (options.showHelp) {
 			return options;
 		}
-		if (argument.starts_with("--log-file=") && argument.size() > 11) {
-			options.logFile = argument.substr(11);
-			continue;
-		}
-		if (!hasPort && parsePort(argument, options.port)) {
-			hasPort = true;
-			continue;
-		}
-		return std::nullopt;
 	}
 	return options;
 }
 
 /// Starts the server with the selected log destination.
-static int runServer(const ServerOptions& options)
+static int runServer(const ServerOptions& options, engine::core::Logger& logger)
 {
 	std::signal(SIGINT, stopServer);
 	std::signal(SIGTERM, stopServer);
-	std::unique_ptr<engine::core::Logger> logger;
 
 	try {
-		if (options.logFile.empty()) {
-			logger = std::make_unique<engine::core::Logger>(std::cout);
-		} else {
-			logger = std::make_unique<engine::core::Logger>(std::filesystem::path(options.logFile));
-		}
-		logger->setVerbose(true);
+		logger.debug("Initializing server network subsystem on UDP port " + std::to_string(options.port));
 		engine::net::UdpServer transport({.port = options.port, .maxDatagramSize = network::MAX_DATAGRAM_SIZE});
-		GameServer server(transport, *logger);
-		logger->info("R-Type server listening on UDP port " + std::to_string(options.port));
+		logger.debug("Server network subsystem initialized successfully");
+
+		logger.debug("Initializing GameServer core...");
+		GameServer server(transport, logger);
+		logger.info("GameServer ready and listening on UDP port " + std::to_string(options.port));
+
 		server.run(running);
-		logger->info("Goodbye...");
+		logger.info("Shutting down server subsystems...");
+		logger.info("Server teardown completed. Goodbye...");
 	} catch (const std::exception& error) {
-		if (logger) {
-			logger->error(std::string("Server error: ") + error.what());
-		} else {
-			std::cerr << "Server error: " << error.what() << '\n';
-		}
+		logger.error(std::string("Server error: ") + error.what());
 		return 1;
 	}
 	return 0;
@@ -111,9 +131,20 @@ int main(int argc, char** argv)
 {
 	const auto options = rtype::parseOptions(argc, argv);
 	if (!options || options->showHelp) {
-		std::ostream& output = options ? std::cout : std::cerr;
-		output << "Usage: r-type_server [udp-port] [--log-file=path] [-h]\n";
+		std::cout << "Usage: r-type_server [udp-port] [--debug] [--log-file <path> | --log-file=path] [-h]\n";
 		return options ? 0 : 2;
 	}
-	return rtype::runServer(*options);
+
+	std::shared_ptr<engine::core::Logger> logger;
+	if (options->logFile.empty()) {
+		logger = std::make_shared<engine::core::Logger>(std::cout);
+	} else {
+		logger = std::make_shared<engine::core::Logger>(std::filesystem::path(options->logFile));
+	}
+	if (options->isDebugMode) {
+		logger->setVerbose(true);
+	}
+	engine::core::Logger::setDefaultLogger(logger);
+
+	return rtype::runServer(*options, *logger);
 }

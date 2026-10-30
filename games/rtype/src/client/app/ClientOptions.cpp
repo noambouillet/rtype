@@ -24,30 +24,48 @@ static bool parsePort(const std::string& value, std::uint16_t& port)
 	return true;
 }
 
-/// Applies one command-line argument to the client settings.
-static bool applyArgument(ClientOptions& options, const std::string& argument, int& position)
+/// Applies a single argument or flag to the options, updating the index and positional counter.
+static bool applyArgument(const std::vector<std::string>& arguments, std::size_t& index,
+	ClientOptions& options, int& positionalIndex)
 {
+	const std::string& argument = arguments[index];
+
+	if (argument == "-h" || argument == "--help") {
+		options.showHelp = true;
+		return true;
+	}
+	if (argument == "--debug") {
+		options.isDebugMode = true;
+		return true;
+	}
 	if (argument.starts_with("--log-file=") && argument.size() > 11) {
 		options.logFile = argument.substr(11);
 		return true;
 	}
-	if (position == 0 && parsePort(argument, options.port)) {
-		position = 2;
+	if (argument == "--log-file") {
+		if (index + 1 >= arguments.size()) {
+			return false;
+		}
+		options.logFile = arguments[++index];
 		return true;
 	}
-	if (position == 0 && !argument.starts_with('-')) {
+	if (positionalIndex == 0 && parsePort(argument, options.port)) {
+		positionalIndex = 2;
+		return true;
+	}
+	if (positionalIndex == 0 && !argument.starts_with('-')) {
 		options.host = argument;
-		position = 1;
+		positionalIndex = 1;
 		return true;
 	}
-	if (position == 1 && parsePort(argument, options.port)) {
-		position = 2;
+	if (positionalIndex == 1 && parsePort(argument, options.port)) {
+		positionalIndex = 2;
 		return true;
 	}
 	return false;
 }
 
-/// Reads an optional hostname, port, and log file from string arguments.
+/// Reads an optional hostname, port, debug flag, and log file from string arguments.
 std::optional<ClientOptions> parseOptions(const std::vector<std::string>& arguments)
 {
 	ClientOptions options;
@@ -55,14 +73,15 @@ std::optional<ClientOptions> parseOptions(const std::vector<std::string>& argume
 	options.port = 6767;
 	options.logFile = "";
 	options.showHelp = false;
-	int position = 0;
-	for (const std::string& argument : arguments) {
-		if (argument == "-h" || argument == "--help") {
-			options.showHelp = true;
-			return options;
-		}
-		if (!applyArgument(options, argument, position)) {
+	options.isDebugMode = false;
+	int positionalIndex = 0;
+
+	for (std::size_t index = 0; index < arguments.size(); ++index) {
+		if (!applyArgument(arguments, index, options, positionalIndex)) {
 			return std::nullopt;
+		}
+		if (options.showHelp) {
+			return options;
 		}
 	}
 	return options;

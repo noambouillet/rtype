@@ -7,6 +7,9 @@
 
 #include "GameWorld.hpp"
 
+#include <string>
+
+#include "engine/core/Logger.hpp"
 #include "engine/core/ecs/Components.hpp"
 #include "engine/core/systems/DestroySystem.hpp"
 #include "engine/core/systems/MovementSystem.hpp"
@@ -40,6 +43,7 @@ GameWorld::GameWorld() : _coordinator{}, _playerEntities{}
 	registerComponents();
 	registerSystems();
 	prefabs::createWaveSpawner(_coordinator);
+	engine::core::Logger::defaultLogger().debug("GameWorld: Server game world initialized");
 }
 
 /// Registers every component type; systems need them to build their signatures.
@@ -133,9 +137,11 @@ void GameWorld::syncPlayerEntities(const Input& input, WorldEventCollector& even
 			const engine::core::Entity player = prefabs::createPlayer(_coordinator, static_cast<std::uint8_t>(playerId));
 			_playerEntities[playerId] = player;
 			events.recordSpawn(_coordinator, player);
+			engine::core::Logger::defaultLogger().debug("GameWorld: Spawned player entity " + std::to_string(player.id()) + " for slot " + std::to_string(playerId));
 		} else if (!connected) {
 			auto& player = _playerEntities[playerId];
 			if (player) {
+				engine::core::Logger::defaultLogger().debug("GameWorld: Despawned player entity " + std::to_string(player->id()) + " for slot " + std::to_string(playerId));
 				_coordinator.destroyEntity(player.value());
 				player.reset();
 			}

@@ -13,7 +13,6 @@
 #include <csignal>
 #include <cstdint>
 #include <filesystem>
-#include <iostream>
 #include <map>
 #include <memory>
 #include <optional>
@@ -108,7 +107,6 @@ static void loadSettings(engine::core::EngineSettings& engineSettings, engine::i
 		engineSettings.saveToMap(config);
 		bindings.saveToMap(config);
 		if (!engine::core::ConfigParser::saveFile(configFile, config)) {
-			logger.error("Unable to save settings file: " + configFile);
 			throw engine::core::ConfigError("Unable to create settings file: " + configFile);
 		}
 	}

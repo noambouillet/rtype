@@ -10,6 +10,7 @@
 #include <array>
 #include <utility>
 
+#include "engine/core/Logger.hpp"
 #include "game/GameTypes.hpp"
 
 namespace rtype::client {
@@ -39,6 +40,7 @@ engine::input::InputMap ClientControls::defaultBindings()
 	map.bindButton(AUTO_FIRE, 1);
 	map.bindKey(QUIT, "Escape");
 	map.bindKey(METRICS, "F3");
+	engine::core::Logger::defaultLogger().debug("ClientControls: Default input bindings configured");
 	return map;
 }
 

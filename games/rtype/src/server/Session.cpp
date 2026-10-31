@@ -7,8 +7,10 @@
 
 #include "Session.hpp"
 
+#include <string>
 #include <utility>
 
+#include "engine/core/Logger.hpp"
 #include "utils/network/Protocol.hpp"
 
 namespace rtype {
@@ -16,6 +18,7 @@ namespace rtype {
 Session::Session(engine::net::Endpoint address, std::uint64_t nonce, Clock::time_point now, std::uint32_t id)
 	: _address(std::move(address)), _nonce(nonce), _id(id), _nextSequence(1), _lastInputSequence(0), _lastHeard(now), _lastInput(now), _buttons(0), _hasInput(false)
 {
+	engine::core::Logger::defaultLogger().debug("Session: Initialized session " + std::to_string(id) + " for " + _address.address + ":" + std::to_string(_address.port));
 }
 
 const engine::net::Endpoint& Session::address() const

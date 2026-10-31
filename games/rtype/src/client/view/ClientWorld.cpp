@@ -18,6 +18,7 @@
 #include "engine/assets/AssetManager.hpp"
 #include "engine/audio/AudioSystem.hpp"
 #include "engine/audio/Components.hpp"
+#include "engine/core/Logger.hpp"
 #include "engine/core/ecs/Components.hpp"
 #include "engine/core/systems/InterpolationSystem.hpp"
 #include "engine/render/Components.hpp"
@@ -52,9 +53,11 @@ ClientWorld::ClientWorld(const engine::assets::AssetManager& assets, bool screen
 	_coordinator.setSystemSignature<SoundEventSystem>(SoundEventSystem::signature(_coordinator));
 	auto& audio = _coordinator.registerSystem<engine::audio::AudioSystem>();
 	_coordinator.setSystemSignature<engine::audio::AudioSystem>(engine::audio::AudioSystem::signature(_coordinator));
+	engine::core::Logger::defaultLogger().debug("ClientWorld: Client view world initialized");
 	const std::string musicPath = assets.hasSound(std::string(SoundEventSystem::MUSIC)) ? assets.getSoundPath(std::string(SoundEventSystem::MUSIC)) : "";
 	if (!musicPath.empty()) {
 		audio.setMusic(musicPath, SoundEventSystem::MUSIC_VOLUME);
+		engine::core::Logger::defaultLogger().debug("ClientWorld: Background music set to " + musicPath);
 	}
 }
 

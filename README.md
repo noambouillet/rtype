@@ -202,12 +202,24 @@ For multiple clients and local testing workflows, see the [**Full Run Guide**](d
 r-type/
 ├── assets/                     # Spritesheets, fonts, sound effects, and music
 ├── docs/                       # Technical guides, protocol RFCs, and engine studies
+│   ├── engine/                 # Engine module specifications and architecture guides
+│   │   ├── core/               # engine::core (core.md, logger.md)
+│   │   ├── render/             # engine::render (render.md)
+│   │   ├── audio/              # engine::audio (audio.md)
+│   │   ├── input/              # engine::input (input.md)
+│   │   ├── assets/             # engine::assets (assets.md)
+│   │   ├── net/                # engine::net (net.md)
+│   │   ├── physics/            # engine::physics (physics.md)
+│   │   └── tools/              # engine::tools (tools.md, metrics.md)
+│   ├── games/                  # Game implementations and design guides
+│   │   └── rtype/              # R-Type game architecture and client/server split (rtype.md)
 │   ├── accessibility_study.md  # Motor & visual accessibility technical study
 │   ├── architecture.md         # Layered subsystem and engine systems overview
 │   ├── build_instructions.md   # Step-by-step compilation guide (Linux & Windows)
 │   ├── coding-style.md         # C++20 conventions and documentation standards
 │   ├── contributing.md         # Conventional commits workflow and git hooks
 │   ├── ecs_guide.md            # Detailed ECS guide (Entities, Components, Systems)
+│   ├── engine_modules.md       # Engine modularity, options, and vcpkg features
 │   ├── RFC.md                  # UDP network binary protocol specification
 │   ├── R-TYPE.md               # Original game design and assignment reference
 │   └── run_instructions.md     # Server/client execution and CLI arguments
@@ -217,6 +229,7 @@ r-type/
 │   ├── render/                 # engine::render: graphics backend, Sprite, RenderSystem
 │   ├── audio/                  # engine::audio: audio backend, Sound, AudioSystem
 │   ├── input/                  # engine::input: devices and action mapping
+│   ├── assets/                 # engine::assets: manifest parsing, texture caching
 │   ├── physics/                # engine::physics: Collider, CollisionSystem
 │   ├── net/                    # engine::net: transport interfaces, UDP, packets
 │   ├── script/                 # engine::script: Lua bindings
@@ -243,17 +256,36 @@ r-type/
 
 ---
 
-## Documentation Index
+## Documentation
 
-For in-depth architectural and technical documentation:
+Comprehensive documentation covering engine architecture, modular subsystems, network protocol, and gameplay implementation:
+
+### Engine Modules (`docs/engine/`)
+
+| Module | Documentation | Focus Area |
+|---|---|---|
+| **`engine::core`** | [**Core Module Guide**](docs/engine/core/core.md) | ECS architecture, generational IDs, `EventBus`, telemetry metrics, and [**Logger Architecture**](docs/engine/core/logger.md). |
+| **`engine::render`** | [**Render Module Guide**](docs/engine/render/render.md) | 2D graphics abstraction (`IGraphicsBackend`), SFML 3 Pimpl renderer, windowing, and `RenderSystem`. |
+| **`engine::audio`** | [**Audio Module Guide**](docs/engine/audio/audio.md) | Sound effect and background music playback (`IAudioBackend`), SFML audio backend, and `AudioSystem`. |
+| **`engine::input`** | [**Input Module Guide**](docs/engine/input/input.md) | Semantic action mapping (`InputMap`), keyboard/gamepad devices (`SfmlInput`), deadzones, and rebindable keys. |
+| **`engine::assets`** | [**Assets Module Guide**](docs/engine/assets/assets.md) | JSON manifest parsing (`manifest.json`), group-based asset preloading, and missing texture fallback handling. |
+| **`engine::net`** | [**Net Module Guide**](docs/engine/net/net.md) | Asynchronous non-blocking UDP client/server transport based on Asio (`UdpClient`, `UdpServer`). |
+| **`engine::physics`** | [**Physics Module Guide**](docs/engine/physics/physics.md) | Deterministic 2D AABB bounding-box collision detection and multi-layer bitmask filtering (`CollisionSystem`). |
+| **`engine::tools`** | [**Tools Module Guide**](docs/engine/tools/tools.md) | Developer diagnostics, real-time HUD metrics overlay (`MetricsOverlay`), and [**Metrics Architecture**](docs/engine/tools/metrics.md). |
+
+### Game Documentation (`docs/games/`)
+
+- [**R-Type Game Architecture**](docs/games/rtype/rtype.md): Authoritative headless server (`r-type_server`), predictive SFML client (`r-type_client`), and network simulation split.
+
+### Technical Guides & Specifications
 
 - [**Build Instructions**](docs/build_instructions.md): Automated one-step setup and build (`build.sh` / `build.ps1`), toolchains, and CMake manual compilation steps.
-- [**Engine Modules**](docs/engine_modules.md): Module list, build options, vcpkg features, and how to add a module.
-- [**Run Instructions**](docs/run_instructions.md): Server and client CLI flags, `settings.cfg`, and multi-client testing.
-- [**Architecture & Systems Overview**](docs/architecture.md): Subsystems breakdown (Engine vs Client vs Server), Render, Physics, and Network systems.
-- [**Entity Component System (ECS) Guide**](docs/ecs_guide.md): In-depth look at our ECS paradigm, generational IDs, and sparse sets.
-- [**Accessibility Technical Study**](docs/accessibility_study.md): Study of implemented accessibility features and GAG/XAG compliance.
+- [**Engine Modules Overview**](docs/engine_modules.md): Module compile/link decoupling, build options, and vcpkg dependency management.
+- [**Run Instructions**](docs/run_instructions.md): Server and client CLI flags, `settings.cfg`, and multi-client testing workflows.
+- [**Architecture & Systems Overview**](docs/architecture.md): Layered architecture breakdown (Engine vs Client vs Server), Render, Physics, and Network subsystems.
+- [**Entity Component System (ECS) Guide**](docs/ecs_guide.md): In-depth look at our custom ECS paradigm, generational IDs, and sparse sets.
 - [**UDP Network Protocol (RFC)**](docs/RFC.md): Packet wire format, headers, sequence validation, and session states.
+- [**Accessibility Technical Study**](docs/accessibility_study.md): Study of implemented accessibility features and GAG/XAG compliance.
 - [**R-Type Gameplay Reference**](docs/R-TYPE.md): Overview of arcade mechanics, enemy types, and weapons.
 - [**Coding Style Guide**](docs/coding-style.md): C++ code conventions, naming rules, and documentation standards.
 - [**Contributing Guide**](docs/contributing.md): Branching strategy, Conventional Commits format, and git hooks.

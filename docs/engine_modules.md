@@ -11,16 +11,17 @@ Modularity works at two levels:
 
 ## 1. Module List
 
-| Module            | Option                 | Default | Depends on            | Third-party            | vcpkg feature | Content                                   |
-| ----------------- | ---------------------- | ------- | --------------------- | ---------------------- | ------------- | ----------------------------------------- |
-| `engine::core`    | always built           | ON      | none                  | none                   | none          | ECS, config, logger, errors, movement, interpolation, timed queue, `EventBus`, `Metrics` |
-| `engine::render`  | `ENGINE_BUILD_RENDER`  | ON      | core                  | SFML Graphics          | `render`      | Graphics backend, `SfmlRenderer` (window, textures, text), `Sprite`, `RenderSystem` |
-| `engine::audio`   | `ENGINE_BUILD_AUDIO`   | ON      | core                  | SFML Audio             | `audio`       | Audio backend, `SfmlAudio`, `Sound`, `AudioSystem` |
-| `engine::input`   | `ENGINE_BUILD_INPUT`   | ON      | core                  | SFML Window            | `input`       | `InputMap` (actions), `SfmlInput` (keyboard, joystick) |
-| `engine::physics` | `ENGINE_BUILD_PHYSICS` | ON      | core                  | none                   | none          | `Collider`, `CollisionSystem`             |
-| `engine::net`     | `ENGINE_BUILD_NET`     | ON      | core                  | asio                   | `net`         | Transport interfaces, UDP, packets        |
-| `engine::script`  | `ENGINE_BUILD_SCRIPT`  | OFF     | core                  | Lua, sol2              | `script`      | Lua bindings (not implemented yet)        |
-| `engine::tools`   | `ENGINE_BUILD_TOOLS`   | OFF     | core, render, input   | (from render, input)   | `tools`       | `MetricsOverlay` (see [Metrics](engine/tools/metrics.md)); console and editor not implemented yet |
+| Module | Option | Default | Depends on | Third-party | vcpkg feature | Content & Documentation |
+| --- | --- | --- | --- | --- | --- | --- |
+| [`engine::core`](engine/core/core.md) | always built | ON | none | none | none | ECS, config, [logger](engine/core/logger.md), errors, movement, interpolation, timed queue, `EventBus`, `Metrics` |
+| [`engine::render`](engine/render/render.md) | `ENGINE_BUILD_RENDER` | ON | core | SFML Graphics | `render` | Graphics backend, `SfmlRenderer` (window, textures, text), `Sprite`, `RenderSystem` |
+| [`engine::audio`](engine/audio/audio.md) | `ENGINE_BUILD_AUDIO` | ON | core | SFML Audio | `audio` | Audio backend, `SfmlAudio`, `Sound`, `AudioSystem` |
+| [`engine::input`](engine/input/input.md) | `ENGINE_BUILD_INPUT` | ON | core | SFML Window | `input` | `InputMap` (actions), `SfmlInput` (keyboard, joystick) |
+| [`engine::assets`](engine/assets/assets.md) | `ENGINE_BUILD_ASSETS` | ON | core, render | nlohmann/json | `assets` | Data-driven `AssetManager`, JSON manifest parser, fallback textures |
+| [`engine::physics`](engine/physics/physics.md) | `ENGINE_BUILD_PHYSICS` | ON | core | none | none | `Collider`, `CollisionSystem` |
+| [`engine::net`](engine/net/net.md) | `ENGINE_BUILD_NET` | ON | core | asio | `net` | Transport interfaces, UDP, packets |
+| `engine::script` | `ENGINE_BUILD_SCRIPT` | OFF | core | Lua, sol2 | `script` | Lua bindings (not implemented yet) |
+| [`engine::tools`](engine/tools/tools.md) | `ENGINE_BUILD_TOOLS` | OFF | core, render, input | (from render, input) | `tools` | `MetricsOverlay` (see [Metrics](engine/tools/metrics.md)); console and editor not implemented yet |
 
 `script` has no sources yet: configure stops with an error if `ENGINE_BUILD_SCRIPT` is ON. The R-Type root build turns `ENGINE_BUILD_TOOLS` on together with the client.
 
@@ -39,6 +40,8 @@ graph BT
     render[engine::render] --> core[engine::core]
     audio[engine::audio] --> core
     input[engine::input] --> core
+    assets[engine::assets] --> core
+    assets --> render
     physics[engine::physics] --> core
     net[engine::net] --> core
     script[engine::script] --> core
@@ -66,7 +69,7 @@ engine/
 │   ├── CMakeLists.txt
 │   ├── include/engine/render/...
 │   └── src/...
-└── audio/ input/ physics/ net/ script/ tools/   # same structure
+└── audio/ input/ assets/ physics/ net/ script/ tools/   # same structure
 ```
 
 A module's `include/` folder is only added to that module's target. Code that links `engine::core` alone cannot include `engine/render/...`: the header is not found at compile time. This keeps modules decoupled, since a missing link is reported as a compile error instead of a link error or a hidden dependency.
@@ -101,7 +104,7 @@ cmake --install build-engine --prefix install
 The enabled modules are listed during configure:
 
 ```
--- Engine modules: core;render;input;physics;net
+-- Engine modules: core;render;assets;input;physics;net
 ```
 
 The install step only copies the libraries and headers of enabled modules. With only `core` enabled, `install/` contains `libengine_core.a` and `include/engine/core/`, nothing else.
@@ -113,7 +116,7 @@ The root picks engine modules from the game targets:
 | Option               | Default | Effect                                                    |
 | -------------------- | ------- | --------------------------------------------------------- |
 | `RTYPE_BUILD_SERVER` | ON      | Builds `r-type_server`, enables `physics` and `net`       |
-| `RTYPE_BUILD_CLIENT` | ON      | Builds `r-type_client`, enables `render`, `audio`, `input`, `net` |
+| `RTYPE_BUILD_CLIENT` | ON      | Builds `r-type_client`, enables `render`, `assets`, `audio`, `input`, `net`, `tools` |
 
 Server-only build:
 
@@ -135,6 +138,9 @@ Configure prints `-- Engine modules: core;physics;net`, and vcpkg installs only 
 ```json
 "features": {
   "render": { "dependencies": [{ "name": "sfml", "features": ["graphics"] }] },
+  "assets": { "dependencies": ["nlohmann-json", { "name": "engine", "features": ["render"] }] },
+  "audio":  { "dependencies": [{ "name": "sfml", "features": ["audio"] }] },
+  "input":  { "dependencies": [{ "name": "sfml", "features": ["window"] }] },
   "net":    { "dependencies": ["asio"] },
   "tools":  { "dependencies": [{ "name": "engine", "features": ["render", "input"] }] }
 }
@@ -151,7 +157,7 @@ Inside the same CMake tree:
 ```cmake
 add_subdirectory(engine)
 target_link_libraries(my_server PRIVATE engine::core engine::physics engine::net)
-target_link_libraries(my_client PRIVATE engine::core engine::render engine::audio engine::input)
+target_link_libraries(my_client PRIVATE engine::core engine::render engine::assets engine::audio engine::input)
 ```
 
 From an installed engine, request the modules as components. `find_package` fails if one was not built:

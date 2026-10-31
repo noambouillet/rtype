@@ -12,6 +12,8 @@
 #include <string>
 #include <utility>
 
+#include "engine/core/Logger.hpp"
+
 namespace engine::input {
 
 InputMap::InputMap() : _bindings{}, _deadzone(DEFAULT_JOYSTICK_DEADZONE)
@@ -117,6 +119,8 @@ void InputMap::loadFromMap(const std::map<std::string, std::string>& data)
 	}
 	_bindings = bindings;
 	_deadzone = deadzoneValue;
+	core::Logger::defaultLogger().debug("InputMap: Loaded " + std::to_string(_bindings.size()) +
+										" input bindings (joystick deadzone: " + std::to_string(_deadzone) + "%)");
 }
 
 /// Serializes the current key bindings and joystick settings to a key-value map.

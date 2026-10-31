@@ -9,10 +9,10 @@
 
 #include <cmath>
 #include <filesystem>
-#include <iostream>
 #include <string>
 
 #include "SfmlRendererImplementation.hpp"
+#include "engine/core/Logger.hpp"
 #include "engine/render/GraphicsError.hpp"
 
 namespace engine::render {
@@ -43,6 +43,8 @@ static sf::Color toSfml(const Color& color)
 SfmlRenderer::SfmlRenderer(const WindowConfig& config) : _implementation(std::make_unique<Implementation>(config))
 {
 	_implementation->window.setFramerateLimit(config.frameRateLimit);
+	core::Logger::defaultLogger().debug("SfmlRenderer: Created window " + std::to_string(config.width) + "x" +
+										std::to_string(config.height) + " ('" + config.title + "', " + std::to_string(config.frameRateLimit) + " fps)");
 }
 
 SfmlRenderer::~SfmlRenderer() = default;
@@ -59,6 +61,7 @@ bool SfmlRenderer::hasFocus() const
 
 void SfmlRenderer::close()
 {
+	core::Logger::defaultLogger().debug("SfmlRenderer: Closing window");
 	_implementation->window.close();
 }
 
@@ -67,6 +70,7 @@ void SfmlRenderer::handleEvent()
 {
 	while (const auto event = _implementation->window.pollEvent()) {
 		if (event->is<sf::Event::Closed>()) {
+			core::Logger::defaultLogger().debug("SfmlRenderer: Window close event received");
 			_implementation->window.close();
 		}
 	}
@@ -77,10 +81,12 @@ TextureId SfmlRenderer::loadTextureFromFile(const std::string& filepath)
 {
 	sf::Texture loadedTexture;
 	if (!loadedTexture.loadFromFile(std::filesystem::path(filepath))) {
+		core::Logger::defaultLogger().warn("SfmlRenderer: Failed to load texture from file: " + filepath);
 		return INVALID_TEXTURE_ID;
 	}
 	const TextureId assignedTextureId = _implementation->nextTextureId++;
 	_implementation->loadedTextures.emplace(assignedTextureId, std::move(loadedTexture));
+	core::Logger::defaultLogger().debug("SfmlRenderer: Loaded texture from " + filepath + " (ID: " + std::to_string(assignedTextureId) + ")");
 	return assignedTextureId;
 }
 
@@ -89,10 +95,12 @@ FontId SfmlRenderer::loadFontFromFile(const std::string& filepath)
 {
 	sf::Font loadedFont;
 	if (!loadedFont.openFromFile(std::filesystem::path(filepath))) {
+		core::Logger::defaultLogger().warn("SfmlRenderer: Failed to load font from file: " + filepath);
 		return INVALID_FONT_ID;
 	}
 	const FontId assignedFontId = _implementation->nextFontId++;
 	_implementation->loadedFonts.emplace(assignedFontId, std::move(loadedFont));
+	core::Logger::defaultLogger().debug("SfmlRenderer: Loaded font from " + filepath + " (ID: " + std::to_string(assignedFontId) + ")");
 	return assignedFontId;
 }
 

@@ -12,6 +12,7 @@
 #include <utility>
 
 #include "KeyNames.hpp"
+#include "engine/core/Logger.hpp"
 
 namespace engine::input {
 
@@ -19,6 +20,8 @@ namespace engine::input {
 SfmlInput::SfmlInput(InputMap map, std::uint32_t joystick)
 	: _map(std::move(map)), _joystickId(joystick), _states(_map.actions().size())
 {
+	core::Logger::defaultLogger().debug("SfmlInput: Backend initialized with " +
+										std::to_string(_states.size()) + " actions (joystick ID: " + std::to_string(_joystickId) + ")");
 }
 
 /// Reads the devices for every action.

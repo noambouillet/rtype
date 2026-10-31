@@ -12,6 +12,7 @@
 
 #include "SfmlAudioImplementation.hpp"
 #include "engine/audio/AudioError.hpp"
+#include "engine/core/Logger.hpp"
 
 namespace engine::audio {
 
@@ -19,6 +20,7 @@ namespace engine::audio {
 SfmlAudio::SfmlAudio(std::filesystem::path root) : _implementation(std::make_unique<Implementation>())
 {
 	_implementation->root = std::move(root);
+	core::Logger::defaultLogger().debug("SfmlAudio: Audio backend initialized (root: '" + _implementation->root.string() + "')");
 }
 
 SfmlAudio::~SfmlAudio() = default;
@@ -30,15 +32,18 @@ void SfmlAudio::playMusic(std::string_view name, float volume)
 												? std::filesystem::path(name)
 												: _implementation->root / std::filesystem::path(name).lexically_normal();
 	if (!_implementation->music.openFromFile(musicPath)) {
+		core::Logger::defaultLogger().warn("SfmlAudio: Failed to open music file: " + musicPath.string());
 		return;
 	}
 	_implementation->music.setLooping(true);
 	_implementation->music.setVolume(volume);
 	_implementation->music.play();
+	core::Logger::defaultLogger().debug("SfmlAudio: Playing music '" + musicPath.string() + "' (volume: " + std::to_string(volume) + ")");
 }
 
 void SfmlAudio::stopMusic()
 {
+	core::Logger::defaultLogger().debug("SfmlAudio: Stopped music playback");
 	_implementation->music.stop();
 }
 
@@ -52,8 +57,10 @@ sf::SoundBuffer& SfmlAudio::Implementation::loadBuffer(const std::string& name)
 													: root / std::filesystem::path(name).lexically_normal();
 		if (!bufferEntry->second.loadFromFile(soundPath)) {
 			buffers.erase(bufferEntry);
+			core::Logger::defaultLogger().warn("SfmlAudio: Cannot load sound file: " + soundPath.string());
 			throw AudioError("Cannot load sound: " + soundPath.string());
 		}
+		core::Logger::defaultLogger().debug("SfmlAudio: Loaded sound buffer '" + name + "' from " + soundPath.string());
 	}
 	return bufferEntry->second;
 }

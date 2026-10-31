@@ -11,6 +11,8 @@
 #include <optional>
 #include <sstream>
 
+#include "engine/core/Logger.hpp"
+
 namespace engine::tools {
 
 /// Writes a value with the given number of decimals, or "--" when it is not measured yet.
@@ -30,11 +32,13 @@ MetricsOverlay::MetricsOverlay(core::EventBus& bus, render::FontId font)
 	: _visible(false), _lines{"Collecting metrics..."}, _onUpdate(), _font(font)
 {
 	_onUpdate = bus.subscribe<core::MetricsUpdated>([this](const core::MetricsUpdated& event) { _lines = format(event.snapshot); });
+	core::Logger::defaultLogger().debug("MetricsOverlay: Initialized metrics overlay");
 }
 
 void MetricsOverlay::toggle()
 {
 	_visible = !_visible;
+	core::Logger::defaultLogger().debug("MetricsOverlay: Toggled visibility to " + std::string(_visible ? "visible" : "hidden"));
 }
 
 bool MetricsOverlay::visible() const
@@ -45,6 +49,7 @@ bool MetricsOverlay::visible() const
 void MetricsOverlay::setFont(render::FontId font)
 {
 	_font = font;
+	core::Logger::defaultLogger().debug("MetricsOverlay: Updated font to ID " + std::to_string(font));
 }
 
 void MetricsOverlay::draw(render::IGraphicsBackend& backend) const

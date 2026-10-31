@@ -7,6 +7,8 @@
 
 #include "engine/core/EngineSettings.hpp"
 
+#include "engine/core/Logger.hpp"
+
 namespace engine::core {
 
 void EngineSettings::loadFromMap(const std::map<std::string, std::string>& data)
@@ -20,6 +22,8 @@ void EngineSettings::loadFromMap(const std::map<std::string, std::string>& data)
 	} else if (screenFlash->second == "false") {
 		_screenFlashEnabled = false;
 	}
+	core::Logger::defaultLogger().debug("EngineSettings: Screen flash " +
+										std::string(_screenFlashEnabled ? "enabled" : "disabled"));
 }
 
 void EngineSettings::saveToMap(std::map<std::string, std::string>& data) const

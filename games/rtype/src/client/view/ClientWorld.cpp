@@ -22,6 +22,7 @@
 #include "engine/core/systems/InterpolationSystem.hpp"
 #include "engine/render/Components.hpp"
 #include "engine/render/RenderSystem.hpp"
+#include "engine/ui/Interface.hpp"
 
 namespace rtype::client {
 
@@ -47,6 +48,7 @@ ClientWorld::ClientWorld(const engine::assets::AssetManager& assets, bool screen
 	auto& render = _coordinator.registerSystem<engine::render::RenderSystem>();
 	_coordinator.setSystemSignature<engine::render::RenderSystem>(engine::render::RenderSystem::signature(_coordinator));
 	render.setBackground(assets.getTexture("background"), 40.0F);
+	engine::ui::registerInterface(_coordinator);
 	auto& sounds = _coordinator.registerSystem<SoundEventSystem>();
 	sounds.setAssetManager(assets);
 	_coordinator.setSystemSignature<SoundEventSystem>(SoundEventSystem::signature(_coordinator));
@@ -75,9 +77,17 @@ void ClientWorld::update(float deltaTime, network::GameClient& client, std::uint
 	effects.update(_coordinator, network, deltaTime);
 }
 
+/// Updates the buttons from the pointer, then shows their state. Clicks are published on the bus as UiClicked.
+void ClientWorld::updateInterface(const engine::input::IInputBackend& input, const engine::render::IGraphicsBackend& backend, engine::core::EventBus& bus)
+{
+	engine::ui::updateInterface(_coordinator, input, backend, bus);
+}
+
+/// Draws the world, then the interface over it in screen space.
 void ClientWorld::render(engine::render::IGraphicsBackend& backend, float deltaTime)
 {
 	_coordinator.getSystem<engine::render::RenderSystem>().render(_coordinator, backend, deltaTime);
+	engine::ui::renderInterface(_coordinator, backend);
 }
 
 void ClientWorld::playAudio(engine::audio::IAudioBackend& backend)

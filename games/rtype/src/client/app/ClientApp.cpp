@@ -142,6 +142,7 @@ static bool updateFrame(ClientLoop& loop)
 	loop.lastFrame = frameStart;
 	const std::uint8_t buttons = loop.controls.buttons(loop.input);
 	loop.view.update(deltaTime, loop.client, buttons);
+	loop.view.updateInterface(loop.input, loop.window, loop.bus);
 	reportNotices(loop.client, loop.logger);
 	if (loop.client.status() != loop.previous) {
 		loop.previous = loop.client.status();

@@ -1,4 +1,5 @@
 add_library(engine_ui
+    src/Interface.cpp
     src/Layout.cpp
     src/UiButtonStyleSystem.cpp
     src/UiInputSystem.cpp

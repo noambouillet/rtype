@@ -1,5 +1,6 @@
 add_library(engine_ui
     src/Layout.cpp
+    src/UiInputSystem.cpp
     src/UiRenderSystem.cpp
 )
 add_library(engine::ui ALIAS engine_ui)

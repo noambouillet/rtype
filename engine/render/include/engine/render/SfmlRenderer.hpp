@@ -33,6 +33,7 @@ public:
 	bool hasFocus() const;
 	void close();
 	void handleEvent();
+	Point cursorPosition() const;
 
 	TextureId loadTextureFromFile(const std::string& filepath) override;
 	FontId loadFontFromFile(const std::string& filepath) override;

@@ -77,6 +77,14 @@ void SfmlRenderer::handleEvent()
 	}
 }
 
+/// Gives the mouse position in screen space coordinates, the ones the interface is drawn in.
+Point SfmlRenderer::cursorPosition() const
+{
+	const sf::Vector2i pixel = sf::Mouse::getPosition(_implementation->window);
+	const sf::Vector2f position = _implementation->window.mapPixelToCoords(pixel, _implementation->screenView);
+	return {.x = static_cast<int>(position.x), .y = static_cast<int>(position.y)};
+}
+
 /// Loads a texture from file into the SFML texture storage and returns an ID.
 TextureId SfmlRenderer::loadTextureFromFile(const std::string& filepath)
 {

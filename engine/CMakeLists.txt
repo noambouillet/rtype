@@ -91,6 +91,19 @@ foreach(ENGINE_MODULE IN LISTS ENGINE_MODULES)
     endif()
 endforeach()
 
+if(TARGET engine_render_sfml)
+    set_target_properties(engine_render_sfml PROPERTIES
+        EXPORT_NAME render_sfml
+        CXX_EXTENSIONS OFF
+    )
+    target_compile_features(engine_render_sfml PUBLIC cxx_std_20)
+    if(MSVC)
+        target_compile_options(engine_render_sfml PRIVATE /W4 $<$<BOOL:${ENGINE_WARNINGS_AS_ERRORS}>:/WX>)
+    else()
+        target_compile_options(engine_render_sfml PRIVATE -Wall -Wextra $<$<BOOL:${ENGINE_WARNINGS_AS_ERRORS}>:-Werror>)
+    endif()
+endif()
+
 message(STATUS "Engine modules: ${ENGINE_MODULES}")
 
 if(ENGINE_INSTALL)
@@ -105,6 +118,15 @@ if(ENGINE_INSTALL)
         )
         install(DIRECTORY ${ENGINE_MODULE}/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
     endforeach()
+
+    if(TARGET engine_render_sfml)
+        install(TARGETS engine_render_sfml
+            EXPORT EngineTargets
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        )
+    endif()
 
     install(EXPORT EngineTargets
         NAMESPACE engine::

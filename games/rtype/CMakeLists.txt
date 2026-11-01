@@ -89,7 +89,7 @@ if(RTYPE_BUILD_CLIENT)
         src/client/app/ClientControls.cpp
         src/client/app/ClientOptions.cpp
     )
-    target_link_libraries(r-type_client PRIVATE rtype_client_core engine::tools Threads::Threads)
+    target_link_libraries(r-type_client PRIVATE rtype_client_core engine::render_sfml engine::tools Threads::Threads)
 
     add_custom_target(rtype_assets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory

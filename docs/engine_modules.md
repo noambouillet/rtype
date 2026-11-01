@@ -13,7 +13,7 @@ Modularity works at two levels:
 
 | Module            | Option                 | Default | Depends on            | Third-party            | vcpkg feature | Content                                   |
 | ----------------- | ---------------------- | ------- | --------------------- | ---------------------- | ------------- | ----------------------------------------- |
-| `engine::core`    | always built           | ON      | none                  | none                   | none          | ECS, config, logger, errors, movement, interpolation, timed queue, `EventBus`, `Metrics` |
+| `engine::core`    | always built           | ON      | none                  | none                   | none          | ECS, config, logger, errors, movement, interpolation, timed queue, `EventBus`, `Metrics`, `SceneManager` (see [Scenes](engine/core/scenes.md)) |
 | `engine::render`  | `ENGINE_BUILD_RENDER`  | ON      | core                  | SFML Graphics          | `render`      | Graphics backend, `SfmlRenderer` (window, textures, text), `Sprite`, `RenderSystem` |
 | `engine::audio`   | `ENGINE_BUILD_AUDIO`   | ON      | core                  | SFML Audio             | `audio`       | Audio backend, `SfmlAudio`, `Sound`, `AudioSystem` |
 | `engine::input`   | `ENGINE_BUILD_INPUT`   | ON      | core                  | SFML Window            | `input`       | `InputMap` (actions), `SfmlInput` (keyboard, joystick) |
@@ -21,8 +21,9 @@ Modularity works at two levels:
 | `engine::net`     | `ENGINE_BUILD_NET`     | ON      | core                  | asio                   | `net`         | Transport interfaces, UDP, packets        |
 | `engine::script`  | `ENGINE_BUILD_SCRIPT`  | OFF     | core                  | Lua, sol2              | `script`      | Lua bindings (not implemented yet)        |
 | `engine::tools`   | `ENGINE_BUILD_TOOLS`   | OFF     | core, render, input   | (from render, input)   | `tools`       | `MetricsOverlay` (see [Metrics](engine/tools/metrics.md)); console and editor not implemented yet |
+| `engine::ui`      | `ENGINE_BUILD_UI`      | OFF     | core, render, input   | (from render, input)   | `ui`          | Interface components (`UiTransform`, `UiRect`, `UiImage`, `UiText`, `UiButton`), drawn in screen space (see [Interface](engine/ui/interface.md)) |
 
-`script` has no sources yet: configure stops with an error if `ENGINE_BUILD_SCRIPT` is ON. The R-Type root build turns `ENGINE_BUILD_TOOLS` on together with the client.
+`script` has no sources yet: configure stops with an error if `ENGINE_BUILD_SCRIPT` is ON. The R-Type root build turns `ENGINE_BUILD_TOOLS` and `ENGINE_BUILD_UI` on together with the client.
 
 Input does not depend on render. `SfmlInput` reads the keyboard and joysticks directly; the game passes it the window focus each frame:
 
@@ -44,6 +45,8 @@ graph BT
     script[engine::script] --> core
     tools[engine::tools] --> render
     tools --> input
+    ui[engine::ui] --> render
+    ui --> input
 ```
 
 ---
@@ -66,7 +69,7 @@ engine/
 │   ├── CMakeLists.txt
 │   ├── include/engine/render/...
 │   └── src/...
-└── audio/ input/ physics/ net/ script/ tools/   # same structure
+└── audio/ input/ physics/ net/ script/ tools/ ui/   # same structure
 ```
 
 A module's `include/` folder is only added to that module's target. Code that links `engine::core` alone cannot include `engine/render/...`: the header is not found at compile time. This keeps modules decoupled, since a missing link is reported as a compile error instead of a link error or a hidden dependency.
@@ -78,6 +81,7 @@ Components belong to the module that uses them:
 | `engine/core/ecs/Components.hpp`    | `Position`, `Velocity`, `Destroy` | `engine::core`    |
 | `engine/render/Components.hpp`  | `Sprite`, `Animation`           | `engine::render`  |
 | `engine/audio/Components.hpp`   | `Sound`                         | `engine::audio`   |
+| `engine/ui/Components.hpp`      | `UiTransform`, `UiRect`, `UiImage`, `UiText`, `UiButton`, `UiFocusable`, `UiButtonStyle`, `UiColorStyle` | `engine::ui` |
 | `engine/physics/Components.hpp` | `Collider`                      | `engine::physics` |
 
 ---

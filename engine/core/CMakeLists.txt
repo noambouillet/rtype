@@ -4,6 +4,8 @@ add_library(engine_core
     src/EventBus.cpp
     src/Logger.cpp
     src/metrics/Metrics.cpp
+    src/scene/Scene.cpp
+    src/scene/SceneManager.cpp
     src/ecs/ComponentManager.cpp
     src/ecs/Coordinator.cpp
     src/ecs/Entity.cpp

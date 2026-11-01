@@ -7,7 +7,8 @@
 
 #include "engine/ui/UiInputSystem.hpp"
 
-#include <optional>
+#include <algorithm>
+#include <utility>
 #include <vector>
 
 #include "engine/ui/Components.hpp"
@@ -15,6 +16,11 @@
 #include "engine/ui/UiEvents.hpp"
 
 namespace engine::ui {
+
+UiInputSystem::UiInputSystem()
+	: _previousAction(), _nextAction(), _confirmAction(), _focused(std::nullopt), _keyboardMode(false), _lastPointerX(0.0F), _lastPointerY(0.0F)
+{
+}
 
 core::Signature UiInputSystem::signature(core::Coordinator& coordinator)
 {
@@ -24,18 +30,39 @@ core::Signature UiInputSystem::signature(core::Coordinator& coordinator)
 	return signature;
 }
 
-/// Updates the hover and press state of every button from the pointer.
-/// A click is a press then a release on the same button; clicks are published once every button is updated,
-/// so a handler may create or destroy interface entities.
+/// Names the input actions that move the focus to the previous or next UiFocusable button and click the focused one.
+void UiInputSystem::setNavigation(std::string previous, std::string next, std::string confirm)
+{
+	_previousAction = std::move(previous);
+	_nextAction = std::move(next);
+	_confirmAction = std::move(confirm);
+}
+
+/// Updates the hover and press state of every button, from the pointer or from the focus.
+/// Moving or clicking the mouse gives control to the pointer; a navigation action gives it to the focus.
 void UiInputSystem::update(core::Coordinator& coordinator, const input::IInputBackend& input, render::Point screen, core::EventBus& bus)
 {
 	const input::PointerState& pointer = input.pointer();
+	if (pointer.x != _lastPointerX || pointer.y != _lastPointerY || pointer.pressed) {
+		_keyboardMode = false;
+	}
+	_lastPointerX = pointer.x;
+	_lastPointerY = pointer.y;
+	if (!_previousAction.empty() && input.justPressed(_previousAction)) {
+		moveFocus(coordinator, -1);
+	}
+	if (!_nextAction.empty() && input.justPressed(_nextAction)) {
+		moveFocus(coordinator, 1);
+	}
 	const std::optional<core::Entity> underPointer = buttonUnderPointer(coordinator, pointer, screen);
+	if (!_keyboardMode && underPointer && coordinator.hasComponent<UiFocusable>(*underPointer)) {
+		_focused = underPointer;
+	}
 	std::vector<UiClicked> clicks;
 	for (core::Entity entity : entities) {
 		auto& button = coordinator.getComponent<UiButton>(entity);
-		button.hovered = underPointer == entity;
-		if (pointer.pressed && button.hovered) {
+		button.hovered = _keyboardMode ? _focused == entity : underPointer == entity;
+		if (pointer.pressed && button.hovered && !_keyboardMode) {
 			button.pressed = true;
 		}
 		if (pointer.released && button.pressed && button.hovered) {
@@ -44,6 +71,10 @@ void UiInputSystem::update(core::Coordinator& coordinator, const input::IInputBa
 		if (!pointer.down) {
 			button.pressed = false;
 		}
+	}
+	const std::optional<core::Entity> focused = focusedButton(coordinator);
+	if (_keyboardMode && focused && !_confirmAction.empty() && input.justPressed(_confirmAction)) {
+		clicks.push_back({.entity = *focused, .action = coordinator.getComponent<UiButton>(*focused).action});
 	}
 	for (const UiClicked& click : clicks) {
 		bus.publish(click);
@@ -66,6 +97,42 @@ std::optional<core::Entity> UiInputSystem::buttonUnderPointer(core::Coordinator&
 		}
 	}
 	return found;
+}
+
+/// Moves the focus to the previous or next UiFocusable button by order, wrapping around.
+void UiInputSystem::moveFocus(core::Coordinator& coordinator, int step)
+{
+	std::vector<core::Entity> focusables;
+	for (core::Entity entity : entities) {
+		if (coordinator.hasComponent<UiFocusable>(entity)) {
+			focusables.push_back(entity);
+		}
+	}
+	if (focusables.empty()) {
+		return;
+	}
+	std::ranges::stable_sort(focusables, [&coordinator](core::Entity left, core::Entity right) {
+		return coordinator.getComponent<UiFocusable>(left).order < coordinator.getComponent<UiFocusable>(right).order;
+	});
+	const std::optional<core::Entity> focused = focusedButton(coordinator);
+	_keyboardMode = true;
+	const auto current = focused ? std::ranges::find(focusables, *focused) : focusables.end();
+	if (current == focusables.end()) {
+		_focused = focusables.front();
+		return;
+	}
+	const auto count = static_cast<int>(focusables.size());
+	const int index = (static_cast<int>(current - focusables.begin()) + step + count) % count;
+	_focused = focusables[static_cast<std::size_t>(index)];
+}
+
+/// Gives the focused button, or nothing if there is no focus or the focused entity is no longer a focusable button.
+std::optional<core::Entity> UiInputSystem::focusedButton(core::Coordinator& coordinator) const
+{
+	if (!_focused || !entities.contains(*_focused) || !coordinator.hasComponent<UiFocusable>(*_focused)) {
+		return std::nullopt;
+	}
+	return _focused;
 }
 
 }

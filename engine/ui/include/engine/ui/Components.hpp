@@ -64,6 +64,10 @@ struct UiButton {
 	bool pressed;
 };
 
+struct UiFocusable {
+	int order;
+};
+
 struct UiButtonStyle {
 	render::Rect normal;
 	render::Rect hovered;

@@ -36,6 +36,10 @@
     "tools": {
       "description": "engine::tools, console, profiler overlay and editor",
       "dependencies": [{"name": "engine", "default-features": false, "features": ["render", "input"]}]
+    },
+    "ui": {
+      "description": "engine::ui, interface components drawn in screen space",
+      "dependencies": [{"name": "engine", "default-features": false, "features": ["render", "input"]}]
     }
   }
 }

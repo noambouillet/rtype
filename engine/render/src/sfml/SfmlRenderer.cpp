@@ -30,7 +30,9 @@ std::unordered_map<FontId, sf::Font>::iterator SfmlRenderer::Implementation::res
 }
 
 SfmlRenderer::Implementation::Implementation(const WindowConfig& config)
-	: window(sf::VideoMode({config.width, config.height}), config.title)
+	: window(sf::VideoMode({config.width, config.height}), config.title),
+	  worldView(sf::FloatRect({0.0F, 0.0F}, {static_cast<float>(config.width), static_cast<float>(config.height)})),
+	  screenView(worldView)
 {
 }
 
@@ -69,6 +71,9 @@ void SfmlRenderer::handleEvent()
 		if (event->is<sf::Event::Closed>()) {
 			_implementation->window.close();
 		}
+		if (const auto* resized = event->getIf<sf::Event::Resized>()) {
+			_implementation->screenView = sf::View(sf::FloatRect({0.0F, 0.0F}, sf::Vector2f(resized->size)));
+		}
 	}
 }
 
@@ -96,9 +101,17 @@ FontId SfmlRenderer::loadFontFromFile(const std::string& filepath)
 	return assignedFontId;
 }
 
+/// Clears the window and goes back to world space.
 void SfmlRenderer::beginFrame()
 {
 	_implementation->window.clear(sf::Color::Black);
+	_implementation->window.setView(_implementation->worldView);
+}
+
+/// Selects the view used by the next draw calls: the world view for the game, the screen view for the interface.
+void SfmlRenderer::setRenderSpace(RenderSpace space)
+{
+	_implementation->window.setView(space == RenderSpace::World ? _implementation->worldView : _implementation->screenView);
 }
 
 /// Draws the repeated background at the offset selected by the render system.
@@ -110,7 +123,8 @@ void SfmlRenderer::drawBackground(TextureId textureId, float offset)
 	}
 	textureIterator->second.setRepeated(true);
 	const sf::Texture& backgroundImage = textureIterator->second;
-	const sf::Vector2u windowSize = _implementation->window.getSize();
+	const sf::Vector2f viewSize = _implementation->worldView.getSize();
+	const sf::Vector2u windowSize(static_cast<unsigned int>(viewSize.x), static_cast<unsigned int>(viewSize.y));
 	if (windowSize.x == 0 || windowSize.y == 0 || backgroundImage.getSize().x == 0) {
 		return;
 	}

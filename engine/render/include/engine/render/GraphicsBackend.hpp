@@ -40,6 +40,11 @@ struct SpriteDraw {
 	float rotation = 0.0F;
 };
 
+enum class RenderSpace : std::uint8_t {
+	World,
+	Screen,
+};
+
 struct Color {
 	std::uint8_t r;
 	std::uint8_t g;
@@ -71,6 +76,7 @@ public:
 	virtual TextureId loadTextureFromFile(const std::string& filepath) = 0;
 	virtual FontId loadFontFromFile(const std::string& filepath) = 0;
 	virtual void beginFrame() = 0;
+	virtual void setRenderSpace(RenderSpace space) = 0;
 	virtual void drawBackground(TextureId texture, float offset) = 0;
 	virtual void drawSprite(const SpriteDraw& sprite) = 0;
 	virtual void drawRect(const RectDraw& rect) = 0;

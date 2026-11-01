@@ -37,6 +37,7 @@ public:
 	TextureId loadTextureFromFile(const std::string& filepath) override;
 	FontId loadFontFromFile(const std::string& filepath) override;
 	void beginFrame() override;
+	void setRenderSpace(RenderSpace space) override;
 	void drawBackground(TextureId texture, float offset) override;
 	void drawSprite(const SpriteDraw& command) override;
 	void drawRect(const RectDraw& rect) override;

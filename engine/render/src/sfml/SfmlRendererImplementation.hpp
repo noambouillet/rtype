@@ -19,6 +19,8 @@ struct SfmlRenderer::Implementation {
 	explicit Implementation(const WindowConfig& config);
 
 	sf::RenderWindow window;
+	sf::View worldView;
+	sf::View screenView;
 	std::unordered_map<TextureId, sf::Texture> loadedTextures;
 	TextureId nextTextureId = 1;
 

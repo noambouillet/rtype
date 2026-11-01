@@ -22,6 +22,7 @@ ClientControls::ClientControls() : _autoFire(false)
 }
 
 /// Returns the R-Type actions with their default keyboard and joystick bindings.
+/// The ui actions move through menus, so they can be used without a mouse.
 engine::input::InputMap ClientControls::defaultBindings()
 {
 	engine::input::InputMap map;
@@ -38,6 +39,16 @@ engine::input::InputMap ClientControls::defaultBindings()
 	map.bindKey(AUTO_FIRE, "X");
 	map.bindButton(AUTO_FIRE, 1);
 	map.bindKey(QUIT, "Escape");
+	map.bindKey(PAUSE, "Escape");
+	map.bindButton(PAUSE, JOYSTICK_START);
+	map.bindKey(UI_UP, "Up");
+	map.bindAxis(UI_UP, JoystickAxis::Y, AxisDirection::Negative);
+	map.bindKey(UI_DOWN, "Down");
+	map.bindAxis(UI_DOWN, JoystickAxis::Y, AxisDirection::Positive);
+	map.bindKey(UI_CONFIRM, "Enter");
+	map.bindButton(UI_CONFIRM, JOYSTICK_CONFIRM);
+	map.bindKey(UI_BACK, "Escape");
+	map.bindButton(UI_BACK, JOYSTICK_BACK);
 	map.bindKey(METRICS, "F3");
 	return map;
 }

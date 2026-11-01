@@ -24,7 +24,16 @@ public:
 	static constexpr std::string_view FIRE = "fire";
 	static constexpr std::string_view AUTO_FIRE = "auto_fire";
 	static constexpr std::string_view QUIT = "quit";
+	static constexpr std::string_view PAUSE = "pause";
+	static constexpr std::string_view UI_UP = "ui_up";
+	static constexpr std::string_view UI_DOWN = "ui_down";
+	static constexpr std::string_view UI_CONFIRM = "ui_confirm";
+	static constexpr std::string_view UI_BACK = "ui_back";
 	static constexpr std::string_view METRICS = "metrics";
+
+	static constexpr std::uint32_t JOYSTICK_CONFIRM = 0;
+	static constexpr std::uint32_t JOYSTICK_BACK = 1;
+	static constexpr std::uint32_t JOYSTICK_START = 7;
 
 	ClientControls();
 	static engine::input::InputMap defaultBindings();

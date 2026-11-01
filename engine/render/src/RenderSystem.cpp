@@ -42,7 +42,7 @@ core::Signature RenderSystem::signature(core::Coordinator& coordinator)
 void RenderSystem::render(core::Coordinator& coordinator, IGraphicsBackend& backend, float deltaTime)
 {
 	_backgroundOffset += _backgroundSpeed * std::max(0.0F, deltaTime);
-	backend.beginFrame();
+	backend.setRenderSpace(RenderSpace::World);
 	if (_backgroundTexture != 0) {
 		backend.drawBackground(_backgroundTexture, _backgroundOffset);
 	}

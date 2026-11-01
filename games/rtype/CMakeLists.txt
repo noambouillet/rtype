@@ -80,6 +80,7 @@ if(RTYPE_BUILD_CLIENT)
         src/client/view/SoundEventSystem.cpp
         src/client/view/ClientWorld.cpp
         src/client/view/LocalFirePredictor.cpp
+        src/client/scenes/MenuWidgets.cpp
     )
     target_link_libraries(rtype_client_core PUBLIC engine::core engine::render engine::assets engine::audio engine::input engine::net engine::ui rtype_protocol)
 

@@ -12,14 +12,14 @@ else()
 endif()
 
 option(RTYPE_BUILD_SERVER "Build r-type_server (engine core, physics, net)" ON)
-option(RTYPE_BUILD_CLIENT "Build r-type_client (engine render, audio, input, net, tools)" ON)
+option(RTYPE_BUILD_CLIENT "Build r-type_client (engine render, audio, input, net, tools, ui)" ON)
 
 set(RTYPE_ENGINE_MODULES core net)
 if(RTYPE_BUILD_SERVER)
     list(APPEND RTYPE_ENGINE_MODULES physics)
 endif()
 if(RTYPE_BUILD_CLIENT)
-    list(APPEND RTYPE_ENGINE_MODULES render audio input tools)
+    list(APPEND RTYPE_ENGINE_MODULES render audio input tools ui)
 endif()
 
 if(NOT TARGET engine::core)
@@ -81,7 +81,7 @@ if(RTYPE_BUILD_CLIENT)
         src/client/view/ClientWorld.cpp
         src/client/view/LocalFirePredictor.cpp
     )
-    target_link_libraries(rtype_client_core PUBLIC engine::core engine::render engine::assets engine::audio engine::input engine::net rtype_protocol)
+    target_link_libraries(rtype_client_core PUBLIC engine::core engine::render engine::assets engine::audio engine::input engine::net engine::ui rtype_protocol)
 
     add_executable(r-type_client
         src/client/main.cpp

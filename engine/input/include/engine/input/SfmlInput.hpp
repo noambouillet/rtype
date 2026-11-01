@@ -25,6 +25,8 @@ public:
 	void update(bool keyboardFocused) override;
 	bool isDown(std::string_view action) const override;
 	bool justPressed(std::string_view action) const override;
+	const PointerState& pointer() const override;
+	void setPointerPosition(PointerPosition position);
 
 private:
 	struct State {
@@ -39,6 +41,7 @@ private:
 	InputMap _map;
 	std::uint32_t _joystickId;
 	std::vector<State> _states;
+	PointerState _pointer;
 };
 
 }

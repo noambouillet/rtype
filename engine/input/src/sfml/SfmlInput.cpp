@@ -9,6 +9,7 @@
 
 #include <SFML/Window/Joystick.hpp>
 #include <SFML/Window/Keyboard.hpp>
+#include <SFML/Window/Mouse.hpp>
 #include <utility>
 
 #include "KeyNames.hpp"
@@ -17,13 +18,17 @@ namespace engine::input {
 
 /// Keeps a copy of the map, so every action must be bound before creating the backend.
 SfmlInput::SfmlInput(InputMap map, std::uint32_t joystick)
-	: _map(std::move(map)), _joystickId(joystick), _states(_map.actions().size())
+	: _map(std::move(map)), _joystickId(joystick), _states(_map.actions().size()), _pointer{.x = 0.0F, .y = 0.0F, .down = false, .pressed = false, .released = false}
 {
 }
 
-/// Reads the devices for every action.
+/// Reads the devices for every action, and the left mouse button while the window has the focus.
 void SfmlInput::update(bool keyboardFocused)
 {
+	const bool wasDown = _pointer.down;
+	_pointer.down = keyboardFocused && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
+	_pointer.pressed = _pointer.down && !wasDown;
+	_pointer.released = !_pointer.down && wasDown;
 	const std::vector<ActionBinding>& actions = _map.actions();
 	for (std::size_t index = 0; index < actions.size(); index++) {
 		State& state = _states[index];
@@ -44,6 +49,18 @@ bool SfmlInput::justPressed(std::string_view action) const
 {
 	const auto index = indexOf(action);
 	return index && _states[*index].down && !_states[*index].wasDown;
+}
+
+const PointerState& SfmlInput::pointer() const
+{
+	return _pointer;
+}
+
+/// Stores the cursor position, which the window gives in the coordinates the interface is drawn in.
+void SfmlInput::setPointerPosition(PointerPosition position)
+{
+	_pointer.x = position.x;
+	_pointer.y = position.y;
 }
 
 std::optional<std::size_t> SfmlInput::indexOf(std::string_view action) const

@@ -38,7 +38,6 @@ engine::input::InputMap ClientControls::defaultBindings()
 	map.bindButton(FIRE, 0);
 	map.bindKey(AUTO_FIRE, "X");
 	map.bindButton(AUTO_FIRE, 1);
-	map.bindKey(QUIT, "Escape");
 	map.bindKey(PAUSE, "Escape");
 	map.bindButton(PAUSE, JOYSTICK_START);
 	map.bindKey(UI_UP, "Up");

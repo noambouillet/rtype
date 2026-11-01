@@ -23,7 +23,6 @@ public:
 	static constexpr std::string_view RIGHT = "right";
 	static constexpr std::string_view FIRE = "fire";
 	static constexpr std::string_view AUTO_FIRE = "auto_fire";
-	static constexpr std::string_view QUIT = "quit";
 	static constexpr std::string_view PAUSE = "pause";
 	static constexpr std::string_view UI_UP = "ui_up";
 	static constexpr std::string_view UI_DOWN = "ui_down";

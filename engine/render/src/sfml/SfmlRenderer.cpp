@@ -114,6 +114,25 @@ void SfmlRenderer::setRenderSpace(RenderSpace space)
 	_implementation->window.setView(space == RenderSpace::World ? _implementation->worldView : _implementation->screenView);
 }
 
+/// Gives the size of the screen space, which is the window size in pixels.
+Point SfmlRenderer::screenSize() const
+{
+	const sf::Vector2f size = _implementation->screenView.getSize();
+	return {.x = static_cast<int>(size.x), .y = static_cast<int>(size.y)};
+}
+
+/// Gives the bounds of a text relative to its draw position.
+Rect SfmlRenderer::measureText(FontId font, std::string_view text, unsigned int size) const
+{
+	const auto fontIterator = _implementation->loadedFonts.find(font);
+	if (fontIterator == _implementation->loadedFonts.end()) {
+		return {};
+	}
+	const sf::Text label(fontIterator->second, std::string(text), size);
+	const sf::FloatRect bounds = label.getLocalBounds();
+	return {.position = {.x = static_cast<int>(bounds.position.x), .y = static_cast<int>(bounds.position.y)}, .size = {.x = static_cast<int>(std::ceil(bounds.size.x)), .y = static_cast<int>(std::ceil(bounds.size.y))}};
+}
+
 /// Draws the repeated background at the offset selected by the render system.
 void SfmlRenderer::drawBackground(TextureId textureId, float offset)
 {

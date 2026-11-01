@@ -77,6 +77,8 @@ public:
 	virtual FontId loadFontFromFile(const std::string& filepath) = 0;
 	virtual void beginFrame() = 0;
 	virtual void setRenderSpace(RenderSpace space) = 0;
+	virtual Point screenSize() const = 0;
+	virtual Rect measureText(FontId font, std::string_view text, unsigned int size) const = 0;
 	virtual void drawBackground(TextureId texture, float offset) = 0;
 	virtual void drawSprite(const SpriteDraw& sprite) = 0;
 	virtual void drawRect(const RectDraw& rect) = 0;

@@ -38,6 +38,8 @@ public:
 	FontId loadFontFromFile(const std::string& filepath) override;
 	void beginFrame() override;
 	void setRenderSpace(RenderSpace space) override;
+	Point screenSize() const override;
+	Rect measureText(FontId font, std::string_view text, unsigned int size) const override;
 	void drawBackground(TextureId texture, float offset) override;
 	void drawSprite(const SpriteDraw& command) override;
 	void drawRect(const RectDraw& rect) override;

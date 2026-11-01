@@ -125,6 +125,8 @@ static bool updateFrame(ClientLoop& loop)
 {
 	const auto frameStart = Clock::now();
 	loop.window.handleEvent();
+	const engine::render::Point cursor = loop.window.cursorPosition();
+	loop.input.setPointerPosition({.x = static_cast<float>(cursor.x), .y = static_cast<float>(cursor.y)});
 	loop.input.update(loop.window.hasFocus());
 	if (loop.input.justPressed(client::ClientControls::QUIT)) {
 		loop.window.close();

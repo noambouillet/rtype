@@ -18,13 +18,13 @@
 
 namespace rtype::client {
 
-SoundEventSystem::SoundEventSystem() : _assets(std::nullopt), _connectedMask(0), _listenerX(PAN_RANGE)
+SoundEventSystem::SoundEventSystem() : _assets(nullptr), _connectedMask(0), _listenerX(PAN_RANGE)
 {
 }
 
 void SoundEventSystem::setAssetManager(const engine::assets::AssetManager& assets)
 {
-	_assets = std::cref(assets);
+	_assets = &assets;
 }
 
 engine::core::Signature SoundEventSystem::signature(engine::core::Coordinator& coordinator)
@@ -36,8 +36,8 @@ engine::core::Signature SoundEventSystem::signature(engine::core::Coordinator& c
 
 std::string_view SoundEventSystem::resolveSound(std::string_view key) const
 {
-	if (_assets && _assets->get().hasSound(std::string(key))) {
-		return _assets->get().getSoundPath(std::string(key));
+	if (_assets != nullptr && _assets->hasSound(std::string(key))) {
+		return _assets->getSoundPath(std::string(key));
 	}
 	return {};
 }

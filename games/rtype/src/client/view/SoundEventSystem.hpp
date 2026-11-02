@@ -8,7 +8,6 @@
 #pragma once
 
 #include <cstdint>
-#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -62,7 +61,7 @@ private:
 	void handle(engine::core::Coordinator& coordinator, const DeathEvent& event);
 	void updateConnections(engine::core::Coordinator& coordinator, std::uint8_t connected);
 
-	std::optional<std::reference_wrapper<const engine::assets::AssetManager>> _assets;
+	const engine::assets::AssetManager* _assets;
 	std::uint8_t _connectedMask;
 	float _listenerX;
 };
